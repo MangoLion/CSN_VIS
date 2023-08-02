@@ -32,14 +32,9 @@ const App = () => {
   const [segments, setSegments] = useState([]);
   const [segmentsSelected, setSegmentsSelected] = useState([]);
 
-  const [canvasData, setCanvasData] = useState({});
-  const [settings, setSettings] = useState({});
-
   const [selectRegion, setSelectRegion] = useState({
       start: null, end: null 
   });
-
-  const [graphData,setGraphData] = useState(null);
 
   /**
    * description
@@ -54,40 +49,21 @@ const App = () => {
     <Allotment key="main">
     <Allotment vertical={true}>
           <Allotment.Pane maxSize={100}>
-            <div><LineSegmentUploader {
-              ...{setShowPlotView, showPlotView, 
-                  setRadius, 
-                  setTubeRes, 
-                  manualUpdate, setManualUpdate, 
-                  setStreamLines, 
-                  setSegments, 
-                  setExclude, 
-                  drawAll, setDrawAll, 
-                  swapLayout, setSwapLayout,
-                  settings, setSettings
-                }} key="uploader" /></div>
+            <div><LineSegmentUploader setShowPlotView={setShowPlotView} showPlotView={showPlotView} setRadius={setRadius} setTubeRes={setTubeRes} manualUpdate={manualUpdate}  key="uploader"
+              setManualUpdate={setManualUpdate} setStreamLines={setStreamLines} 
+              setSegments={setSegments} setExclude={setExclude} 
+              drawAll={drawAll} setDrawAll={setDrawAll}
+              swapLayout={swapLayout} setSwapLayout={setSwapLayout}/></div>
           </Allotment.Pane>
           <Allotment.Pane preferredSize={'40%'} >
-          <LineSegments {...{radius, tubeRes, setSelectedSegment, drawAll, segments, setSelectRegion, segmentsSelected}} key="line3D" />
-
+          <LineSegments radius={radius} tubeRes={tubeRes} setSelectedSegment={setSelectedSegment} key="line3D" drawAll={drawAll} segments={segments} selectRegion={setSelectRegion} segmentsSelected={segmentsSelected} />
           </Allotment.Pane>
     </Allotment>
     <Allotment.Pane>
-    <div><HugeCanvas {
-      ...{selectedSegment, 
-          manualUpdate, 
-          exclude, 
-          layerProps, 
-          handleLayerChange, 
-          setSegmentsSelected, 
-          setGraphData,
-          canvasData, setCanvasData}}
-          onLayerChange={handleLayerChange}
-           streamLines2={streamLines} segments2={segments} key="canvas1" cid={1} />
-    </div>
+    <div><HugeCanvas selectedSegment={selectedSegment} key="canvas1" cid={1} manualUpdate={manualUpdate} exclude={exclude} layerProps={layerProps} onLayerChange={handleLayerChange} setSegmentsSelected={setSegmentsSelected} streamLines2={streamLines} segments2={segments} /></div>
     </Allotment.Pane>
     <Allotment.Pane>
-    {(showPlotView)?<BarChart graphData={graphData} setSegmentsSelected={setSegmentsSelected} segments={segments}/>:<div><HugeCanvas {...{selectedSegment, manualUpdate, exclude, layerProps, handleLayerChange, setSegmentsSelected}} streamLines2={streamLines} segments2={segments} key="canvas2" cid={2} /></div>}
+    {(showPlotView)?<BarChart/>:<div><HugeCanvas selectedSegment={selectedSegment} key="canvas2" cid={2} manualUpdate={manualUpdate} exclude={exclude} layerProps={layerProps} onLayerChange={handleLayerChange} setSegmentsSelected={setSegmentsSelected} streamLines2={streamLines} segments2={segments} /></div>}
     </Allotment.Pane>
   </Allotment>
     </div>

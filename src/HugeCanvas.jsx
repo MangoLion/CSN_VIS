@@ -5,7 +5,7 @@ import useImage from 'use-image';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { PanAndZoom } from 'react-konva-utils';
 import KNNComponent from './KNNComponent';
-import {findRBN,computeDiagonalLength,computeBounds,createLineSegmentKDTree, findKNearestNeighbors, processSegments } from './knnHelper';
+import {findRBN,computeDiagonalLength,computeBounds,createLineSegmentKDTree, findKNearestNeighbors, processSegments, lineSegmentDistance } from './knnHelper';
 // Create a new web worker
 import MUworkerT from './MU.worker.js';
 import AMCSworkerT from './AMCS.worker.js';
@@ -14,15 +14,21 @@ const MUworker = new MUworkerT();
 let AMCSworker = new AMCSworkerT();
 let AMCSworker2 = new AMCSworkerT();
 
-const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, exclude, onLayerChange,segments2,streamLines2, setSegmentsSelected}) => {
+const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, exclude, onLayerChange,segments2,streamLines2, setSegmentsSelected,canvasData, setCanvasData,setGraphData}) => {
   const layerRef = useRef();
   const stageRef = useRef();
   const { x, y, scaleX, scaleY, updateId } = layerProps;
   const [streamLines, setStreamlines] = useState([]);
   const [segments, setSegments] = useState([]);
-  const[showDiv,setShowDiv] = useState(true);
+  const[showDiv,setShowDiv] = useState(false);
+  useEffect(()=>{
+    setStreamlines(streamLines2);
+    setSegments(segments2);
+    
+  }, [canvasData])
+
   useEffect(() => {
-    console.log("SL: ", streamLines2)
+    //console.log("SL: ", streamLines2)
     setStreamlines(streamLines2);
     
   }, [streamLines2]);
@@ -136,6 +142,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
         AMCSworker.removeEventListener('message', AMCSWorkerFunc);
         setGraph(event.data.tgraph);
         const sl = (doSort)?event.data.streamlines:streamLines;
+        //setPixelsM(event.data.pixels, sl);
         setPixels(event.data.pixels, sl);
         if (doSort){
           setSegments(event.data.segments);
@@ -379,6 +386,9 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       graph2:graph2,
       selectColor:selectColor
     });
+
+    if (setGraphData)
+      setGraphData(getGraphData());
   }
 
   function clampSelection(selection, bounds) {
@@ -522,7 +532,6 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       }
     }
   }
-  
   function drawRectangle(canvases, x, y, width, height, color, tileSize) {
     const startX = Math.floor(x / tileSize);
     const startY = Math.floor(y / tileSize);
@@ -548,7 +557,31 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       }
     }
   }
+
+  function drawRectangleM(canvas, row, col, x, y, width, height, color, tileSize) {
+    const startX = Math.floor(x / tileSize);
+    const startY = Math.floor(y / tileSize);
+    const endX = Math.floor((x + width - 1) / tileSize);
+    const endY = Math.floor((y + height - 1) / tileSize);
   
+    for (let i = startY; i <= endY; i++) {
+      for (let j = startX; j <= endX; j++) {
+        //const canvas = canvases[i][j];
+        //if (!canvas)
+        if (i==row && j==col){
+        const ctx = canvas.getContext("2d");
+  
+        const localX = j === startX ? x % tileSize : 0;
+        const localY = i === startY ? y % tileSize : 0;
+        const localWidth = j === endX ? (x + width) % tileSize || tileSize : tileSize - localX;
+        const localHeight = i === endY ? (y + height) % tileSize || tileSize : tileSize - localY;
+        //console.log(i,j);
+        ctx.fillStyle = color;
+        ctx.fillRect(localX, localY, localWidth, localHeight);
+        }else{}
+      }
+    }
+  }
   function fillBlackPixels(canvases, pixelList, tileSize) {
     pixelList.forEach((pixel) => {
       const x = pixel[0];
@@ -556,6 +589,20 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       const row = Math.floor(y / tileSize);
       const col = Math.floor(x / tileSize);
       const canvas = canvases[row][col];
+      const context = canvas.getContext("2d");
+      context.fillStyle = "black";
+      context.fillRect(x % tileSize, y % tileSize, 1, 1);
+    });
+  }
+  function fillBlackPixelsM(canvas, row, col, pixelList, tileSize) {
+    pixelList.forEach((pixel) => {
+      const x = pixel[0];
+      const y = pixel[1];
+      const r = Math.floor(y / tileSize);
+      const c = Math.floor(x / tileSize);
+      //const canvas = canvases[row][col];
+      if (r != row && c!= col)
+        return;
       const context = canvas.getContext("2d");
       context.fillStyle = "black";
       context.fillRect(x % tileSize, y % tileSize, 1, 1);
@@ -584,6 +631,79 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
     });
   }
   
+  const setPixelsM = useCallback((pixels,streamlines)=>{
+    //console.log(streamlines);
+    const tileSize = 1000;
+    const cols = Math.ceil(segments.length / tileSize);
+
+    const grid = new Array(cols).fill(cols).map(() => new Array(cols).fill(null));
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < cols; j++) {
+        const imageX = j * tileSize;
+        const imageY = i * tileSize;
+        grid[i][j] = {
+          width:0,
+          height:0,
+          x:imageX,
+          y:imageY,
+          url:""
+        }
+      }
+    }
+
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < cols; j++) {
+
+    //const canvas = createWhiteImage(segments.length, segments.length,tileSize);
+    const canvas = document.createElement("canvas");
+    canvas.width = tileSize;
+    canvas.height = tileSize;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "white";
+    context.fillRect(0, 0, tileSize, tileSize);
+
+    let rects = []
+    for (let si = 0; si < streamlines.length; si++) {
+      for (let sj = 0; sj < streamlines.length; sj++) {
+        let sl1 = streamlines[si];
+          let sl2 = streamlines[sj];
+        // Set the value at each position based on its position
+        if ((si + sj) % 2 === 0) {
+          //1
+          drawRectangleM(canvas, i, j, sl1[0], sl2[0], sl1[1]-sl1[0],sl2[1]-sl2[0],"#F3F3F3",tileSize);
+        } else {
+          drawRectangleM(canvas, i, j, sl1[0], sl2[0], sl1[1]-sl1[0],sl2[1]-sl2[0],"white",tileSize);
+          //0
+        }
+      }
+    }
+    //console.log(rects);
+    //console.log(matrix)
+    fillBlackPixelsM(canvas, i, j, pixels,tileSize);
+
+    const imageX = j * tileSize;
+    const imageY = i * tileSize;
+    grid[i][j] = {
+      width:tileSize,
+      height:tileSize,
+      x:imageX,
+      y:imageY,
+      url:canvas.toDataURL()
+    }
+    canvas.width = 0; // set the width and height to 0 to release memory
+      canvas.height = 0;
+      canvas = null; // set the canvas to null to release memory
+    console.log(i,j);
+  }}
+      
+  console.log(grid);
+        const prevGrid = image;
+    previousImage.current = image;
+    setImage(grid);
+    
+    //console.log(canvas.toDataURL('image/png'));
+  })
+
   const setPixels = useCallback((pixels,streamlines)=>{
     console.log(streamlines);
     const tileSize = 1000;
@@ -633,9 +753,10 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
         cv = null; // set the canvas to null to release memory
       }
     }
-
+    
     const prevGrid = image;
     previousImage.current = image;
+    console.log(canvas);
     setImage(canvas);
     
     //console.log(canvas.toDataURL('image/png'));
@@ -738,6 +859,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
   function renderCanvasGrid(canvases, tileSize, visibleArea) {
     const images = [];
     let ex = 0;
+    let lasturl = "";
     for (let i = 0; i < canvases.length; i++) {
       for (let j = 0; j < canvases[i].length; j++) {
         const canvas = canvases[i][j];
@@ -762,7 +884,11 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
           ex++;
           continue;
         }
-
+        //console.log(canvas);
+        //if (canvas.url == lasturl)
+        //  console.log("same");
+        lasturl = canvas.url;
+        //console.log(`${i}-${j}`)
         images.push(
           <Base64Image
             key={`${i}-${j}`}
@@ -898,6 +1024,69 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
     }
   };
 
+  const handleDownload2 = () =>{
+    const fileName = window.prompt('Enter file name', 'myImage.png');
+    if (fileName) {
+      let text = "";
+      for (var i=0; i < graph.length; i++){
+        text += graph[i].join(" ") + "\n";
+      }
+
+      const link = document.createElement('a');
+      link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+
+  const getStreamlineOf = (idx)=>{
+    for (var i=0; i < streamLines.length;i++){
+      let sl = streamLines[i];
+      if (idx >= sl[0] && idx <= sl[1])
+        return i
+    }
+    return -1;
+  }
+
+  const getGraphData = () =>{
+    let res = [];
+      for (var i=selection.x; i < selection.x + selection.width; i++){
+        //text += graph[i].join(" ") + "\n";
+        const querySegment = [segments[i].startPoint,segments[i].endPoint];
+        let sls = {};
+        for (var nn of graph[i]){
+          var sl = getStreamlineOf(nn);
+          if (!sls[sl])
+            sls[sl] = [];
+          
+          const segment = [segments[nn].startPoint,segments[nn].endPoint];
+          const dist = lineSegmentDistance(querySegment, segment,'shortest');
+          sls[sl].push(dist);
+        }
+        res.push(sls);
+      }
+    return res;
+  }
+
+  const handleDownload = () =>{
+    const fileName = window.prompt('Enter file name', 'test.txt');
+    if (fileName) {
+      let text = "";
+      let res = getGraphData();
+
+      return;//skip download file
+
+      const link = document.createElement('a');
+      link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(res)));
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+
   const handleSaveImage2 = () => {
     const dataURL = stageRef.current.toDataURL();
     window.location.href = dataURL;
@@ -998,7 +1187,8 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
         updateView()
       }}>🔄</button> }
     <button onClick={()=>{
-        handleSaveImage();
+        //handleSaveImage();
+        handleDownload();
       }}>💾</button> 
     
     <br/>

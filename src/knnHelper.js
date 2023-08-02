@@ -10,7 +10,7 @@ export function distance3D(point1, point2) {
   );
 }
 
-function lineSegmentDistance(line1, line2, type){
+export function lineSegmentDistance(line1, line2, type){
   let fun;
   
   if (type == "shortest"){

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import PopupComponent from './Popup';
 
-const LineSegmentUploader= React.memo(({setRadius,setTubeRes,swapLayout,setSwapLayout,drawAll, setDrawAll, manualUpdate,setManualUpdate,setStreamLines,setSegments, setExclude}) => {
+const LineSegmentUploader= React.memo(({setShowPlotView,showPlotView,setRadius,setTubeRes,swapLayout,setSwapLayout,drawAll, setDrawAll, manualUpdate,setManualUpdate,setStreamLines,setSegments, setExclude,settings, setSettings}) => {
   const [lines, setLines] = useState([]);
   const [skipLines, setSkipLines] = useState(0);
   const [skipSegments, setSkipSegments] = useState(0);
   const [file, setFile] = useState(null);
   const [exclude, setExclude2] = useState(-1);
+  const [plotview] = useState(true);
 
   const handleFileUpload = (event) => {
     setFile(event.target.files[0]);
@@ -104,11 +106,19 @@ const LineSegmentUploader= React.memo(({setRadius,setTubeRes,swapLayout,setSwapL
       setExclude(Number(event.target.value));
   };
 
+  const [items] = useState(['Item 1', 'Item 2', 'Item 3', 'Item 4']);
+
+    const handleLoad = () => {
+        // Put the logic for what should happen when you click the load button here
+        console.log('Load button pressed');
+    };
+
   return (
     <div>
       <input type="file" onChange={handleFileUpload} />
       <button onClick={handleUpload}>Upload</button>
       <button onClick={()=>{setSwapLayout(!swapLayout)}}>Swap Layout</button>
+      <PopupComponent items={items} handleLoad={handleLoad} />
       <br/>
       Streamlines: {lines.length}
       {/* {lines.map((line, i) => (
@@ -126,6 +136,16 @@ const LineSegmentUploader= React.memo(({setRadius,setTubeRes,swapLayout,setSwapL
         <label>
           Merge x segments together:
           <input style={{ maxWidth: '45px' }} type="number" value={skipSegments} onChange={((e)=>{setSkipSegments(Number(e.target.value))})} />
+        </label>
+        <label>
+          PlotView:
+          <input
+            type="checkbox"
+            checked={showPlotView}
+            onChange={()=>{
+                setShowPlotView(!showPlotView);
+            }}
+          />
         </label> <br/>
       <label>
           Exclude close segments:
@@ -133,7 +153,7 @@ const LineSegmentUploader= React.memo(({setRadius,setTubeRes,swapLayout,setSwapL
         </label><br/>
         <label>
           Tube Radius:
-          <input defaultValue={0.012} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setRadius(Number(e.target.value));}} />
+          <input defaultValue={0.008} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setRadius(Number(e.target.value));}} />
         </label>
         <label>
           Tube Resolution:
