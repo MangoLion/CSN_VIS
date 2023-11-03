@@ -10,6 +10,7 @@ import BarChart from './PlotView';
 import "./App.css";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
+import Vis from './components/Vis';
 
 const App = () => {
 
@@ -87,7 +88,7 @@ const App = () => {
     </div>
     </Allotment.Pane>
     <Allotment.Pane>
-    {(showPlotView)?<BarChart graphData={graphData} setSegmentsSelected={setSegmentsSelected} segments={segments}/>:<div><HugeCanvas {...{selectedSegment, manualUpdate, exclude, layerProps, handleLayerChange, setSegmentsSelected}} streamLines2={streamLines} segments2={segments} key="canvas2" cid={2} /></div>}
+    {(showPlotView)?<Vis graphData={graphData} setSegmentsSelected={setSegmentsSelected} segments={segments}/>:<div><HugeCanvas {...{selectedSegment, manualUpdate, exclude, layerProps, handleLayerChange, setSegmentsSelected}} streamLines2={streamLines} segments2={segments} key="canvas2" cid={2} /></div>}
     </Allotment.Pane>
   </Allotment>
     </div>
