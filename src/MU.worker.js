@@ -19,8 +19,8 @@ function listIndicesInRange(a, b, c, d) {
 self.addEventListener('message', (event) => {
   //console.log('Worker started:');
 
-    const { selectMode, aboveDiagonalColumnIndexes, belowDiagonalRowIndexes, selection, segments, graph, graph2, selectColor} = event.data;
-    const selected = [];
+    const { selectMode, aboveDiagonalColumnIndexes, belowDiagonalRowIndexes, selection, segments, graph, graph2, selectColor, filter} = event.data;
+    let selected = [];
     const combined = (graph2.length > 0);
 
     let cquery = '#0394fc';
@@ -297,6 +297,10 @@ self.addEventListener('message', (event) => {
       }
     }
     
+    if (filter){
+      console.log(filter)
+      selected = selected.filter(seg => filter.includes(seg.globalIdx));
+    }
 
     //console.log(selected);
     // Send the results back to the main thread

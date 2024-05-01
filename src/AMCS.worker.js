@@ -1,4 +1,4 @@
-import {findRBN,computeDiagonalLength,computeBounds,createLineSegmentKDTree, findKNearestNeighbors, processSegments, distance3D } from './knnHelper';
+import {findRBN, findRBN2, computeDiagonalLength,computeBounds,createLineSegmentKDTree, findKNearestNeighbors, processSegments, distance3D } from './knnHelper';
 function rearrangeMatrix2(matrix) {
   // Validate the input is a square matrix
   const size = matrix.length;
@@ -49,6 +49,42 @@ function rearrangeMatrix(matrix) {
   return rowIndexes;
 }
 
+
+function nestedArraysAreEqual(array1, array2) {
+  if (array1.length !== array2.length) {
+      return false;
+  }
+
+  for (let i = 0; i < array1.length; i++) {
+      // Check if elements are arrays
+      if (!Array.isArray(array1[i]) || !Array.isArray(array2[i])) {
+          return false;
+      }
+
+      // Check if nested arrays are equal
+      if (!arraysAreEqual(array1[i], array2[i])) {
+          return false;
+      }
+  }
+
+  return true;
+}
+
+function arraysAreEqual(array1, array2) {
+  if (array1.length !== array2.length) {
+      return false;
+  }
+
+  for (let i = 0; i < array1.length; i++) {
+      if (array1[i] !== array2[i]) {
+          return false;
+      }
+  }
+
+  return true;
+}
+
+
 self.addEventListener('message', (event) => {
   console.log("worker started")
     let {doSort, param, segments2, algorithm, distanceMetric, exclude,streamlines2,sortType} = event.data;
@@ -62,15 +98,21 @@ self.addEventListener('message', (event) => {
       });
 
     let lineSegments = processSegments(segments);
+   
       let KR = Number(param);
       if (algorithm=='RBN'){
         const bounds = computeBounds(lineSegments);
         KR = KR * computeDiagonalLength(bounds);
       }
       let tgraph = [];
+      let dgraph = [];
+
+      let minDist = 10000, maxDist = 0;
+
       let lastProgress = 0;
       let pixels = [];
       let tree = createLineSegmentKDTree(lineSegments);
+      let tree2 = createLineSegmentKDTree(lineSegments);
 
       let sum,sumSquared;
       const matrix = Array(streamlines.length).fill().map(() => Array(streamlines.length).fill(0));
@@ -78,9 +120,24 @@ self.addEventListener('message', (event) => {
       for (let i=0; i <  lineSegments.length; i++){
         //for (let i=0; i <  2; i++){
         const segment = lineSegments[i];
-        const fun = (algorithm=='RBN')? findRBN:findKNearestNeighbors;
+        const fun = (algorithm=='RBN')? findRBN2:findKNearestNeighbors;
+        
+        let funRes = fun(tree, segment, lineSegments, KR,distanceMetric);
+        let neighbors = funRes[0];
 
-        let neighbors = fun(tree, segment, lineSegments, KR,distanceMetric);
+        const probability = 0.01;
+        if (Math.random() < probability){
+          let funRes2 = fun(tree2, segment, lineSegments, KR,distanceMetric);
+          let neighbors2 = funRes2[0];
+
+          /*if (!arraysAreEqual(neighbors,neighbors2)){
+            console.log("CONSISTENCY CHECK FAILED!!!");
+            //console.log(neighbors, neighbors2)
+          }else
+            console.log("passed")*/
+        }
+
+        let distances = funRes[1];
         if (exclude > 0 && algorithm == "KNN"){
           let excluded = 0;
           const sIdx = segments[i].globalIdx;
@@ -89,7 +146,11 @@ self.addEventListener('message', (event) => {
               excluded += 1;
           });
           //console.log(excluded);
-          neighbors = fun(tree, segment, lineSegments, KR+excluded,distanceMetric);
+
+          funRes = fun(tree, segment, lineSegments, KR+excluded,distanceMetric);
+          let neighbors = funRes[0];
+          distances = funRes[1];
+          
         }
 
         if (exclude > 0){
@@ -99,14 +160,18 @@ self.addEventListener('message', (event) => {
           })
         }
 
-        if (!doSort)
+        if (!doSort){
+          //console.log(distances)
+          minDist = distances.reduce((min,num)=>Math.min(min,num),minDist);
+          maxDist = distances.reduce((max,num)=>Math.max(max,num),maxDist);
           tgraph.push(neighbors);
-        else{
+          dgraph.push(distances);
+        }else{
           sum = 0;
           sumSquared = 0;
         }
         const lIdx = segments[i].lineIDx;
-        neighbors.forEach(n => {
+        neighbors.forEach((n,idx) => {
           //segments[n].color = 'blue';
           //console.log(sIdx, segments[n].globalIdx, matrix)
           matrix[lIdx][segments[n].lineIDx]+=1;
@@ -121,7 +186,7 @@ self.addEventListener('message', (event) => {
             //sum += idx;
             //sumSquared += idx*idx;
           }else
-            pixels.push([i,n]);
+            pixels.push([i,n,distances[idx]]);
           //pixels.push([n,i]);
         });
 
@@ -134,6 +199,7 @@ self.addEventListener('message', (event) => {
           streamlines[segments[i].lineIDx][2] += sum / neighbors.length;
         }
         
+
         const progress = Math.floor(i / lineSegments.length * 100);
         if (progress % 10 === 0 && progress !== lastProgress) {
           //setProgress(progress);
@@ -196,7 +262,7 @@ self.addEventListener('message', (event) => {
         for (let i=0; i <  lineSegments.length; i++){
           //for (let i=0; i <  2; i++){
           const segment = lineSegments[i];
-          const fun = (algorithm=='RBN')? findRBN:findKNearestNeighbors;
+          const fun = (algorithm=='RBN')? findRBN2:findKNearestNeighbors;
 
           let neighbors = fun(tree, segment, lineSegments, KR,distanceMetric);
           if (exclude > 0 && algorithm == "KNN"){
@@ -217,7 +283,7 @@ self.addEventListener('message', (event) => {
             })
           }
           tgraph.push(neighbors);
-          neighbors.forEach(n => {
+          neighbors.forEach((n,idx) => {
             //segments[n].color = 'blue';
             pixels.push([i,n]);
             //pixels.push([n,i]);
@@ -236,11 +302,23 @@ self.addEventListener('message', (event) => {
         }
       }
 
+      let graphSize = 0;
+        tgraph.forEach(edges=>{
+          graphSize += edges.length;
+        })
+
+        console.log('GRAPH SIZE: ', graphSize);
+
+      console.log(minDist);
+      console.log(maxDist);
       //console.log(streamlines.length, streamlines2.length);
       console.log("ended");
       const msg = {
         type: "final",
         tgraph:tgraph,
+        minDist:minDist,
+        maxDist:maxDist,
+        dgraph:dgraph,
         pixels:pixels
       };
       if (doSort){

@@ -227,6 +227,22 @@ export function createLineSegmentKDTree(lineSegments) {
     return tree;
   }
   
+
+  function arraysAreEqual(array1, array2) {
+    if (array1.length !== array2.length) {
+        return false;
+    }
+  
+    for (let i = 0; i < array1.length; i++) {
+        if (array1[i].index !== array2[i].index) {
+            return false;
+        }
+    }
+  
+    return true;
+  }
+
+
   // Function to find K nearest neighbors for a query line segment, given a KD-tree of line segment end points
   export function findKNearestNeighbors(tree, querySegment, lineSegments, K, distMetric) {
 
@@ -260,7 +276,23 @@ export function createLineSegmentKDTree(lineSegments) {
     const pointsWithinRadius = [];
     tree.rnn(midpoint, searchRadius, function(idx) {
       pointsWithinRadius.push(idx);
+      
     });
+
+    /*if (Math.random() < 0.01){
+      const pointsWithinRadius2 = [];
+      tree.rnn(midpoint, searchRadius, function(idx) {
+        pointsWithinRadius2.push(idx);
+      });
+
+      if (!arraysAreEqual(pointsWithinRadius,pointsWithinRadius2)){
+        console.log("DAMN ITTTTT");
+      }else{
+        console.log("passed")
+      }
+    }*/
+
+
     //console.log("NUM:",pointsWithinRadius.length);
     // Compute the true distance between the query segment and each segment within that radius
     const distances = [];
@@ -277,16 +309,153 @@ export function createLineSegmentKDTree(lineSegments) {
     }
     //console.log("maxR: ", maxRadius);
     // Sort the distances and find K nearest segments
-    distances.sort((a, b) => a.distance - b.distance);
+    //distances.sort((a, b) => a.distance - b.distance);
+    distances.sort((a, b) => {
+      if (a.distance === b.distance) {
+        return a.index - b.index; // Break ties based on segment index
+      }
+      return a.distance - b.distance;
+    });
     //const kNearestNeighbors = distances.slice(0, K).map((d) => lineSegments[d.index]);
     const kNearestNeighborIndices = distances.slice(0, K).map((d) => d.index);
+    /*if (Math.random() < 0.001){
+      const distances2 = [];
+      const uniqueSegmentIndices2 = new Set();
+      for (const idx of pointsWithinRadius) {
 
+        const segmentIndex = Math.floor(idx / 2);
+        if (!uniqueSegmentIndices2.has(segmentIndex)) {
+          uniqueSegmentIndices2.add(segmentIndex);
+          const segment = lineSegments[segmentIndex];
+          const trueDistance = lineSegmentDistance(querySegment, segment,distMetric);
+          distances2.push({ index: segmentIndex, distance: trueDistance });
+        }
+      }
+      //console.log("maxR: ", maxRadius);
+      // Sort the distances and find K nearest segments
+      //distances2.sort((a, b) => a.distance - b.distance);
+      distances2.sort((a, b) => {
+        if (a.distance === b.distance) {
+          return a.index - b.index; // Break ties based on segment index
+        }
+        return a.distance - b.distance;
+      });
+
+      if (!arraysAreEqual(distances,distances2)){
+        console.log("DAMN ITTTTT");
+        console.log(distances,distances2);
+      }else{
+        console.log("passed")
+      }
+    }*/
   
-    return kNearestNeighborIndices;
+    return [kNearestNeighborIndices,distances.slice(0, K).map((d) => d.distance)];
   }
   
+
+  export function findRBN(tree, querySegment, lineSegments, R, distMetric, numPartitions=12) {
+    // Calculate the midpoint of the query line segment
+    const midpoint = [
+      (querySegment[0][0] + querySegment[1][0]) / 2,
+      (querySegment[0][1] + querySegment[1][1]) / 2,
+      (querySegment[0][2] + querySegment[1][2]) / 2,
+    ];
+  
+    // Calculate the length of the query line segment
+    const C = distance3D(querySegment[0], querySegment[1]);
+  
+    // Calculate the search radius based on the query segment length and the given radius R
+    const searchRadius = R + 2 * C;
+  
+    // Find the indices of points within the search radius using the KD-tree
+    const pointsWithinRadius = [];
+    tree.rnn(midpoint, searchRadius, function(idx) {
+      pointsWithinRadius.push(idx);
+    });
+  
+    // Compute the true distance between the query segment and each segment within the search radius
+    const distances = [];
+    const uniqueSegmentIndices = new Set();
+    for (const idx of pointsWithinRadius) {
+      const segmentIndex = Math.floor(idx / 2);
+      if (!uniqueSegmentIndices.has(segmentIndex)) {
+        uniqueSegmentIndices.add(segmentIndex);
+        const segment = lineSegments[segmentIndex];
+        const trueDistance = lineSegmentDistance(querySegment, segment, distMetric);
+        distances.push({ index: segmentIndex, distance: trueDistance });
+      }
+    }
+  
+    // Partition the cylindrical space around the query segment into numPartitions
+    const partitionAngles = Array.from({ length: numPartitions }, (_, i) => (i * 2 * Math.PI) / numPartitions);
+  
+    // Initialize an array to store the nearest segment in each partition
+    const nearestSegmentsPerPartition = partitionAngles.map(() => ({ index: -1, distance: Infinity }));
+
+    
+  
+    // Iterate over the segments within the search radius
+    for (const { index, distance } of distances) {
+      if (distance <= R) {
+        const segment = lineSegments[index];
+        const segmentMidpoint = [
+          (segment[0][0] + segment[1][0]) / 2,
+          (segment[0][1] + segment[1][1]) / 2,
+          (segment[0][2] + segment[1][2]) / 2,
+        ];
+  
+        // Calculate the direction vector of the query segment
+        const queryDirection = [
+          querySegment[1][0] - querySegment[0][0],
+          querySegment[1][1] - querySegment[0][1],
+          querySegment[1][2] - querySegment[0][2],
+        ];
+  
+        // Calculate the length of the query segment
+        const queryLength = Math.sqrt(
+          queryDirection[0] ** 2 + queryDirection[1] ** 2 + queryDirection[2] ** 2
+        );
+  
+        // Calculate the unit direction vector of the query segment
+        const queryUnitDirection = queryDirection.map((component) => component / queryLength);
+  
+        // Calculate the projected length of the segment's midpoint onto the query segment's direction vector
+        const projectedLength = (
+          (segmentMidpoint[0] - querySegment[0][0]) * queryUnitDirection[0] +
+          (segmentMidpoint[1] - querySegment[0][1]) * queryUnitDirection[1] +
+          (segmentMidpoint[2] - querySegment[0][2]) * queryUnitDirection[2]
+        );
+  
+        // Check if the segment's midpoint falls within the cylindrical space formed by the query segment
+        if (projectedLength >= 0 && projectedLength <= queryLength) {
+          const dx = segmentMidpoint[0] - midpoint[0];
+          const dy = segmentMidpoint[1] - midpoint[1];
+          const angle = Math.atan2(dy, dx);
+          const partitionIndex = Math.floor((angle + Math.PI) / (2 * Math.PI / numPartitions));
+  
+          // Check if the partitionIndex is within the valid range
+          if (partitionIndex >= 0 && partitionIndex < numPartitions) {
+            if (distance < nearestSegmentsPerPartition[partitionIndex].distance) {
+              nearestSegmentsPerPartition[partitionIndex] = { index, distance };
+            }
+          }
+        }
+      }
+    }
+    if (Math.random() < 0.001)
+    console.log(nearestSegmentsPerPartition);
+    // Extract the indices of the nearest segments in each partition (excluding empty partitions)
+    const res = nearestSegmentsPerPartition.filter((seg) => seg.index !== -1).map((seg) => seg.index);
+  
+    // Extract the distances of the nearest segments in each partition (excluding empty partitions)
+    const resDist = nearestSegmentsPerPartition.filter((seg) => seg.index !== -1).map((seg) => seg.distance);
+  
+    // Return the indices and distances of the nearest segments in each partition
+    return [res, resDist];
+  }
+
 // Function to find  neighbors within R for a query line segment, given a KD-tree of line segment end points
-export function findRBN(tree, querySegment, lineSegments, R,distMetric) {
+export function findRBN2(tree, querySegment, lineSegments, R,distMetric) {
 
   // Calculate the midpoint of the query line segment
   const midpoint = [
@@ -326,7 +495,7 @@ export function findRBN(tree, querySegment, lineSegments, R,distMetric) {
 
   const res =  distances.filter((seg) => seg.distance <= R).map((seg) => seg.index);
   //console.log(res);
-  return res;
+  return [res,distances.filter((seg) => seg.distance <= R).map((seg) => seg.distance)];
 }
 
 export function processSegments(segments){

@@ -2,6 +2,7 @@ const path = require("path");
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+
 module.exports = {
   entry: "./src/index.js",
   output: {
@@ -11,13 +12,15 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.join(__dirname, "public", "index.html"),
-    })
+    }),
+    new webpack.HotModuleReplacementPlugin(), // Add HMR plugin
   ],
   devServer: {
     static: {
       directory: path.join(__dirname, "build"),
     },
     port: 3000,
+    hot: true, // Enable HMR
   },
   module: {
     // exclude node_modules

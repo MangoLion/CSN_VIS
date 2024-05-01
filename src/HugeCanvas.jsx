@@ -10,17 +10,67 @@ import {findRBN,computeDiagonalLength,computeBounds,createLineSegmentKDTree, fin
 import MUworkerT from './MU.worker.js';
 import AMCSworkerT from './AMCS.worker.js';
 
+import { scaleLinear } from 'd3-scale';
+import { interpolateHsl, interpolateRgb } from 'd3-interpolate';
+import { rgb } from 'd3-color';
+import OpacityTable from './OpacityTable.js';
+
+
 const MUworker = new MUworkerT();
 let AMCSworker = new AMCSworkerT();
 let AMCSworker2 = new AMCSworkerT();
 
-const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, exclude, onLayerChange,segments2,streamLines2, setSegmentsSelected,canvasData, setCanvasData,setGraphData}) => {
+const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, exclude, onLayerChange,segments2,streamLines2, setSegmentsSelected,canvasData, 
+  setCanvasData,setGraphData, setDGraphData,pixelData,setPixelData, pixelMapData,setCSNG,setDGraph, manualStart, setManualProgress}) => {
   const layerRef = useRef();
   const stageRef = useRef();
   const { x, y, scaleX, scaleY, updateId } = layerProps;
   const [streamLines, setStreamlines] = useState([]);
   const [segments, setSegments] = useState([]);
   const[showDiv,setShowDiv] = useState(false);
+  const [currentPixels, setCurrentPixels] = useState([])
+  const [opacities,setOpacities] = useState([
+    { target: 0, alpha: 1 },
+    { target: 1, alpha: 0 }
+  ]);
+
+  const [slRange, setSlRange] = useState(false);
+
+  useEffect(()=>{
+    if (manualStart){
+      handleStart();
+    }
+  },[manualStart])
+
+  function interpolateAlpha(target) {
+      let arr = opacities;
+      // Sort the array by target values
+      arr.sort((a, b) => a.target - b.target);
+
+      // Handle edge case: target is less than the lowest target
+      if (target < arr[0].target) {
+          return arr[0].alpha;
+      }
+
+      // Handle edge case: target is higher than the highest target
+      if (target > arr[arr.length - 1].target) {
+          return arr[arr.length - 1].alpha;
+      }
+
+      // Find the two adjacent targets and interpolate
+      for (let i = 0; i < arr.length - 1; i++) {
+          if (target >= arr[i].target && target <= arr[i + 1].target) {
+              // Linear interpolation
+              const proportion = (target - arr[i].target) / (arr[i + 1].target - arr[i].target);
+              return arr[i].alpha + proportion * (arr[i + 1].alpha - arr[i].alpha);
+          }
+      }
+
+      // Return null if the target is not within the range of the array
+      return 0;
+  }
+
+
   useEffect(()=>{
     setStreamlines(streamLines2);
     setSegments(segments2);
@@ -37,6 +87,13 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
     setSegments(segments2);
     
   }, [segments2]);
+
+  useEffect(()=>{
+    if (pixelData && pixelData!=currentPixels){
+      setPixelsNoUpdate(pixelData);
+      setPixelData(currentPixels);
+    }
+  },[pixelData])
 
   useEffect(() => {
     //console.log("updated")
@@ -67,6 +124,8 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
 
 
   //const [segments, setSegments] = useState(initsegments);
+  const [minMax, setMinMax] = useState([0,1]);
+  //const [dGraph, setDGraph] = useState([]);
   const [snap, setSnap] = useState(true);
   const [grid, setGrid] = useState([]);
   const [graph, setGraph] = useState([]);
@@ -78,7 +137,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
   const [image, setImage] = useState(createWhiteImage(500, 500,1000));
     ///UI
     const [algorithm, setAlgorithm] = useState('KNN');
-    const [param, setParam] = useState('');
+    const [param, setParam] = useState('60');
     const [distanceMetric, setDistanceMetric] = useState('shortest');
     const [progress, setProgress] = useState(0);
     
@@ -99,7 +158,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
     ///
     ///UI2
     const [algorithm2, setAlgorithm2] = useState('KNN');
-    const [param2, setParam2] = useState('');
+    const [param2, setParam2] = useState('60');
     const [distanceMetric2, setDistanceMetric2] = useState('shortest');
     const [progress2, setProgress2] = useState(0);
     
@@ -127,7 +186,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       AMCSworker.postMessage({
         doSort:doSort,
         param:param,
-        segments2:segments2,
+        segments2:segments,
         algorithm:algorithm,
         distanceMetric:distanceMetric,
         streamlines2:streamLines2,
@@ -135,15 +194,81 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
         sortType:sortType
       });
     }
+
+    const updateSlRangeBU = (pixels) =>{
+      const slR = {};
+      pixels.forEach(px=>{
+        for (var i=0; i< 2;i++){
+          const idx = segments[px[i]].lineIDx;
+          if (!slR[idx]){
+            slR[idx] = [px[2],px[2]];
+          }else{
+            slR[idx][0] = Math.min(px[2], slR[idx][0]);
+            slR[idx][1] = Math.max(px[2], slR[idx][1]);
+          }
+        }
+      })
+      setSlRange(slR);
+      console.log("UPDATE SL RANGE")
+      console.log(slR);
+    }
+
+    const updateSlRange = (pixels) =>{
+      const slR = {};
+      pixels.forEach(px=>{
+        const idx1 = segments[px[0]].lineIDx;
+        const idx2 = segments[px[1]].lineIDx;
+        let key = `${idx1},${idx2}`
+          if (!slR[key]){
+            slR[key] = [px[2],px[2]];
+          }else{
+            slR[key][0] = Math.min(px[2], slR[key][0]);
+            slR[key][1] = Math.max(px[2], slR[key][1]);
+          }
+      })
+      setSlRange(slR);
+      console.log("UPDATE SL RANGE")
+      console.log(slR);
+    }
+
+    
     const AMCSWorkerFunc = (event) => {
       if (event.data.type == "final"){
         setProgress(100);
+        setManualProgress(100);
         //console.log(event.data);
         AMCSworker.removeEventListener('message', AMCSWorkerFunc);
         setGraph(event.data.tgraph);
+        window.tempGraph = event.data.tgraph
+        console.log("graph: ")
+        console.log(event.data.tgraph)
+
+        let graphSize = 0;
+        event.data.tgraph.forEach(edges=>{
+          graphSize += edges.length;
+        })
+
+        console.log('GRAPH SIZE: ', graphSize);
+        
+        console.log("DGRAPH:")
+        console.log(event.data.dgraph)
+        setDGraph(event.data.dgraph);
+        setMinMax([event.data.minDist, event.data.maxDist])
+        console.log("MINMAX:");
+        console.log([event.data.minDist, event.data.maxDist])
+        setDGraphData(event.data.tgraph);
+        //setCSNG()
         const sl = (doSort)?event.data.streamlines:streamLines;
         //setPixelsM(event.data.pixels, sl);
-        setPixels(event.data.pixels, sl);
+
+        //disabled for graph test!!!
+        //disabled for initial matrix only show cluster matrix
+        //setPixels(event.data.pixels, sl);
+
+        updateSlRange(event.data.pixels);
+
+        setCurrentPixels(event.data.pixels)
+        setPixelData(event.data.pixels);
         if (doSort){
           setSegments(event.data.segments);
           setStreamlines(event.data.streamlines);
@@ -151,6 +276,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
         
       }else if (event.data.type == "progress"){
         setProgress(event.data.progress);
+        setManualProgress(event.data.progress);
       }
     }
 
@@ -162,7 +288,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       AMCSworker2.postMessage({
         doSort:doSort,
         param:param2,
-        segments2:segments2,
+        segments2:segments,
         algorithm:algorithm2,
         distanceMetric:distanceMetric2,
         streamlines2:streamLines2,
@@ -219,13 +345,17 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       layerRef.current.draggable(true);
     }
     if (e.evt.button != 0) return;
-    e.evt.stopPropagation();
+      e.evt.stopPropagation();
+
     const pos = e.target.getStage().getPointerPosition();
     const scaleX = 1/layerRef.current.scaleX();
     let xx = Math.floor(pos.x*scaleX-layerRef.current.x()*scaleX);
     let yy = Math.floor(pos.y*scaleX-layerRef.current.y()*scaleX);
     if (snap){
-      streamLines.forEach(sl=>{
+      let sl = streamLines;
+      if (pixelMapData)
+        sl = computeStreamlinesMap();
+      sl.forEach(sl=>{
         if (xx >= sl[0] && xx <= sl[1])
           xx = sl[0]-1;
         if (yy >= sl[0] && yy <= sl[1])
@@ -356,11 +486,57 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
   
   
   const MUWorkerFunc = (event) => {
+    /*ss = selection;
+
+    const orgSS = {
+      x: ss.x,
+      y: ss.y,
+      width: ss.width,
+      height: ss.height,
+    };
+
+    if (pixelMapData){
+      //const minidx = pixelMapData[0]
+
+      //ss.x+=minidx
+      //ss.y += minidx
+      orgSS.width = pixelMapData[ss.x+ss.width]-pixelMapData[ss.x]
+      orgSS.height = pixelMapData[ss.y+ss.height]-pixelMapData[ss.y]
+
+      orgSS.x = pixelMapData[ss.x]
+      orgSS.y = pixelMapData[ss.y]
+    }
+
+    const RpixelMapData = reverseObject(pixelMapData);
+
+    const selected = event.data.selected;
+
+    selected.forEach(seg=>{
+      if (seg.lineIDx > ss.y && seg,lineIDx < ss.y+ss.height ){
+        const row = RpixelMapData[seg.lineIDx]
+        seg.color = getEntryColor()
+      }
+    })*/
+
     const selected = event.data.selected;
     setSegmentsSelected(selected);
+
+    //if (pixelMapData)
+    //  setSegments(segments)
     
     MUworker.removeEventListener('message', MUWorkerFunc);
   }
+
+
+  function reverseObject(obj) {
+    var reversed = {};
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            reversed[obj[key]] = key;
+        }
+    }
+    return reversed;
+}
 
   // Listen for messages from the worker
   
@@ -368,23 +544,46 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
     if (!ss)
       ss = selection;
 
+  
+
+    const orgSS = {
+      x: ss.x,
+      y: ss.y,
+      width: ss.width,
+      height: ss.height,
+    };
+
+    if (pixelMapData){
+      //const minidx = pixelMapData[0]
+
+      //ss.x+=minidx
+      //ss.y += minidx
+      orgSS.width = pixelMapData[ss.x+ss.width]-pixelMapData[ss.x]
+      orgSS.height = pixelMapData[ss.y+ss.height]-pixelMapData[ss.y]
+
+      orgSS.x = pixelMapData[ss.x]
+      orgSS.y = pixelMapData[ss.y]
+    }
+
     const ranges = matrixSubregionIndexRanges(segments.length, ss.x, ss.y,
       ss.width,ss.height);
+
+      let filter = false;
+      
+      //if (pixelMapData)
+       // filter = Object.values(pixelMapData);
+
       MUworker.addEventListener('message', MUWorkerFunc,false);
     MUworker.postMessage({
       aboveDiagonalColumnIndexes: ranges.aboveDiagonalColumnIndexes,
       belowDiagonalRowIndexes: ranges.belowDiagonalRowIndexes,
       selectMode:selectMode,
-      selection: {
-        x: ss.x,
-        y: ss.y,
-        width: ss.width,
-        height: ss.height,
-      },
+      selection: orgSS,
       segments: segments,
       graph: graph,
       graph2:graph2,
-      selectColor:selectColor
+      selectColor:selectColor,
+      filter:filter
     });
 
     if (setGraphData)
@@ -558,6 +757,83 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
     }
   }
 
+  function getEntryColor(x,y){
+    let colorScaleGlobal = scaleLinear()
+  .domain([minMax[0], minMax[1]])
+  .range(['blue', 'red']) // example color range
+  .interpolate(interpolateHsl);
+    //console.log(opacities);
+
+    let colorScaleLocal = false;
+
+    let currSL = 0, key = -1;
+    let vmin = minMax[0], vmax = minMax[1];
+
+    //const x = pixel[0];
+    //const y = pixel[1];
+    const row = Math.floor(y / tileSize);
+    const col = Math.floor(x / tileSize);
+    const canvas = canvases[row][col];
+    const context = canvas.getContext("2d");
+
+    let dist = pixel[2];
+
+    if (pixelMapData){
+      const idx1 = segments[pixelMapData[x]].lineIDx;
+      const idx2 = segments[pixelMapData[y]].lineIDx;
+      key = `${idx1},${idx2}`
+    }
+
+    let colorScale;
+    if (key != currSL && slRange && pixelMapData){
+
+      
+
+      currSL = key;
+      if (slRange[key]){
+        vmin = slRange[key][0]
+        vmax = slRange[key][1]
+
+        colorScaleLocal = scaleLinear()
+        .domain([slRange[key][0], slRange[key][1]])
+        .range(['blue', 'red']) // example color range
+        .interpolate(interpolateHsl);
+        //console.log(key)
+        //console.log(slRange[key])
+        }else{
+          colorScaleLocal = colorScaleGlobal;
+        //  console.log("key NOT FOUND:")
+        //  console.log(key);
+        }
+    }
+
+    if (slRange && pixelMapData && colorScaleLocal )
+      colorScale = colorScaleLocal;
+    else
+      colorScale = colorScaleGlobal;
+    
+
+    //context.fillStyle = "black";
+
+    let colorMap = rgb(colorScale(dist));
+    colorMap.opacity = interpolateAlpha((dist-vmin)/vmax);
+    return colorMap.toString();
+
+
+    context.fillStyle = colorMap.toString();
+
+    //context.fillStyle = colorScale(dist);
+    context.fillRect(x % tileSize, y % tileSize, 1, 1);
+
+    const color = rgb(context.fillStyle );
+    color.opacity = 0.1; // Set the alpha to 0.1
+    //return color.toString();
+
+    //const transparentBlack = "rgba(0, 0, 0, 0.1)";
+    const transparentcolor = color.toString();
+    context.fillStyle = transparentcolor;
+  }
+
   function drawRectangleM(canvas, row, col, x, y, width, height, color, tileSize) {
     const startX = Math.floor(x / tileSize);
     const startY = Math.floor(y / tileSize);
@@ -583,17 +859,91 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
     }
   }
   function fillBlackPixels(canvases, pixelList, tileSize) {
+    let colorScaleGlobal = scaleLinear()
+        .domain([minMax[0], minMax[1]])
+        .range(['blue', 'orange']) // Keep the color range
+        .interpolate(interpolateRgb); // Use RGB interpolation
+    //console.log(opacities);
+
+    let colorScaleLocal = false;
+
+    /*if (slRange){
+      colorScaleLocal = scaleLinear()
+      .domain([slRange[0][0], slRange[0][1]])
+      .range(['blue', 'red']) // example color range
+      .interpolate(interpolateHsl);
+    }*/
+    let currSL = 0, key = -1;
+    //console.log(pixelMapData);
     pixelList.forEach((pixel) => {
+      let vmin = minMax[0], vmax = minMax[1];
+
       const x = pixel[0];
       const y = pixel[1];
       const row = Math.floor(y / tileSize);
       const col = Math.floor(x / tileSize);
       const canvas = canvases[row][col];
       const context = canvas.getContext("2d");
-      context.fillStyle = "black";
+
+      let dist = pixel[2];
+
+      if (pixelMapData){
+        const idx1 = segments[pixelMapData[x]].lineIDx;
+        const idx2 = segments[pixelMapData[y]].lineIDx;
+        key = `${idx1},${idx2}`
+      }
+
+      let colorScale;
+      if (key != currSL && slRange && pixelMapData){
+
+        
+
+        currSL = key;
+        if (slRange[key]){
+          vmin = slRange[key][0]
+          vmax = slRange[key][1]
+
+          colorScaleLocal = scaleLinear()
+          .domain([slRange[key][0], slRange[key][1]])
+          .range(['blue', 'red']) // example color range
+          .interpolate(interpolateHsl);
+          //console.log(key)
+          //console.log(slRange[key])
+          }else{
+            colorScaleLocal = colorScaleGlobal;
+          //  console.log("key NOT FOUND:")
+          //  console.log(key);
+          }
+      }
+
+      if (slRange && pixelMapData && colorScaleLocal )
+        colorScale = colorScaleLocal;
+      else
+        colorScale = colorScaleGlobal;
+      
+
+      //context.fillStyle = "black";
+
+      let colorMap = rgb(colorScale(dist));
+      colorMap.opacity = interpolateAlpha((dist-vmin)/vmax);
+      context.fillStyle = colorMap.toString();
+
+      //context.fillStyle = colorScale(dist);
       context.fillRect(x % tileSize, y % tileSize, 1, 1);
+
+      const color = rgb(context.fillStyle );
+      color.opacity = 0.1; // Set the alpha to 0.1
+      //return color.toString();
+
+      //const transparentBlack = "rgba(0, 0, 0, 0.1)";
+      const transparentcolor = color.toString();
+      context.fillStyle = transparentcolor;
+      //ANTIALIAS
+      //context.fillRect(x % tileSize-2, y % tileSize-2, 5, 5);
     });
   }
+
+
   function fillBlackPixelsM(canvas, row, col, pixelList, tileSize) {
     pixelList.forEach((pixel) => {
       const x = pixel[0];
@@ -704,8 +1054,102 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
     //console.log(canvas.toDataURL('image/png'));
   })
 
+  const computeStreamlinesMap = () => {
+    const streamlinesMap = {}
+    const streamlinesOrder = [];
+    console.log(streamlinesOrder)
+    const indices = Object.values(pixelMapData);
+    for (let entry in pixelMapData){
+      const idx = pixelMapData[entry]
+      if (!streamlinesMap[segments[idx].lineIDx]){
+        streamlinesMap[segments[idx].lineIDx]=[idx,idx]
+        streamlinesOrder.push(segments[idx].lineIDx)
+      }else{
+        streamlinesMap[segments[idx].lineIDx][0] = Math.min(idx,streamlinesMap[segments[idx].lineIDx][0])
+        streamlinesMap[segments[idx].lineIDx][1] = Math.max(idx,streamlinesMap[segments[idx].lineIDx][1])
+      }
+    }
+    const streamlinesNew = [];
+    let prevIdx = 0;
+    streamlinesOrder.forEach(slIdx=>{
+      const sl = streamlinesMap[slIdx]
+      const newSL = [prevIdx+1,prevIdx+(sl[1]-sl[0])];
+      prevIdx=newSL[1]+1;
+      streamlinesNew.push(newSL)
+    })
+    return streamlinesNew;
+  }
+
+  
+
+  const setPixelsNoUpdate = (pixels) =>{
+    // Use reduce to find the maximum of the first elements
+    let maxValue = pixels.reduce((max, current) => {
+      return current[0] > max ? current[0] : max;
+    }, -Infinity);
+    
+    const tileSize = 1000;
+    const cols = Math.ceil(maxValue / tileSize);
+    const streamlines = computeStreamlinesMap();
+    console.log(streamlines)
+    const canvas = createWhiteImage(maxValue, maxValue,tileSize);
+    //////
+    let rects = []
+    for (let i = 0; i < streamlines.length; i++) {
+      for (let j = 0; j < streamlines.length; j++) {
+        break;
+
+        let sl1 = streamlines[i];
+          let sl2 = streamlines[j];
+        // Set the value at each position based on its position
+        if ((i + j) % 2 === 0) {
+          //1
+          
+          
+          //rects.push([sl1[0], sl2[0], sl1[1]-sl1[0],sl2[1]-sl2[0]]);
+          //console.log( sl1[0], sl2[0], sl1[1]-sl1[0],sl2[1]-sl2[0])
+          drawRectangle(canvas, sl1[0], sl2[0], sl1[1]-sl1[0],sl2[1]-sl2[0],"#F3F3F3",tileSize);
+        } else {
+          drawRectangle(canvas, sl1[0], sl2[0], sl1[1]-sl1[0],sl2[1]-sl2[0],"white",tileSize);
+          //0
+        }
+      }
+    }
+
+    /////
+
+
+    fillBlackPixels(canvas, pixels,tileSize);
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < cols; j++) {
+        const cv = canvas[i][j];
+        const imageX = j * tileSize;
+        const imageY = i * tileSize;
+        canvas[i][j] = {
+          width:tileSize,
+          height:tileSize,
+          x:imageX,
+          y:imageY,
+          url:cv.toDataURL()
+        }
+
+        cv.width = 0; // set the width and height to 0 to release memory
+        cv.height = 0;
+        cv = null; // set the canvas to null to release memory
+      }
+    }
+    
+    const prevGrid = image;
+    previousImage.current = image;
+    console.log(canvas);
+    setImage(canvas);
+  }
+
+
+
   const setPixels = useCallback((pixels,streamlines)=>{
-    console.log(streamlines);
+    //return;
+    //console.log(streamlines);
     const tileSize = 1000;
     const cols = Math.ceil(segments.length / tileSize);
     
@@ -1076,7 +1520,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       let text = "";
       let res = getGraphData();
 
-      return;//skip download file
+      //return;//skip download file
 
       const link = document.createElement('a');
       link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(res)));
@@ -1188,7 +1632,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       }}>🔄</button> }
     <button onClick={()=>{
         //handleSaveImage();
-        handleDownload();
+        handleDownload2();
       }}>💾</button> 
     
     <br/>
@@ -1254,8 +1698,11 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
       <button onClick={handleStart2}>Start</button> 
       <progress style={{ width: '60px' }} value={progress2} max="100"></progress>
       {false &&<button onClick={()=>{setGraph2([])}}>X</button> }
+      <OpacityTable setOpacities={setOpacities}/>
       </div>}
       {/* */}
+
+      
     </div>
     <div ref={divRef}
       style={{minHeight: '100vh',

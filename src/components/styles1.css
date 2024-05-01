@@ -44,7 +44,7 @@ body {
   align-items: center;
 }
 
-.sidebar .button {
+.sidebar .button2 {
   padding: 10px;
   display: flex;
   justify-content: center;
@@ -77,7 +77,7 @@ body {
   scrollbar-width: none;
 }
 
-button {
+button2 {
   background-color: #fefcfc;
   border: 1px solid rgb(209,213,219);
   border-radius: .5rem;
@@ -99,16 +99,16 @@ button {
   touch-action: manipulation;
 }
 
-button:hover {
+button2:hover {
   background-color: #f9fafb;
 }
 
-button:focus {
+button2:focus {
   outline: 2px solid rgba(0,0,0,0.1);
   outline-offset: 2px;
 }
 
-button:focus-visible {
+button2:focus-visible {
   -webkit-box-shadow: none;
   box-shadow: none;
 }
