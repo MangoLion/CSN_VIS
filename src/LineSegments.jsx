@@ -16,7 +16,7 @@ import { InstancedMesh, Matrix4,MeshPhongMaterial, Color, Quaternion  } from 'th
 
 extend({ TrackballControls });
 
-const Segments = ({ segments, radius, tubeRes }) => {
+const ComplexSegments = ({ segments, radius, tubeRes }) => {
   const { scene } = useThree();
   const instancedMeshRef = useRef(null);
 
@@ -77,7 +77,7 @@ const Segments = ({ segments, radius, tubeRes }) => {
 };
 
 
-const LineSegmentsComponent = ({radius, tubeRes, segments, setSelectedSegment }) => {
+const SimpleLineSegments = ({radius, tubeRes, segments, setSelectedSegment }) => {
   const groupRef = useRef();
   const { camera, raycaster, gl } = useThree();
   const [mouse, setMouse] = useState(new THREE.Vector2());
@@ -277,9 +277,9 @@ const LineSegments = ({radius, tubeRes, drawAll, segments, segmentsSelected,setS
       {false && <axesHelper args={[1]} />}
       {/*<OrbitControls makeDefault />*/}
       <TrackballControls makeDefault/>
-      {drawAll && <LineSegmentsComponent radius={radius} tubeRes={tubeRes} setSelectedSegment={setSelectedSegment} segments={segments} />}
-      {false && <LineSegmentsComponent2 radius={radius} tubeRes={tubeRes} segments={segmentsSelected} /> }
-      {segmentsSelected.length > 0 && <Segments  radius={radius} tubeRes={tubeRes} segments={segmentsSelected} /> }
+      {drawAll && <SimpleLineSegments radius={radius} tubeRes={tubeRes} setSelectedSegment={setSelectedSegment} segments={segments} />}
+      {/*false && <LineSegmentsComponent2 radius={radius} tubeRes={tubeRes} segments={segmentsSelected} /> */}
+      {segmentsSelected.length > 0 && <ComplexSegments  radius={radius} tubeRes={tubeRes} segments={segmentsSelected} /> }
 
     </Canvas>
   );
