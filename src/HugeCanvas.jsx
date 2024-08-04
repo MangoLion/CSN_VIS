@@ -137,7 +137,7 @@ const HugeCanvas = React.memo(({selectedSegment,cid, manualUpdate,layerProps, ex
   const [image, setImage] = useState(createWhiteImage(500, 500,1000));
     ///UI
     const [algorithm, setAlgorithm] = useState('KNN');
-    const [param, setParam] = useState('60');
+    const [param, setParam] = useState('1');
     const [distanceMetric, setDistanceMetric] = useState('shortest');
     const [progress, setProgress] = useState(0);
     

@@ -4,7 +4,7 @@ import OpacityTable from './OpacityTable';
 
 const LineSegmentUploader= React.memo(({setShowPlotView,showPlotView,setRadius,setTubeRes,swapLayout,setSwapLayout,drawAll, setDrawAll, manualUpdate,setManualUpdate,setStreamLines,
     setSegments, setExclude,settings, setSettings, setSphereRadius, sphereRadius, setObjFile,
-    selectionMode, setSelectionMode, shapeMode, setShapeMode, transformMode, setTransformMode, setManualStart, manualProgress}) => {
+    selectionMode, setSelectionMode, shapeMode, setShapeMode, transformMode, setTransformMode, setManualStart, manualProgress, intensity,setIntensity}) => {
   const [lines, setLines] = useState([]);
   const [skipLines, setSkipLines] = useState(0);
   const [skipSegments, setSkipSegments] = useState(0);
@@ -318,7 +318,7 @@ const LineSegmentUploader= React.memo(({setShowPlotView,showPlotView,setRadius,s
     };
 
     const [algorithm, setAlgorithm] = useState('KNN');
-    const [param, setParam] = useState('');
+    const [param, setParam] = useState('1');
     const [distanceMetric, setDistanceMetric] = useState('shortest');
     const [showSettings, setShowSettings] = useState(true);
 
@@ -359,6 +359,11 @@ const LineSegmentUploader= React.memo(({setShowPlotView,showPlotView,setRadius,s
         </div>
       ))} */}
       <br/>
+      <label>
+          Intensity:
+          <input style={{ maxWidth: '45px' }} type="number" value={intensity} onChange={((e)=>{setIntensity(Number(e.target.value))})} />
+        </label>
+
       <button onClick={()=>{setShowSettings(!showSettings)}}>{'<'} Show Settings</button> 
       {showSettings && <div>
       <label>
@@ -385,7 +390,7 @@ const LineSegmentUploader= React.memo(({setShowPlotView,showPlotView,setRadius,s
         </label><br/>
         <label>
           Tube Radius:
-          <input defaultValue={0.008} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setRadius(Number(e.target.value));}} />
+          <input defaultValue={0.45} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setRadius(Number(e.target.value));}} />
         </label>
         <label>
           Tube Resolution:

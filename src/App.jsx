@@ -32,7 +32,7 @@ const App = () => {
   const [drawAll, setDrawAll] = useState(true);
   const [swapLayout, setSwapLayout] = useState(false);
   const [selectedSegment,setSelectedSegment] = useState(-1);
-  const [radius,setRadius] = useState(0.008);
+  const [radius,setRadius] = useState(0.45);
   const [tubeRes,setTubeRes] = useState(20);
   const [showPlotView,setShowPlotView] = useState(true);
   const [layerProps, setLayerProps] = useState({
@@ -72,6 +72,8 @@ const App = () => {
   const [manualStart, setManualStart] = useState(false);
   const [manualProgress, setManualProgress] = useState(0);
 
+  const [intensity,setIntensity] = useState(2);
+
   useEffect(()=>{
     console.log(matRef.current);
   }, [matRef.current]);
@@ -103,12 +105,13 @@ const App = () => {
                   swapLayout, setSwapLayout,
                   settings, setSettings, setSphereRadius, sphereRadius,
                   selectionMode,setSelectionMode,shapeMode, setShapeMode,
-                  transformMode, setTransformMode, setObjFile, setManualStart, manualProgress
+                  transformMode, setTransformMode, setObjFile, setManualStart, manualProgress,
+                  intensity,setIntensity
                 }} key="uploader" /></div>
           </Allotment.Pane>
           <Allotment.Pane preferredSize={'40%'} >
           <LineSegments {...{radius, tubeRes, setSelectedSegment, drawAll, segments, setSelectRegion, segmentsSelected,setSegmentsSelected, dGraphData, dGraph,
-            sphereRadius, selectionMode, shapeMode, transformMode, setTransformMode, objFile}} key="line3D" />
+            sphereRadius, selectionMode, shapeMode, transformMode, setTransformMode, objFile, intensity}} key="line3D" />
 
           </Allotment.Pane>
     </Allotment>
@@ -120,8 +123,8 @@ const App = () => {
       setSelectionMode={setSelectionMode} />:<div><HugeCanvas {...{selectedSegment, manualUpdate, exclude, layerProps, handleLayerChange, setSegmentsSelected}} streamLines2={streamLines} segments2={segments} key="canvas2" cid={2} /></div>}
     </Allotment.Pane>
 
-    <Allotment.Pane maxSize={0}>
-    <div style={{display:'none', maxWidth:'0px'}}><HugeCanvas {
+    <Allotment.Pane maxSize2={0}>
+    <div style2={{display:'none', maxWidth:'0px'}}><HugeCanvas {
       ...{selectedSegment, 
           manualUpdate, 
           exclude, 

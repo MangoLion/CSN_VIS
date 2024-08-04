@@ -210,7 +210,7 @@ const LineSegments = ({radius, tubeRes, drawAll, segments, segmentsSelected,setS
   return (
     <Canvas style={{ width: '100%', height: '100%' }}>
       <ambientLight intensity={0.5} />
-      <DirectionalLightWithCamera intensity={0.7} />
+      <DirectionalLightWithCamera intensity={0.1} />
       {false &&<pointLight position={[10, 10, 10]} />}
       {false && <axesHelper args={[1]} />}
       {/*<OrbitControls makeDefault />*/}

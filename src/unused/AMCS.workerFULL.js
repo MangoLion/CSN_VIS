@@ -86,11 +86,8 @@ function arraysAreEqual(array1, array2) {
 
 
 self.addEventListener('message', (event) => {
-  console.log("worker started");
+  console.log("worker started")
     let {doSort, param, segments2, algorithm, distanceMetric, exclude,streamlines2,sortType} = event.data;
-
-    const startTime = performance.now();
-
     console.log("ex: ", exclude);
     let streamlines = streamlines2;
     let segments = segments2;
@@ -140,7 +137,7 @@ self.addEventListener('message', (event) => {
             console.log("passed")*/
         }
 
-        //let distances = funRes[1];
+        let distances = funRes[1];
         if (exclude > 0 && algorithm == "KNN"){
           let excluded = 0;
           const sIdx = segments[i].globalIdx;
@@ -152,7 +149,7 @@ self.addEventListener('message', (event) => {
 
           funRes = fun(tree, segment, lineSegments, KR+excluded,distanceMetric);
           let neighbors = funRes[0];
-          //distances = funRes[1];
+          distances = funRes[1];
           
         }
 
@@ -165,15 +162,14 @@ self.addEventListener('message', (event) => {
 
         if (!doSort){
           //console.log(distances)
-          //minDist = distances.reduce((min,num)=>Math.min(min,num),minDist);
-          //maxDist = distances.reduce((max,num)=>Math.max(max,num),maxDist);
+          minDist = distances.reduce((min,num)=>Math.min(min,num),minDist);
+          maxDist = distances.reduce((max,num)=>Math.max(max,num),maxDist);
           tgraph.push(neighbors);
-          //dgraph.push(distances);
+          dgraph.push(distances);
         }else{
           sum = 0;
           sumSquared = 0;
         }
-        /*
         const lIdx = segments[i].lineIDx;
         neighbors.forEach((n,idx) => {
           //segments[n].color = 'blue';
@@ -202,7 +198,7 @@ self.addEventListener('message', (event) => {
 
           streamlines[segments[i].lineIDx][2] += sum / neighbors.length;
         }
-        */
+        
 
         const progress = Math.floor(i / lineSegments.length * 100);
         if (progress % 10 === 0 && progress !== lastProgress) {
@@ -310,9 +306,6 @@ self.addEventListener('message', (event) => {
         tgraph.forEach(edges=>{
           graphSize += edges.length;
         })
-
-      const endTime = performance.now();
-      console.log(`Neighbor search took ${endTime - startTime} ms.`);
 
         console.log('GRAPH SIZE: ', graphSize);
 

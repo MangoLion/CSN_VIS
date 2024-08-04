@@ -1,14 +1,7 @@
 const kdtree = require('static-kdtree');
 const tf = require('@tensorflow/tfjs');
 
-// Helper function to calculate distance between two 3D points
-export function distance3D(point1, point2) {
-  return Math.sqrt(
-    Math.pow(point1[0] - point2[0], 2) +
-    Math.pow(point1[1] - point2[1], 2) +
-    Math.pow(point1[2] - point2[2], 2)
-  );
-}
+
 
 export function lineSegmentDistance(line1, line2, type){
   let fun;
@@ -117,8 +110,16 @@ function distanceHaustoff(line1, line2, samples = 10) {
   return Math.max(maxDistance(setA, setB), maxDistance(setB, setA));
 }
 
+// Helper function to calculate distance between two 3D points
+export function distance3D2(point1, point2) {
+  return Math.sqrt(
+    Math.pow(point1[0] - point2[0], 2) +
+    Math.pow(point1[1] - point2[1], 2) +
+    Math.pow(point1[2] - point2[2], 2)
+  );
+}
 
-function distanceLongest(line1, line2) {
+function distanceLongest2(line1, line2) {
   const p0 = line1[0];
   const p1 = line1[1];
   const q0 = line2[0];
@@ -133,6 +134,50 @@ function distanceLongest(line1, line2) {
 
   return Math.max(...distances);
 }
+
+////
+export function distance3D(point1, point2) {
+  return Math.hypot(
+    point1[0] - point2[0],
+    point1[1] - point2[1],
+    point1[2] - point2[2]
+  );
+}
+
+export function distanceLongest(line1, line2) {
+  const p0 = line1[0];
+  const p1 = line1[1];
+  const q0 = line2[0];
+  const q1 = line2[1];
+
+  const dist1 = Math.hypot(
+    p0[0] - q0[0], 
+    p0[1] - q0[1], 
+    p0[2] - q0[2]
+  );
+  
+  const dist2 = Math.hypot(
+    p0[0] - q1[0], 
+    p0[1] - q1[1], 
+    p0[2] - q1[2]
+  );
+  
+  const dist3 = Math.hypot(
+    p1[0] - q0[0], 
+    p1[1] - q0[1], 
+    p1[2] - q0[2]
+  );
+  
+  const dist4 = Math.hypot(
+    p1[0] - q1[0], 
+    p1[1] - q1[1], 
+    p1[2] - q1[2]
+  );
+
+  return Math.max(dist1, dist2, dist3, dist4);
+}
+
+////
 
 
 // Helper function to calculate true distance between two 3D line segments

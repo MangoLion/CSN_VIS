@@ -1,192 +1,286 @@
-import React, { useMemo,useState,useCallback, useRef } from 'react';
+import React, { useMemo,useState,useCallback, useRef,useEffect } from 'react';
 import { Canvas, extend, useThree,useFrame  } from '@react-three/fiber';
-import { TubeGeometry } from 'three';
+import { TubeGeometry, BufferGeometry } from 'three';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2';
 extend({ LineSegments2 })
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls,TrackballControls } from '@react-three/drei';
 import * as THREE from 'three';
+import { mergeGeometries, mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-import { scaleLinear } from 'd3-scale';
-import { interpolateHsl } from 'd3-interpolate';
-import { rgb } from 'd3-color';
+import {  Vector3 } from 'three';
+import { InstancedMesh, Matrix4,MeshPhongMaterial, Color, Quaternion  } from 'three';
 
-extend({ OrbitControls });
 
-const LineSegmentsComponent = ({ segments, setSelectedSegment ,setSegmentsSelected, dGraphData, dGraph}) => {
-  const lineRef = useRef();
+
+extend({ TrackballControls });
+
+const Segments = ({ segments, radius, tubeRes }) => {
+  const { scene } = useThree();
+  const instancedMeshRef = useRef(null);
+
+  useEffect(() => {
+    const material = new THREE.MeshPhongMaterial();
+    const geometry = new TubeGeometry(new THREE.CatmullRomCurve3([
+      new Vector3(0, 0, 0),
+      new Vector3(1, 0, 0)  // Unit vector along the x-axis for initial orientation
+    ]), 20, radius, tubeRes, false);
+
+    const instancedMesh = new THREE.InstancedMesh(geometry, material, segments.length);
+    segments.forEach((segment, index) => {
+      const start = new Vector3(...segment.startPoint);
+      const end = new Vector3(...segment.endPoint);
+
+      // Calculate segment vector
+      const segmentVector = end.clone().sub(start);
+      const length = segmentVector.length();
+
+      // Extend start and end by 5% each
+      const extension = segmentVector.clone().normalize().multiplyScalar(length * 0.05);
+      const extendedStart = start.clone().sub(extension);
+      const extendedEnd = end.clone().add(extension);
+      const extendedLength = extendedEnd.clone().sub(extendedStart).length();
+
+      // Calculate rotation to align the tube with the extended segment vector
+      const quaternion = new Quaternion().setFromUnitVectors(new Vector3(1, 0, 0), segmentVector.normalize());
+
+      // Apply scale and position
+      const matrix = new Matrix4();
+      matrix.compose(
+        extendedStart, // Position the geometry at the extended start point
+        quaternion,
+        new Vector3(extendedLength, 1, 1) // Scale only in the length direction
+      );
+
+      instancedMesh.setMatrixAt(index, matrix);
+      instancedMesh.setColorAt(index, new Color(segment.color));
+    });
+
+    instancedMesh.instanceMatrix.needsUpdate = true;
+    instancedMesh.instanceColor.needsUpdate = true;
+    scene.add(instancedMesh);
+    instancedMeshRef.current = instancedMesh;
+
+    // Cleanup function to remove the previous instanced mesh
+    return () => {
+      if (instancedMeshRef.current) {
+        scene.remove(instancedMeshRef.current);
+        instancedMeshRef.current.geometry.dispose();
+        instancedMeshRef.current.material.dispose();
+        instancedMeshRef.current = null;
+      }
+    };
+  }, [segments, radius, tubeRes, scene]);
+
+  return null;
+};
+
+
+const LineSegmentsComponent = ({radius, tubeRes, segments, setSelectedSegment }) => {
+  const groupRef = useRef();
   const { camera, raycaster, gl } = useThree();
   const [mouse, setMouse] = useState(new THREE.Vector2());
 
-  const handleClick = (event) => {
-    //DISABLED RIGHT CLICK!!!
-    //IF ENABLED, SELECT SEG + NEIGHBORS
-    return;
-    console.log("here");
-    event.stopPropagation();
-    if (event.button !== 2)
-      return;
-    
-    const rect = gl.domElement.getBoundingClientRect();
-    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  const handleClick = useCallback(
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.button !== 2) return;
+  
+      const rect = gl.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(groupRef.current.children, true);
+  
+      if (intersects.length > 0) {
+        const intersection = intersects[0];
+        const intersectedLine = intersection.object;
+        const intersectionPoint = intersection.point;
+  
+        //const { segments } = intersectedLine.userData;
+  
+        let closestSegmentIndex = -1;
+        let minDistance = Infinity;
+  
+        let idx = 0;
+        //console.log(segments)
+        segments.forEach((segment) => {
+          const startPoint = new THREE.Vector3(...segment.startPoint);
+          const endPoint = new THREE.Vector3(...segment.endPoint);
+  
+          const centerPoint = new THREE.Vector3()
+            .addVectors(startPoint, endPoint)
+            .multiplyScalar(0.5);
+  
+          const distance = centerPoint.distanceTo(intersectionPoint);
+          //console.log(distance);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestSegmentIndex = idx;
+          }
+          idx++;
+        });
+  
+        setSelectedSegment(closestSegmentIndex);
+        console.log("Selected segment index:", closestSegmentIndex);
+      }
+    },
+    [camera, raycaster, gl.domElement, setSelectedSegment,segments]
+  );
+  
 
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObject(lineRef.current, true);
+  const lineMeshes = useMemo(() => {
+    const lineMap = {};
 
-    if (intersects.length > 0) {
-      const selectedSegmentIndex = Math.floor(intersects[0].faceIndex);
-      const pt = intersects[0].pointOnLine;
-      segments.forEach(seg => {
-        if (seg.startPoint == pt || seg.endPoint==pt){
-          console.log("FOUND ",seg);
-          
-        }
+    segments.forEach((segment, index) => {
+      const material = new THREE.MeshPhongMaterial({
+        color: segment.color,
+        transparent: true,
+        opacity: 0.4,
       });
 
-      
-    
-      //setSelectedSegment(selectedSegmentIndex);
-      console.log('Selected segment index:', selectedSegmentIndex);
-      console.log(dGraph)
-      const sseg = segments[selectedSegmentIndex];
-      if (sseg){
-        if (!dGraphData){
-          setSegmentsSelected([sseg])
-          console.log("no graph data!");
-        }else{
-          
+      const path = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(...segment.startPoint),
+        new THREE.Vector3(...segment.endPoint),
+      ]);
 
-          let min = Number.MAX_VALUE;
-          let max = Number.MIN_VALUE;
-          console.log(dGraphData[selectedSegmentIndex])
-          sseg.color = 'green'
-          const graph = [sseg];
+      const geometry = new TubeGeometry(path, 1, radius, tubeRes, false);
+      geometry.userData.segmentIndex = index;
 
-          let idx=0;
-          dGraphData[selectedSegmentIndex].forEach(idx2=>{
-            //graph.push(segments[idx]);
-            if (dGraph[selectedSegmentIndex][idx] >= 0){
-              min = Math.min(dGraph[selectedSegmentIndex][idx], min);
-              max = Math.max(dGraph[selectedSegmentIndex][idx], max);
-          }else{
-            console.log("Invalid sidx! ", idx,dGraph[selectedSegmentIndex],dGraph[selectedSegmentIndex][idx],Math.min(parseFloat(dGraph[selectedSegmentIndex][idx]),Number.MAX_VALUE))
-          }
-            idx++;
-          })
-          console.log([min,max])
-          let colorScale = scaleLinear()
-        .domain([min,max])
-        .range(['blue', 'red']) // example color range
-        .interpolate(interpolateHsl);
-
-        let idx2=0;
-        dGraphData[selectedSegmentIndex].forEach(idx=>{
-          segments[idx].color = rgb(colorScale(dGraph[selectedSegmentIndex][idx2])).toString();
-          console.log(segments[idx].color);
-          graph.push(segments[idx]);
-          idx2++;
-        })
-
-          setSegmentsSelected(graph);
-          console.log(dGraphData)
-        }
-      }else{
-        console.log("Invalid index!")
-        console.log(segments);
+      if (!lineMap[segment.lineIDx]) {
+        lineMap[segment.lineIDx] = {
+          geometries: [geometry],
+          material: material,
+        };
+      } else {
+        lineMap[segment.lineIDx].geometries.push(geometry);
       }
-    }
-  }
+    });
 
-  useFrame(() => {
-    
-  });
-
-  const lineSegmentsGeometry = useMemo(() => {
-    const geometry = new LineSegmentsGeometry();
-    const positions = [];
-    const colors = [];
-
-    for (const segment of segments) {
-      positions.push(...segment.startPoint, ...segment.endPoint);
-      colors.push(...new THREE.Color(segment.color).toArray(), ...new THREE.Color(segment.color).toArray());
-    }
-
-    geometry.setPositions(positions);
-    geometry.setColors(colors);
-
-    return geometry;
+    return Object.entries(lineMap).map(([lineIDx, { geometries, material }]) => {
+      const mergedGeometry = mergeGeometries(geometries);
+      const mesh = new THREE.Mesh(mergedGeometry, material);
+      mesh.userData.lineIndex = parseInt(lineIDx);
+      mesh.userData.segments = geometries;
+      return mesh;
+    });
   }, [segments]);
 
-  const lineMaterial = useMemo(() => {
-    return new LineMaterial({
-      color: 'white',
-      linewidth: 4,
-      vertexColors: true,
-      dashed: false,
-      opacity: 0.7,
-      resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
-    });
-  }, []);
+  useEffect(() => {
+    gl.domElement.addEventListener("contextmenu", handleClick);
+
+    return () => {
+      gl.domElement.removeEventListener("contextmenu", handleClick);
+    };
+  }, [gl.domElement, handleClick]);
 
   return (
-    <lineSegments2 ref={lineRef}
-    onContextMenu={handleClick}
-      geometry={lineSegmentsGeometry}
-      material={lineMaterial}
-    >
-      <primitive object={camera} />
-    </lineSegments2>
+    <group ref={groupRef}>
+      {lineMeshes.map((mesh, index) => (
+        <primitive key={index} object={mesh} />
+      ))}
+    </group>
   );
 };
 
 
-const LineSegmentsComponent2 = ({ segments }) => {
+
+const LineSegmentsComponent2 = ({ radius, tubeRes, segments }) => {
+  const meshes = useMemo(() => {
+    const lineSegments = segments.reduce((acc, segment) => {
+      if (segment !== undefined) { // Check if segment is defined
+        if (!acc[segment.lineIDx]) {
+          acc[segment.lineIDx] = [];
+        }
+        acc[segment.lineIDx].push(segment);
+      }
+      return acc;
+    }, {});
+
+    return Object.values(lineSegments).flatMap((line) => {
+      return line.map((segment, index) => {
+        const material = new THREE.MeshPhongMaterial({
+          color: segment.color,
+        });
+
+        const points = [new THREE.Vector3(...segment.startPoint)];
+
+        // If this is not the first segment, scale the previous segment's endPoint towards the current segment's startPoint
+        if (index > 0) {
+          const prevEndPoint = new THREE.Vector3(...line[index - 1].endPoint);
+          const startPoint = new THREE.Vector3(...segment.startPoint);
+          const scale = 0; // Adjust the scale value (between 0 and 1) to control the extrusion
+
+          const scaledPoint = prevEndPoint.clone().lerp(startPoint, 1 - scale);
+          points.unshift(scaledPoint);
+        }
+
+        points.push(new THREE.Vector3(...segment.endPoint));
+
+        const path = new THREE.CatmullRomCurve3(points);
+
+        // Subtract 1 from tube segments when the previous segment's endPoint is included
+        const segmentTubeRes = index > 0 ? tubeRes - 1 : tubeRes;
+
+        const geometry = new TubeGeometry(path, segmentTubeRes, radius, tubeRes, false);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.userData.segmentIndex = index;
+
+        return mesh;
+      });
+    });
+  }, [segments]);
+
+  return (
+    <group>
+      {meshes.map((mesh, index) => (
+        <primitive key={index} object={mesh} />
+      ))}
+    </group>
+  );
+};
+
+
+
+
+
+const DirectionalLightWithCamera = ({ intensity }) => {
+  const directionalLightRef = useRef();
   const { camera } = useThree();
 
-  const lineSegmentsGeometry = useMemo(() => {
-    const geometry = new LineSegmentsGeometry();
-    const positions = [];
-    const colors = [];
-
-    for (const segment of segments) {
-      positions.push(...segment.startPoint, ...segment.endPoint);
-      colors.push(...new THREE.Color(segment.color).toArray(), ...new THREE.Color(segment.color).toArray());
+  useFrame(() => {
+    if (directionalLightRef.current && camera) {
+      //console.log("synced")
+      directionalLightRef.current.position.copy(camera.position);
+      directionalLightRef.current.rotation.copy(camera.rotation);
     }
-
-    geometry.setPositions(positions);
-    geometry.setColors(colors);
-
-    return geometry;
-  }, [segments]);
-
-  const lineMaterial = useMemo(() => {
-    return new LineMaterial({
-      color: 'white',
-      linewidth: 4,
-      vertexColors: true,
-      dashed: false,
-      resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
-    });
-  }, []);
+  });
 
   return (
-    <lineSegments2 geometry={lineSegmentsGeometry} material={lineMaterial}>
-      <primitive object={camera} />
-    </lineSegments2>
+    <directionalLight
+      ref={directionalLightRef}
+      intensity={intensity}
+    />
   );
 };
 
-const LineSegments = ({drawAll, segments, segmentsSelected,setSelectedSegment,setSegmentsSelected, dGraphData, dGraph }) => {
+const LineSegments = ({radius, tubeRes, drawAll, segments, segmentsSelected,setSelectedSegment, intensity }) => {
+
   return (
     <Canvas style={{ width: '100%', height: '100%' }}>
       <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} />
+      <DirectionalLightWithCamera intensity={intensity} />
+      {false &&<pointLight position={[10, 10, 10]} />}
       {false && <axesHelper args={[1]} />}
-      <OrbitControls makeDefault />
-      {drawAll && <LineSegmentsComponent setSelectedSegment={setSelectedSegment} segments={segments} dGraph={dGraph} setSegmentsSelected={setSegmentsSelected} dGraphData={dGraphData} />}
-      {<LineSegmentsComponent2 segments={segmentsSelected} /> }
+      {/*<OrbitControls makeDefault />*/}
+      <TrackballControls makeDefault/>
+      {drawAll && <LineSegmentsComponent radius={radius} tubeRes={tubeRes} setSelectedSegment={setSelectedSegment} segments={segments} />}
+      {false && <LineSegmentsComponent2 radius={radius} tubeRes={tubeRes} segments={segmentsSelected} /> }
+      {segmentsSelected.length > 0 && <Segments  radius={radius} tubeRes={tubeRes} segments={segmentsSelected} /> }
+
     </Canvas>
   );
 };

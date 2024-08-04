@@ -58,7 +58,7 @@ const GraphCommunities = ({ data, segments,segmentsSelected, setSegmentsSelected
     const { name, value, type, checked } = e.target;
     setInputs({
       ...inputs,
-      [name]: type === 'checkbox' ? checked : parseFloat(value)
+      [name]: type === 'checkbox' ? checked : value
     });
   };
 
@@ -371,7 +371,7 @@ function createGraph(data) {
 
     startTime = performance.now();
 
-    /*let graph2 = new Graph(); // Create a graph
+    let graph2 = new Graph(); // Create a graph
 
     data.forEach((_, nodeIndex) => {
       graph2.addNode(nodeIndex);
@@ -413,7 +413,7 @@ function createGraph(data) {
 
     endTime = performance.now();
     console.log(`Graph3 build time: ${endTime - startTime} ms`);
-    startTime = endTime;*/
+    startTime = endTime;
 
     createGraph(data);
 
@@ -555,30 +555,34 @@ function createGraph(data) {
 
     // Detected communities: communities (a mapping of node -> community)
 
+    let interCommunityLinks = [];
 
     console.log("CHECKPOINT1")
 
-    // Use a set to store unique inter-community links in the format "smaller_larger" to ensure uniqueness
-    const interCommunityLinksSet = new Set();
-
+    // Assuming `data` is an adjacency list representation of the original graph
     data.forEach((edges, source) => {
-      edges.forEach(target => {
-          const sourceCommunity = communities[source];
-          const targetCommunity = communities[target];
-  
-          // Check if communities are different, now including community 0
-          if (sourceCommunity !== targetCommunity) {
-              // Ensure a consistent order for the pair to avoid duplicate entries in set
-              const sortedPair = [sourceCommunity, targetCommunity].sort().join('_');
-              interCommunityLinksSet.add(sortedPair);
-          }
-      });
-  });
+    edges.forEach(target => {
+        const sourceCommunity = communities[source];
+        const targetCommunity = communities[target];
+        //if (!targetCommunity)
+         // console.log(target, communities[target])
 
-    // Convert the set back to an array of objects for further processing or output
-    let interCommunityLinks = Array.from(interCommunityLinksSet).map(pair => {
-        const [source, target] = pair.split('_');
-        return { source, target };
+        if (sourceCommunity !== targetCommunity) {
+        // This is an inter-community link
+        const linkExists = interCommunityLinks.some(link => 
+            (link.source === sourceCommunity && link.target === targetCommunity) ||
+            (link.source === targetCommunity && link.target === sourceCommunity)
+        );
+
+        if (!linkExists && sourceCommunity != 0) {
+            interCommunityLinks.push({
+            source: sourceCommunity.toString(),
+            target: targetCommunity.toString()
+            });
+            //console.log([sourceCommunity,targetCommunity,sourceCommunity.toString(), targetCommunity.toString()])
+        }
+        }
+    });
     });
     console.log("CHECKPOINT2")
     // Deduplicate the links
@@ -632,108 +636,6 @@ function createGraph(data) {
     saveUndo();
   
   }//, [data]);
-
-  // Function to generate a random color
-  const getRandomColor = () => {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  };
-
-  const isValidColor = (color) => {
-    const s = new Option().style;
-    s.color = color;
-    return s.color !== '';
-  };
-
-  // Function to update node and segment colors
-  const updateColors = (node, newColor) => {
-    setNodeColors(prevColors => ({
-      ...prevColors,
-      [node.id]: newColor
-    }));
-
-    const updatedSegments = segments.map(seg => 
-      node.members.includes(seg.globalIdx) ? { ...seg, color: newColor } : seg
-    );
-
-    setSegmentsSelected(updatedSegments);
-  };
-
-  const promptForColor = () => {
-    const userInput = window.prompt("Enter a color (e.g., 'red', '#FF0000', or 'rgb(255,0,0)'):");
-    return userInput || null; // Return null if user cancels or inputs empty string
-  };
-
-  // Modified onNodeClick handler
-  const handleNodeClick = (node, event) => {
-    if (event.button === 2) { // Right click
-      event.preventDefault(); // Prevent default right-click menu
-      let newColor;
-      if (event.ctrlKey) {
-        newColor = promptForColor();
-      } else {
-        newColor = getRandomColor();
-      }
-
-      node.color = newColor;
-      
-      // Update node color without changing its structure
-      /*setGraphData(prevState => ({
-        ...prevState,
-        nodes: prevState.nodes.map(n => 
-          n.id === node.id ? { ...n, color: newColor } : n
-        )
-      }));*/
-
-      // Update associated segments' colors
-      const updatedSegments = segments.map(seg => 
-        node.members.includes(seg.globalIdx) ? { ...seg, color: newColor } : seg
-      );
-
-      setSegmentsSelected(updatedSegments);
-    } else { // Left click (existing behavior)
-      if (multiSelect) {
-        setSelectedNodes(prevSelectedNodes => {
-          const isNodeAlreadySelected = prevSelectedNodes.find(selectedNode => selectedNode.id === node.id);
-          if (!isNodeAlreadySelected) {
-            const newState = [...prevSelectedNodes, node];
-            let selected = [];
-            newState.forEach(node => {
-              node.members.forEach(idx => {
-                let seg = segments[parseInt(idx)];
-                seg.color = node.color;
-                selected.push(seg);
-              });
-            });
-            setSegmentsSelected(selected);
-            return newState;
-          }
-          return prevSelectedNodes;
-        });
-      } else {
-        setSelectedNodes([]);
-        if (selectedNode == node) {
-          setSelectedNode(false);
-          setSegmentsSelected(segments);
-        } else {
-          let selected = [];
-          node.members.forEach(idx => {
-            let seg = segments[parseInt(idx)];
-            if (!seg)
-              console.log(`segment idx not found! ${idx}`);
-            seg.color = node.color;
-            selected.push(seg);
-          });
-          setSegmentsSelected(selected);
-          setSelectedNode(node);
-        }
-      }
-    }
-  };
   
   const renderInputs = () => {
     switch (algorithm) {
@@ -781,7 +683,7 @@ function createGraph(data) {
               <input
                 type="text"
                 style = {{ width: '100px' }}
-                name="kmean"
+                name="Kmeans"
                 value={inputs.kmean}
                 onChange={handleInputChange}
               />
@@ -1932,8 +1834,50 @@ function createGraph(data) {
       ref={fgRef}
       //cooldownTicks={100}
       //onEngineStop={() => fgRef.current.zoomToFit(400)}
-      onNodeClick={handleNodeClick}
-          onNodeRightClick={(node, event) => handleNodeClick(node, event)} // Add this line
+      onNodeClick={(node) => {
+        if (multiSelect) {
+            setSelectedNodes(prevSelectedNodes => {
+              // Add node to the array if it's not already included
+              const isNodeAlreadySelected = prevSelectedNodes.find(selectedNode => selectedNode.id === node.id);
+              if (!isNodeAlreadySelected) {
+                //console.log(`Added Community Node: ${node.id}`);
+                //console.log('Selected:', selectedNodes);
+                const newState = [...prevSelectedNodes, node];
+                let selected = []
+                newState.forEach(node=>{
+                    node.members.forEach(idx=>{
+                        let seg = segments[parseInt(idx)];
+                        seg.color = node.color;
+                        selected.push(seg)
+                    })
+                })
+                setSegmentsSelected(selected)
+                return newState;
+              }
+              return prevSelectedNodes;
+            });
+          } else {
+                setSelectedNodes([])
+                if (selectedNode == node){
+                    setSelectedNode(false)
+                    setSegmentsSelected(segments)
+                }else{
+                    let selected = []
+                    //console.log(segments.length)
+                    node.members.forEach(idx=>{
+                        let seg = segments[parseInt(idx)];
+                        if (!seg)
+                            console.log(`segment idx not found! ${idx}`)
+                        seg.color = node.color;
+                        selected.push(seg)
+                    })
+            
+                    setSegmentsSelected(selected)
+                    setSelectedNode(node)
+                }
+            }
+        
+      }}
       nodeCanvasObject={(node, ctx, globalScale) => {
 
 
@@ -1941,16 +1885,6 @@ function createGraph(data) {
         
         const fontSize = 12/globalScale; // Adjust font size against zoom level
         let size = node.size/nodeScale;
-
-        if (size < 8)
-            size = 8;
-        if (size > 45)
-            size = 45;
-
-        // let nS = nodeScale;
-        // if (nodeScale == 1)
-        //     nS = 1.1;
-        // let size = node.size / Math.log(nS);
 
         // Draw group background or outline if the node has a groupID
         if(node.groupID.length > 0 && node.x) {
@@ -2134,6 +2068,188 @@ function createGraph(data) {
     />)}
 
 
+
+
+{use3D && (<ForceGraph3D
+      graphData={graphData}
+      nodeLabel="id"
+      ref={fgRef}
+      onNodeClick={(node) => {
+        if (multiSelect) {
+            setSelectedNodes(prevSelectedNodes => {
+              // Add node to the array if it's not already included
+              const isNodeAlreadySelected = prevSelectedNodes.find(selectedNode => selectedNode.id === node.id);
+              if (!isNodeAlreadySelected) {
+                //console.log(`Added Community Node: ${node.id}`);
+                //console.log('Selected:', selectedNodes);
+                const newState = [...prevSelectedNodes, node];
+                let selected = []
+                newState.forEach(node=>{
+                    node.members.forEach(idx=>{
+                        let seg = segments[parseInt(idx)];
+                        seg.color = node.color;
+                        selected.push(seg)
+                    })
+                })
+                setSegmentsSelected(selected)
+                return newState;
+              }
+              return prevSelectedNodes;
+            });
+          } else {
+                setSelectedNodes([])
+                if (selectedNode == node){
+                    setSelectedNode(false)
+                    setSegmentsSelected(segments)
+                }else{
+                    let selected = []
+                    //console.log(segments.length)
+                    node.members.forEach(idx=>{
+                        let seg = segments[parseInt(idx)];
+                        if (!seg)
+                            console.log(`segment idx not found! ${idx}`)
+                        seg.color = node.color;
+                        selected.push(seg)
+                    })
+            
+                    setSegmentsSelected(selected)
+                    setSelectedNode(node)
+                }
+            }
+        
+      }}
+      nodeCanvasObject={(node, ctx, globalScale) => {
+        const label = node.id.toString();
+        
+        const fontSize = 12/globalScale; // Adjust font size against zoom level
+        let size = node.size/nodeScale;
+
+        // Draw group background or outline if the node has a groupID
+        if(node.groupID.length > 0 && node.x) {
+            //size *= 1.5;
+            //var groupID = ;
+            node.groupID.forEach(groupID =>{
+              if (!window.tempt)
+                window.tempt = {}
+              if (!window.tempt[groupID])
+                  window.tempt[groupID] = []
+              window.tempt[groupID].push([node.x, node.y])
+              //console.log(node)
+              //console.log(JSON.stringify(node));
+              //console.log({...node}.x)
+              if (window.tempt[groupID].length == allGroups[groupID]){
+                
+                const centroid = drawHullOnCanvas(window.tempt[groupID], ctx, node.groupColor);
+                window.tempt[groupID] = false;
+
+                if (centroid){
+
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                  ctx.font = `${fontSize}px Sans-Serif`;
+                  ctx.fillText((groupID-1).toString(), centroid[0], centroid[1]);
+                }
+            }
+          })
+
+        //console.log("here")
+          // You can add custom logic to determine the color or shape based on groupID
+          /*
+          const backgroundPadding = 1; // Add some padding around the node
+          const outlineSize = size + backgroundPadding; // The size of the outline/background
+      
+          ctx.setLineDash([1, 3]); // Create dashed lines with pattern [dashSize, gapSize]
+            ctx.strokeStyle = node.groupColor; // Color of the dashed outline
+            ctx.lineWidth = 2; // Width of the outline
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, size, 0, Math.PI * 2, false);
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset the dash pattern so it doesn't affect other drawings
+            */
+        }
+      
+        // Now draw the actual node on top
+        
+        //ctx.fillStyle = node.color || 'rgba(0, 0, 0, 1)';
+
+        // Assuming node.color is a hex color like "#RRGGBB"
+        const hexColor = node.color;
+        let alpha = 0.5; // 50% transparency
+        if (selectedNode){
+          if (selectedNode.id == node.id)
+            alpha = 1;
+        }else if (selectedNodes.length > 0){
+          if (selectedNodes.map(node => node.id).includes(node.id))
+            alpha = 1;
+        }else { //nothing is selected
+          alpha = 1;
+        }
+
+        // Parse the hex color into RGB components
+        const r = parseInt(hexColor.slice(1, 3), 16);
+        const g = parseInt(hexColor.slice(3, 5), 16);
+        const b = parseInt(hexColor.slice(5, 7), 16);
+
+        // Set the fillStyle with RGBA format
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false); // Use size for radius
+        //console.log(node.x, node.y)
+        ctx.fill();
+
+        let scolor = `rgba(${1}, ${1}, ${1}, ${1})`;
+        if (node.groupColor){
+          scolor = node.groupColor;
+          const r2 = parseInt(node.groupColor.slice(1, 3), 16);
+        const g2 = parseInt(node.groupColor.slice(3, 5), 16);
+        const b2 = parseInt(node.groupColor.slice(5, 7), 16);
+
+          //scolor = `rgba(${r2}, ${g2}, ${b2}, ${1})`;
+          //alert(scolor)
+        }
+
+        ctx.strokeStyle = scolor
+        
+        //ctx.strokeStyle = node.groupColor; // Color for the dashed line
+        ctx.lineWidth = 1; // Width of the dashed line
+        ctx.stroke(); // Apply the line style to the hull
+        
+      
+        // Draw labels for larger nodes
+        if (size > 5/globalScale) {
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.font = `${fontSize}px Sans-Serif`;
+          ctx.fillText(label, node.x, node.y);
+        }
+      }}
+      linkDirectionalArrowLength={3.5}
+        linkDirectionalArrowRelPos={1}
+        d3Force="charge" // Modify the charge force
+        d3ReheatSimulation={true}
+        //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
+        //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
+        d3ForceConfig={{
+            charge: { 
+              strength: -220, 
+              distanceMax: 300, // Optional: Increase to allow repulsion over larger distances
+              //distanceMin: 1    // Optional: Decrease to enhance repulsion for closely positioned nodes
+            },
+            link: {
+              // Adjust the strength of the link force based on groupID
+              strength: (link) => {
+                const sourceNode = graphData.nodes[link.source];
+                const targetNode = graphData.nodes[link.target];
+                //alert("HERE")
+                return sourceNode.groupID === targetNode.groupID ? 1 : 4; // Modify as needed
+              },
+              // You can also configure other link force parameters here
+            }
+        }}
+    />)}
     
       
     </div>
@@ -2142,3 +2258,36 @@ function createGraph(data) {
 
 export default GraphCommunities;
 
+
+/*non beizer backup
+  function drawDashedHullOnCanvas(points, ctx) {
+  // Compute the convex hull
+  const hull = d3.polygonHull(points);
+
+  // If no hull is found, or it's degenerate, don't draw anything
+  if (!hull || hull.length < 3) return;
+
+  // Begin path for the convex hull
+  ctx.beginPath();
+  ctx.moveTo(hull[0][0], hull[0][1]); // Start at the first point of the hull
+
+  // Draw lines to the rest of the points on the hull
+  for (let i = 1; i < hull.length; i++) {
+    ctx.lineTo(hull[i][0], hull[i][1]);
+  }
+
+  ctx.closePath(); // Close the path to create a closed shape
+
+  // Set the style for the dashed line
+  ctx.setLineDash([5, 5]); // Sets up the dash pattern, adjust the numbers for different patterns
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)'; // Color for the dashed line
+  ctx.lineWidth = 2; // Width of the dashed line
+  ctx.stroke(); // Apply the line style to the hull
+
+  // Fill the convex hull
+  ctx.fillStyle = 'rgba(150, 150, 250, 0.5)'; // Fill color with some transparency
+  ctx.fill(); // Fill the shape with the style set above
+
+  // Reset the dashed line to default for any subsequent drawing
+  ctx.setLineDash([]);
+}*/
