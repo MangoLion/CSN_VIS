@@ -39,7 +39,7 @@ const ComplexSegments = ({
   cylinderHeight,
 }) => {
   const { scene } = useThree();
-  const instancedMeshRef = useRef(null);
+  const instancedMeshRef = useRef([]);
   const startCapMeshRef = useRef(null);
   const endCapMeshRef = useRef(null);
 
@@ -97,7 +97,7 @@ const ComplexSegments = ({
     tubeMesh.instanceMatrix.needsUpdate = true;
     tubeMesh.instanceColor.needsUpdate = true;
     scene.add(tubeMesh);
-    instancedMeshRef.current = tubeMesh;
+    instancedMeshRef.current.push(tubeMesh);
 
     if (showCaps) {
       const capGeometry = new THREE.CircleGeometry(radius, tubeRes);
@@ -155,30 +155,21 @@ const ComplexSegments = ({
 
       scene.add(startCapMesh);
       scene.add(endCapMesh);
-      startCapMeshRef.current = startCapMesh;
-      endCapMeshRef.current = endCapMesh;
+      instancedMeshRef.current.push(startCapMesh);
+      instancedMeshRef.current.push(endCapMesh);
     }
 
     // Cleanup function to remove the previous instanced mesh
     return () => {
       if (instancedMeshRef.current) {
-        scene.remove(instancedMeshRef.current);
-        instancedMeshRef.current.geometry.dispose();
-        instancedMeshRef.current.material.dispose();
-        instancedMeshRef.current = null;
+        for (let i = 0; i < instancedMeshRef.current.length; i++) {
+          scene.remove(instancedMeshRef.current[i]);
+          instancedMeshRef.current[i].geometry.dispose();
+          instancedMeshRef.current[i].material.dispose();
+          instancedMeshRef.current[i] = null;
+        }
       }
-      if (startCapMeshRef.current) {
-        scene.remove(startCapMeshRef.current);
-        startCapMeshRef.current.geometry.dispose();
-        startCapMeshRef.current.material.dispose();
-        startCapMeshRef.current = null;
-      }
-      if (endCapMeshRef.current) {
-        scene.remove(endCapMeshRef.current);
-        endCapMeshRef.current.geometry.dispose();
-        endCapMeshRef.current.material.dispose();
-        endCapMeshRef.current = null;
-      }
+      instancedMeshRef.current = [];
     };
   }, [segments, radius, tubeRes, scene, opacity, showCaps, cylinderHeight]);
 
