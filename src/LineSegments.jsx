@@ -422,7 +422,7 @@ const LineSegments = ({
           cylinderHeight={cylinderHeight}
         />
       )}
-      {segmentsSelected.length > 0 && (
+      {segmentsSelected.length > 0 && drawAll && (
         <ComplexSegments
           radius={radius}
           tubeRes={tubeRes}
