@@ -25,6 +25,7 @@ const App = () => {
   const [tubeRes, setTubeRes] = useState(20);
   const [showCaps, setShowCaps] = useState(true);
   const [opacity, setOpacity] = useState(0.4);
+  const [cylinderHeight, setCylinderHeight] = useState(1.0);
   const [showPlotView, setShowPlotView] = useState(true);
   const [layerProps, setLayerProps] = useState({
     x: 0,
@@ -83,7 +84,7 @@ const App = () => {
   return (
     <div className="App">
       <Allotment key="main">
-        <Allotment vertical={true} defaultSizes={[1, 1]}>
+        <Allotment vertical={true} defaultSizes={[1, 2]}>
           <Allotment.Pane>
             <div>
               <LineSegmentUploader
@@ -119,6 +120,7 @@ const App = () => {
                   setOpacity,
                   showCaps,
                   setShowCaps,
+                  setCylinderHeight,
                 }}
                 key="uploader"
               />
@@ -146,6 +148,7 @@ const App = () => {
                 intensity,
                 opacity,
                 showCaps,
+                cylinderHeight,
               }}
               key="line3D"
             />

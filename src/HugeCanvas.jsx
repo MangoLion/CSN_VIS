@@ -280,8 +280,6 @@ const HugeCanvas = React.memo(
         AMCSworker.removeEventListener("message", AMCSWorkerFunc);
         setGraph(event.data.tgraph);
         window.tempGraph = event.data.tgraph;
-        console.log("graph: ");
-        console.log(event.data.tgraph);
 
         let graphSize = 0;
         event.data.tgraph.forEach((edges) => {

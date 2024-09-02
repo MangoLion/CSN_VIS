@@ -36,6 +36,7 @@ const LineSegmentUploader = React.memo(
     setOpacity,
     showCaps,
     setShowCaps,
+    setCylinderHeight,
   }) => {
     const [lines, setLines] = useState([]);
     const [skipLines, setSkipLines] = useState(0);
@@ -445,72 +446,17 @@ const LineSegmentUploader = React.memo(
                 }}
               />
             </div>
-          </div>
-        </div>
-        <br />
-        <label style={{ fontWeight: "bold" }}>Generate CSNG</label>
-        <div id="csng" style={{ display: "flex", gap: "10px" }}>
-          <div style={{ flexDirection: "column", width: "50%" }}>
-            <div>
-              <label>Algorithm:</label>
-              <select
-                defaultValue={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value)}
-              >
-                <option value="KNN">KNN</option>
-                <option value="RBN">RBN</option>
-              </select>
+            <div className="setting">
+              <label>Cylinder Height:</label>
+              <input
+                type="number"
+                defaultValue={1}
+                step={0.05}
+                onChange={(e) => {
+                  setCylinderHeight(Number(e.target.value));
+                }}
+              />
             </div>
-            {algorithm === "KNN" && (
-              <div>
-                <label>K:</label>
-                <input
-                  type="number"
-                  value={param}
-                  onChange={(e) => setParam(e.target.value)}
-                />
-              </div>
-            )}
-            {algorithm === "RBN" && (
-              <div>
-                <label>R:</label>
-                <input
-                  type="number"
-                  value={param}
-                  onChange={(e) => setParam(e.target.value)}
-                />
-              </div>
-            )}
-            <div>
-              <label>Distance:</label>
-              <select
-                defaultValue={distanceMetric}
-                onChange={(e) => setDistanceMetric(e.target.value)}
-              >
-                <option value="shortest">Shortest</option>
-                <option value="longest">Longest</option>
-                <option value="haustoff">Haustoff</option>
-              </select>
-            </div>
-          </div>
-          <div
-            style={{
-              flexDirection: "column",
-              width: "50%",
-              alignItems: "center",
-            }}
-          >
-            <button
-              style={{ width: "80%", maxWidth: "260px" }}
-              onClick={handleStart}
-            >
-              Start
-            </button>
-            <progress
-              style={{ width: "80%", maxWidth: "260px" }}
-              value={progress}
-              max="100"
-            ></progress>
           </div>
         </div>
       </div>

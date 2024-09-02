@@ -30,7 +30,14 @@ import {
 
 extend({ TrackballControls });
 
-const ComplexSegments = ({ segments, radius, tubeRes, opacity, showCaps }) => {
+const ComplexSegments = ({
+  segments,
+  radius,
+  tubeRes,
+  opacity,
+  showCaps,
+  cylinderHeight,
+}) => {
   const { scene } = useThree();
   const instancedMeshRef = useRef(null);
   const startCapMeshRef = useRef(null);
@@ -41,61 +48,56 @@ const ComplexSegments = ({ segments, radius, tubeRes, opacity, showCaps }) => {
       transparent: true,
       opacity: opacity,
     });
-    const geometry = new TubeGeometry(
-      new THREE.CatmullRomCurve3([
-        new Vector3(0, 0, 0),
-        new Vector3(1, 0, 0), // Unit vector along the x-axis for initial orientation
-      ]),
-      20,
+
+    const tubeGeometry = new THREE.CylinderGeometry(
       radius,
+      radius,
+      cylinderHeight,
       tubeRes,
-      false
+      1,
+      true
     );
 
-    const instancedMesh = new THREE.InstancedMesh(
-      geometry,
+    const tubeMesh = new THREE.InstancedMesh(
+      tubeGeometry,
       material,
       segments.length
     );
-    segments.forEach((segment, index) => {
-      const start = new Vector3(...segment.startPoint);
-      const end = new Vector3(...segment.endPoint);
 
-      // Calculate segment vector
-      const segmentVector = end.clone().sub(start);
-      const length = segmentVector.length();
+    const dummy = new THREE.Object3D();
 
-      // Extend start and end by 5% each
-      const extension = segmentVector
-        .clone()
-        .normalize()
-        .multiplyScalar(length * 0.05);
-      const extendedStart = start.clone().sub(extension);
-      const extendedEnd = end.clone().add(extension);
-      const extendedLength = extendedEnd.clone().sub(extendedStart).length();
+    segments.forEach((segment, i) => {
+      const startPoint = new Vector3(...segment.startPoint);
+      const endPoint = new Vector3(...segment.endPoint);
 
-      // Calculate rotation to align the tube with the extended segment vector
-      const quaternion = new Quaternion().setFromUnitVectors(
-        new Vector3(1, 0, 0),
-        segmentVector.normalize()
+      const direction = new THREE.Vector3().subVectors(endPoint, startPoint);
+
+      // Axis and angle for the cylinder orientation
+      const axis = new THREE.Vector3(0, 1, 0).cross(direction).normalize();
+      const angle = Math.acos(
+        new THREE.Vector3(0, 1, 0).dot(direction.normalize())
       );
 
-      // Apply scale and position
-      const matrix = new Matrix4();
-      matrix.compose(
-        extendedStart, // Position the geometry at the extended start point
-        quaternion,
-        new Vector3(extendedLength, 1, 1) // Scale only in the length direction
-      );
+      // Set cylinder mesh position and orientation
+      dummy.position.set(...segment.midPoint);
+      const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+      dummy.setRotationFromQuaternion(quaternion);
 
-      instancedMesh.setMatrixAt(index, matrix);
-      instancedMesh.setColorAt(index, new Color(segment.color));
+      const distance = new THREE.Vector3()
+        .subVectors(startPoint, endPoint)
+        .length();
+      dummy.scale.set(1, distance, 1);
+      dummy.updateMatrix();
+      tubeMesh.setMatrixAt(i, dummy.matrix);
+
+      // Update the color of the cylinder
+      tubeMesh.setColorAt(i, new Color(segment.color));
     });
 
-    instancedMesh.instanceMatrix.needsUpdate = true;
-    instancedMesh.instanceColor.needsUpdate = true;
-    scene.add(instancedMesh);
-    instancedMeshRef.current = instancedMesh;
+    tubeMesh.instanceMatrix.needsUpdate = true;
+    tubeMesh.instanceColor.needsUpdate = true;
+    scene.add(tubeMesh);
+    instancedMeshRef.current = tubeMesh;
 
     if (showCaps) {
       const capGeometry = new THREE.CircleGeometry(radius, tubeRes);
@@ -178,7 +180,7 @@ const ComplexSegments = ({ segments, radius, tubeRes, opacity, showCaps }) => {
         endCapMeshRef.current = null;
       }
     };
-  }, [segments, radius, tubeRes, scene, opacity, showCaps]);
+  }, [segments, radius, tubeRes, scene, opacity, showCaps, cylinderHeight]);
 
   return null;
 };
@@ -190,6 +192,7 @@ const SimpleLineSegments = ({
   setSelectedSegment,
   opacity,
   showCaps,
+  cylinderHeight,
 }) => {
   const groupRef = useRef();
   const { camera, raycaster, gl } = useThree();
@@ -242,6 +245,7 @@ const SimpleLineSegments = ({
     },
     [camera, raycaster, gl.domElement, setSelectedSegment, segments, mouse]
   );
+
   const lineMeshes = useMemo(() => {
     if (!segments || segments.length === 0) {
       return null;
@@ -250,7 +254,7 @@ const SimpleLineSegments = ({
     const tubeGeometry = new THREE.CylinderGeometry(
       radius,
       radius,
-      1,
+      cylinderHeight,
       tubeRes,
       1,
       true
@@ -270,9 +274,9 @@ const SimpleLineSegments = ({
 
     const dummy = new THREE.Object3D();
 
-    for (let i = 0; i < segments.length; i++) {
-      const startPoint = new THREE.Vector3(...segments[i].startPoint);
-      const endPoint = new THREE.Vector3(...segments[i].endPoint);
+    segments.forEach((segment, i) => {
+      const startPoint = new THREE.Vector3(...segment.startPoint);
+      const endPoint = new THREE.Vector3(...segment.endPoint);
 
       const direction = new THREE.Vector3().subVectors(endPoint, startPoint);
 
@@ -283,7 +287,7 @@ const SimpleLineSegments = ({
       );
 
       // Set cylinder mesh position and orientation
-      dummy.position.set(...segments[i].midPoint);
+      dummy.position.set(...segment.midPoint);
       const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
       dummy.setRotationFromQuaternion(quaternion);
 
@@ -293,7 +297,7 @@ const SimpleLineSegments = ({
       dummy.scale.set(1, distance, 1);
       dummy.updateMatrix();
       tubeMesh.setMatrixAt(i, dummy.matrix);
-    }
+    });
 
     if (showCaps) {
       const res = [tubeMesh];
@@ -351,7 +355,7 @@ const SimpleLineSegments = ({
     }
 
     return [tubeMesh];
-  }, [segments, radius, tubeRes, opacity, showCaps]);
+  }, [segments, radius, tubeRes, opacity, showCaps, cylinderHeight]);
 
   useEffect(() => {
     if (prevLineMeshesRef.current) {
@@ -403,6 +407,7 @@ const LineSegments = ({
   intensity,
   opacity,
   showCaps,
+  cylinderHeight,
 }) => {
   return (
     <Canvas style={{ width: "100%", height: "100%" }}>
@@ -417,6 +422,7 @@ const LineSegments = ({
           segments={segments}
           opacity={opacity}
           showCaps={showCaps}
+          cylinderHeight={cylinderHeight}
         />
       )}
       {segmentsSelected.length > 0 && (
@@ -426,6 +432,7 @@ const LineSegments = ({
           segments={segmentsSelected}
           opacity={opacity}
           showCaps={showCaps}
+          cylinderHeight={cylinderHeight}
         />
       )}
     </Canvas>
