@@ -39,9 +39,7 @@ const ComplexSegments = ({
   cylinderHeight,
 }) => {
   const { scene } = useThree();
-  const instancedMeshRef = useRef([]);
-  const startCapMeshRef = useRef(null);
-  const endCapMeshRef = useRef(null);
+  const meshesRef = useRef([]);
 
   useEffect(() => {
     const material = new THREE.MeshPhongMaterial({
@@ -97,7 +95,7 @@ const ComplexSegments = ({
     tubeMesh.instanceMatrix.needsUpdate = true;
     tubeMesh.instanceColor.needsUpdate = true;
     scene.add(tubeMesh);
-    instancedMeshRef.current.push(tubeMesh);
+    meshesRef.current.push(tubeMesh);
 
     if (showCaps) {
       const capGeometry = new THREE.CircleGeometry(radius, tubeRes);
@@ -115,9 +113,9 @@ const ComplexSegments = ({
 
       const dummy = new THREE.Object3D();
 
-      for (let i = 0; i < segments.length; i++) {
-        const startPoint = new THREE.Vector3(...segments[i].startPoint);
-        const endPoint = new THREE.Vector3(...segments[i].endPoint);
+      segments.forEach((segment, i) => {
+        const startPoint = new THREE.Vector3(...segment.startPoint);
+        const endPoint = new THREE.Vector3(...segment.endPoint);
 
         const direction = new THREE.Vector3().subVectors(endPoint, startPoint);
 
@@ -129,47 +127,55 @@ const ComplexSegments = ({
 
         // Set cylinder mesh position and orientation
         const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-        dummy.setRotationFromQuaternion(quaternion);
 
-        dummy.scale.set(1, 1, 1);
-        dummy.rotateX(Math.PI / 2);
-        if (i === 0 || segments[i].lineIDx !== segments[i - 1].lineIDx)
-          dummy.position.set(...segments[i].startPoint);
-        else dummy.scale.set(0, 0, 0);
-        dummy.updateMatrix();
-        startCapMesh.setMatrixAt(i, dummy.matrix);
-        startCapMesh.setColorAt(i, new Color(segments[i].color));
+        if (i === 0 || segment.lineIDx !== segments[i - 1].lineIDx) {
+          const startCap = new THREE.Mesh(
+            new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
+            new THREE.MeshStandardMaterial({
+              color: segment.color,
+              opacity: opacity,
+              transparent: true,
+            }) // Adjust material properties
+          );
+          startCap.position.copy(startPoint);
+          startCap.rotation.setFromQuaternion(quaternion);
+          startCap.rotateX(Math.PI / 2); // Rotate to face the cylinder direction
+          scene.add(startCap);
+          meshesRef.current.push(startCap); // Add to scene or group
+        }
 
-        dummy.scale.set(1, 1, 1);
-        dummy.rotateX(Math.PI);
         if (
           i === segments.length - 1 ||
-          segments[i].lineIDx !== segments[i + 1].lineIDx
-        )
-          dummy.position.set(...segments[i].endPoint);
-        else dummy.scale.set(0, 0, 0);
-        dummy.updateMatrix();
-        endCapMesh.setMatrixAt(i, dummy.matrix);
-        endCapMesh.setColorAt(i, new Color(segments[i].color));
-      }
-
-      scene.add(startCapMesh);
-      scene.add(endCapMesh);
-      instancedMeshRef.current.push(startCapMesh);
-      instancedMeshRef.current.push(endCapMesh);
+          segment.lineIDx !== segments[i + 1].lineIDx
+        ) {
+          const endCap = new THREE.Mesh(
+            new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
+            new THREE.MeshStandardMaterial({
+              color: segment.color,
+              opacity: opacity,
+              transparent: true,
+            }) // Adjust material properties
+          );
+          endCap.position.copy(endPoint);
+          endCap.rotation.setFromQuaternion(quaternion);
+          endCap.rotateX(-Math.PI / 2); // Rotate to face the cylinder direction
+          scene.add(endCap);
+          meshesRef.current.push(endCap); // Add to scene or group
+        }
+      });
     }
 
     // Cleanup function to remove the previous instanced mesh
     return () => {
-      if (instancedMeshRef.current) {
-        for (let i = 0; i < instancedMeshRef.current.length; i++) {
-          scene.remove(instancedMeshRef.current[i]);
-          instancedMeshRef.current[i].geometry.dispose();
-          instancedMeshRef.current[i].material.dispose();
-          instancedMeshRef.current[i] = null;
+      if (meshesRef.current) {
+        for (let i = 0; i < meshesRef.current.length; i++) {
+          scene.remove(meshesRef.current[i]);
+          meshesRef.current[i].geometry.dispose();
+          meshesRef.current[i].material.dispose();
+          meshesRef.current[i] = null;
         }
       }
-      instancedMeshRef.current = [];
+      meshesRef.current = [];
     };
   }, [segments, radius, tubeRes, scene, opacity, showCaps, cylinderHeight]);
 
@@ -338,7 +344,7 @@ const SimpleLineSegments = ({
           );
           endCap.position.copy(endPoint);
           endCap.rotation.setFromQuaternion(quaternion);
-          endCap.rotateX(Math.PI); // Rotate to face the cylinder direction
+          endCap.rotateX(-Math.PI / 2); // Rotate to face the cylinder direction
           res.push(endCap); // Add to scene or group
         }
       }
