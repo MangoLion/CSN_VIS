@@ -1,0 +1,23 @@
+#settings input {
+  flex: 1;
+  height: 20px;
+}
+
+#settings label,
+#csng label {
+  flex: 3;
+}
+
+#csng select,
+#csng input {
+  flex: 2;
+  padding: 0;
+  height: 20px;
+}
+
+#settings div,
+#csng div {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+}

@@ -1,0 +1,18 @@
+#graph-comm-settings input {
+  flex: 1;
+  height: 20px;
+}
+
+#graph-comm-settings label {
+  flex: 2;
+}
+
+#graph-comm-settings div {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+}
+
+div {
+  user-select: none;
+}

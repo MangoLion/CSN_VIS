@@ -1,41 +1,51 @@
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import "./styles/GraphComm.css";
 
-import React, { useRef,useEffect, useState } from 'react';
-import { ForceGraph2D,ForceGraph3D } from 'react-force-graph';
-import Graph from 'graphology';
-import forceAtlas2 from 'graphology-layout-forceatlas2';
-import louvain from 'graphology-communities-louvain';
+import React, { useRef, useEffect, useState } from "react";
+import { ForceGraph2D, ForceGraph3D } from "react-force-graph";
+import Graph from "graphology";
+import forceAtlas2 from "graphology-layout-forceatlas2";
+import louvain from "graphology-communities-louvain";
+import { scaleOrdinal } from "d3-scale";
+import { schemeCategory10 } from "d3-scale-chromatic"; // Or any other D3 color scheme
 
-
-
-import { scaleOrdinal } from 'd3-scale';
-import { schemeCategory10 } from 'd3-scale-chromatic'; // Or any other D3 color scheme
-
-import { PCA } from 'ml-pca';
-const kmeans = require('ml-kmeans');
+import { PCA } from "ml-pca";
+const kmeans = require("ml-kmeans");
 
 //import * as d3 from 'd3';
-import convexHull from 'convex-hull'
-import chroma from 'chroma-js';
-import seedrandom from 'seedrandom';
-const infomap = require('infomap');
-const llp = require('layered-label-propagation');
-const hamming = require('./distance-hamming')
+import convexHull from "convex-hull";
+import chroma from "chroma-js";
+import seedrandom from "seedrandom";
+const infomap = require("infomap");
+const llp = require("layered-label-propagation");
+const hamming = require("./distance-hamming");
 
 //import { node } from 'webpack';
 
 // Use an ordinal scale for colors with a D3 color scheme
 const colorScale = scaleOrdinal(schemeCategory10);
 
-const GraphCommunities = ({ data, segments,segmentsSelected, setSegmentsSelected, selectedSegment, pixelData,setPixelData,setPixelMapData }) => {
+const GraphCommunities = ({
+  data,
+  segments,
+  segmentsSelected,
+  setSegmentsSelected,
+  selectedSegment,
+  pixelData,
+  setPixelData,
+  setPixelMapData,
+}) => {
   const fgRef = useRef();
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
-  const [orgCommunities, setOrgCommunities] = useState({ nodes: [], links: [] });
+  const [orgCommunities, setOrgCommunities] = useState({
+    nodes: [],
+    links: [],
+  });
   const [isEmpty, setIsEmpty] = useState(true);
   const [selectedNode, setSelectedNode] = useState(null);
   const [nodeScale, setNodeScale] = useState(1);
 
-  const [use3D, setUse3D] = useState(0)
+  const [use3D, setUse3D] = useState(0);
 
   const [multiSelect, setMultiSelect] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState([]);
@@ -43,7 +53,7 @@ const GraphCommunities = ({ data, segments,segmentsSelected, setSegmentsSelected
 
   const [undoState, setUndoState] = useState(false);
   const [seed, setSeed] = useState(1);
-  const [algorithm, setAlgorithm] = useState('Louvain');
+  const [algorithm, setAlgorithm] = useState("Louvain");
   const [inputs, setInputs] = useState({
     resolution: 1,
     randomWalk: false,
@@ -51,72 +61,74 @@ const GraphCommunities = ({ data, segments,segmentsSelected, setSegmentsSelected
     gamma: 0.1,
     max: 10,
     dims: 5,
-    kmean: 8
+    kmean: 8,
   });
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setInputs({
       ...inputs,
-      [name]: type === 'checkbox' ? checked : parseFloat(value)
+      [name]: type === "checkbox" ? checked : parseFloat(value),
     });
   };
 
   useEffect(() => {
+    console.log("RUN");
 
-    console.log("RUN")
-
-    if (!isEmpty){
-      fgRef.current.d3Force('link')
-      .distance(link => {
-        if (link.source.groupID.length>0 && (link.source.groupID[0] == link.target.groupID[0])){
-          console.log(link)
+    if (!isEmpty) {
+      fgRef.current.d3Force("link").distance((link) => {
+        if (
+          link.source.groupID.length > 0 &&
+          link.source.groupID[0] == link.target.groupID[0]
+        ) {
+          console.log(link);
           return -15;
         }
-        
+
         return 30;
-      })
-      if (use3D){
-          const bloomPass = new UnrealBloomPass();
-          bloomPass.strength = 1;
-          bloomPass.radius = 1;
-          bloomPass.threshold = 0;
-          fgRef.current.postProcessingComposer().addPass(bloomPass);
+      });
+      if (use3D) {
+        const bloomPass = new UnrealBloomPass();
+        bloomPass.strength = 1;
+        bloomPass.radius = 1;
+        bloomPass.threshold = 0;
+        fgRef.current.postProcessingComposer().addPass(bloomPass);
       }
     }
-  }, [isEmpty,use3D, data]);
+  }, [isEmpty, use3D, data]);
 
-  const saveUndo = () =>{
+  useEffect(() => {
+    console.log("data updated!");
+  }, [data]);
 
-    const nlinks = graphData.links.map(obj => ({
+  const saveUndo = () => {
+    const nlinks = graphData.links.map((obj) => ({
       source: obj.source.id,
-      target: obj.target.id}
-      ))
+      target: obj.target.id,
+    }));
 
     const sGraphData = {
-      nodes:graphData.nodes,
-      links:nlinks
-    }
+      nodes: graphData.nodes,
+      links: nlinks,
+    };
 
     const undo = {
-      graphData:sGraphData,
+      graphData: sGraphData,
       orgCommunities,
       isEmpty,
       selectedNode,
       selectedNodes,
       multiSelect,
-      allGroups
-    }
+      allGroups,
+    };
 
     setUndoState(JSON.stringify(undo));
-  }
+  };
 
-  const handleUndo = (data=false) =>{
-    if (!undoState)
-      return;
-    if (!data)
-      data = undoState;
-    else{
+  const handleUndo = (data = false) => {
+    if (!undoState) return;
+    if (!data) data = undoState;
+    else {
       setUndoState(data);
     }
     const undo = JSON.parse(data);
@@ -128,115 +140,127 @@ const GraphCommunities = ({ data, segments,segmentsSelected, setSegmentsSelected
     setSelectedNodes(undo.selectedNodes);
     setMultiSelect(undo.multiSelect);
     setAllGroups(undo.allGroups);
-
-  }
+  };
 
   // Function to get an object with only keys from 0 to n-1
-function getFirstNKeys(obj, n) {
-  const result = {};
-  for (let i = 0; i < n; i++) {
+  function getFirstNKeys(obj, n) {
+    const result = {};
+    for (let i = 0; i < n; i++) {
       if (obj.hasOwnProperty(i)) {
-          result[i] = obj[i];
+        result[i] = obj[i];
       }
+    }
+    return result;
   }
-  return result;
-}
 
-function fillHolesInCommunities(communities) {
-  const sortedKeys = Object.keys(communities).map(Number).sort((a, b) => a - b);
-  const newCommunities = {};
-  let gapCount = 0;
+  function fillHolesInCommunities(communities) {
+    const sortedKeys = Object.keys(communities)
+      .map(Number)
+      .sort((a, b) => a - b);
+    const newCommunities = {};
+    let gapCount = 0;
 
-  for (let i = 0; i < sortedKeys.length; i++) {
+    for (let i = 0; i < sortedKeys.length; i++) {
       // Check if there is a hole
       if (i > 0 && sortedKeys[i] !== sortedKeys[i - 1] + 1) {
-          gapCount += sortedKeys[i] - sortedKeys[i - 1] - 1;
+        gapCount += sortedKeys[i] - sortedKeys[i - 1] - 1;
       }
       newCommunities[sortedKeys[i] - gapCount] = communities[sortedKeys[i]];
+    }
+
+    return newCommunities;
   }
 
-  return newCommunities;
-}
-
-function pcaKmeansStreamlineClustering(segments, pcaDims, k) {
-  // Step 1a: Group segments by streamline
-  const streamlineIndices = {};
-  segments.forEach((segment, idx) => {
+  function pcaKmeansStreamlineClustering(segments, pcaDims, k) {
+    // Step 1a: Group segments by streamline
+    const streamlineIndices = {};
+    segments.forEach((segment, idx) => {
       if (!streamlineIndices[segment.lineIDx]) {
-          streamlineIndices[segment.lineIDx] = [idx, idx];
+        streamlineIndices[segment.lineIDx] = [idx, idx];
       } else {
-          streamlineIndices[segment.lineIDx][1] = idx;
+        streamlineIndices[segment.lineIDx][1] = idx;
       }
-  });
+    });
 
-  const streamlines = Object.values(streamlineIndices); // Array of [startIdx, endIdx]
+    const streamlines = Object.values(streamlineIndices); // Array of [startIdx, endIdx]
 
-  // Step 2: Determine average streamline length
-  const avgLength = Math.round(streamlines.reduce((sum, s) => sum + (s[1] - s[0] + 1), 0) / streamlines.length);
+    // Step 2: Determine average streamline length
+    const avgLength = Math.round(
+      streamlines.reduce((sum, s) => sum + (s[1] - s[0] + 1), 0) /
+        streamlines.length
+    );
 
-// Step 3: Pad/Trim Streamlines to average length
-const paddedStreamlines = streamlines.map(([startIdx, endIdx]) => {
-  let streamline = segments.slice(startIdx, endIdx + 1);
-  let streamlineLength = streamline.length;
+    // Step 3: Pad/Trim Streamlines to average length
+    const paddedStreamlines = streamlines.map(([startIdx, endIdx]) => {
+      let streamline = segments.slice(startIdx, endIdx + 1);
+      let streamlineLength = streamline.length;
 
-  // Flatten the streamline and ensure all values are numeric
-  let flattenedStreamline = streamline.flatMap(segment => [
-      ...segment.startPoint, 
-      ...segment.endPoint, 
-      ...segment.midPoint
-  ]);
+      // Flatten the streamline and ensure all values are numeric
+      let flattenedStreamline = streamline.flatMap((segment) => [
+        ...segment.startPoint,
+        ...segment.endPoint,
+        ...segment.midPoint,
+      ]);
 
-  if (streamlineLength < avgLength) {
-      // Pad with zeroes to reach the desired length
-      const paddingSize = (avgLength - streamlineLength) * 9; // 9 for 3 coordinates each of start, end, and mid points
-      flattenedStreamline = [...flattenedStreamline, ...Array(paddingSize).fill(0)];
-  } else if (streamlineLength > avgLength) {
-      // Trim to the average length (each segment has 9 values)
-      flattenedStreamline = flattenedStreamline.slice(0, avgLength * 9);
-  }
+      if (streamlineLength < avgLength) {
+        // Pad with zeroes to reach the desired length
+        const paddingSize = (avgLength - streamlineLength) * 9; // 9 for 3 coordinates each of start, end, and mid points
+        flattenedStreamline = [
+          ...flattenedStreamline,
+          ...Array(paddingSize).fill(0),
+        ];
+      } else if (streamlineLength > avgLength) {
+        // Trim to the average length (each segment has 9 values)
+        flattenedStreamline = flattenedStreamline.slice(0, avgLength * 9);
+      }
 
-  return flattenedStreamline;
-});
+      return flattenedStreamline;
+    });
 
+    // Step 4: Apply PCA and KMeans
+    const pca = new PCA(paddedStreamlines);
+    const reducedData = pca.predict(paddedStreamlines, {
+      nComponents: pcaDims,
+    });
+    const reducedDataArray = Array.from(reducedData.data).map((row) =>
+      Array.from(row)
+    );
+    let ans = kmeans.kmeans(reducedDataArray, k, { seed: seed });
 
-  // Step 4: Apply PCA and KMeans
-  const pca = new PCA(paddedStreamlines);
-  const reducedData = pca.predict(paddedStreamlines, { nComponents: pcaDims });
-  const reducedDataArray = Array.from(reducedData.data).map(row => Array.from(row));
-  let ans = kmeans.kmeans(reducedDataArray, k, {seed:seed});
-
-  // Step 5: Assign clusters to segments
-  const communities = {};
-  ans.clusters.forEach((cluster, streamlineIndex) => {
+    // Step 5: Assign clusters to segments
+    const communities = {};
+    ans.clusters.forEach((cluster, streamlineIndex) => {
       const [startIdx, endIdx] = streamlines[streamlineIndex];
       for (let i = startIdx; i <= endIdx; i++) {
-          communities[i] = cluster;
+        communities[i] = cluster;
       }
-  });
+    });
 
-  return fillHolesInCommunities(communities);
-}
+    return fillHolesInCommunities(communities);
+  }
 
   function pcaKmeansCommunityDetection(segments, pcaDims, k) {
     // Step 1: Prepare data for PCA with new feature extraction
-    const data = segments.map(segment => {
+    const data = segments.map((segment) => {
       const length = Math.sqrt(
-          Math.pow(segment.endPoint[0] - segment.startPoint[0], 2) +
+        Math.pow(segment.endPoint[0] - segment.startPoint[0], 2) +
           Math.pow(segment.endPoint[1] - segment.startPoint[1], 2) +
           Math.pow(segment.endPoint[2] - segment.startPoint[2], 2)
       );
       const direction = [
-          (segment.endPoint[0] - segment.startPoint[0]) / length,
-          (segment.endPoint[1] - segment.startPoint[1]) / length,
-          (segment.endPoint[2] - segment.startPoint[2]) / length,
+        (segment.endPoint[0] - segment.startPoint[0]) / length,
+        (segment.endPoint[1] - segment.startPoint[1]) / length,
+        (segment.endPoint[2] - segment.startPoint[2]) / length,
       ];
       return [length, ...direction, ...segment.midPoint];
-  });
+    });
 
     // Step 2: Apply PCA
     const pca = new PCA(data);
     const reducedData = pca.predict(data, { nComponents: pcaDims });
-    const reducedDataArray = Array.from(reducedData.data).map(row => Array.from(row));
+    const reducedDataArray = Array.from(reducedData.data).map((row) =>
+      Array.from(row)
+    );
     // Step 3: Apply KMeans
     console.log(reducedDataArray);
     let ans = kmeans.kmeans(reducedDataArray, k);
@@ -245,188 +269,142 @@ const paddedStreamlines = streamlines.map(([startIdx, endIdx]) => {
     // Step 4: Assign clusters to segments
     const communities = {};
     ans.clusters.forEach((cluster, index) => {
-        const segmentIdx = segments[index].globalIdx; // Assuming globalIdx uniquely identifies a segment
-        communities[segmentIdx] = cluster;
+      const segmentIdx = segments[index].globalIdx; // Assuming globalIdx uniquely identifies a segment
+      communities[segmentIdx] = cluster;
     });
-    
+
     return fillHolesInCommunities(communities);
-}
+  }
 
-/**
- * Creates a graph from a given data array.
- * @param {Array<Array<number>>} data - An array of number arrays representing the edges of the graph.
- * @returns {Graph} The created graph.
- */
-function createGraph(data) {
-  const preprocessData = (data) => {
-    const nodesSet = new Set();
-    const edges = [];
+  /**
+   * Creates a graph from a given data array.
+   * @param {Array<Array<number>>} data - An array of number arrays representing the edges of the graph.
+   * @returns {Graph} The created graph.
+   */
+  function createGraph(data) {
+    const preprocessData = (data) => {
+      const nodesSet = new Set();
+      const edges = [];
 
-    data.forEach((edgeList, source) => {
-      nodesSet.add(source);
-      edgeList.forEach(target => {
-        nodesSet.add(target);
-        edges.push({ source, target });
+      data.forEach((edgeList, source) => {
+        nodesSet.add(source);
+        edgeList.forEach((target) => {
+          nodesSet.add(target);
+          edges.push({ source, target });
+        });
       });
+
+      const nodes = Array.from(nodesSet);
+      const nodeCount = nodes.length;
+      const nodeMap = new Map(nodes.map((node, index) => [node, index]));
+      const typedEdges = new Uint32Array(edges.length * 2);
+
+      edges.forEach(({ source, target }, index) => {
+        typedEdges[index * 2] = nodeMap.get(source);
+        typedEdges[index * 2 + 1] = nodeMap.get(target);
+      });
+
+      return { nodes, typedEdges, nodeCount };
+    };
+
+    const { nodes, typedEdges } = preprocessData(data);
+
+    const startTime = performance.now();
+
+    const graph2 = new Graph();
+    graph2.import({
+      nodes: nodes.map((node) => ({ key: node })),
+      edges: Array.from({ length: typedEdges.length / 2 }, (_, i) => ({
+        source: typedEdges[i * 2],
+        target: typedEdges[i * 2 + 1],
+      })),
     });
 
-    const nodes = Array.from(nodesSet);
-    const nodeCount = nodes.length;
-    const nodeMap = new Map(nodes.map((node, index) => [node, index]));
-    const typedEdges = new Uint32Array(edges.length * 2);
+    const endTime = performance.now();
+    console.log(`Graph creation took ${endTime - startTime} milliseconds.`);
 
-    edges.forEach(({ source, target }, index) => {
-      typedEdges[index * 2] = nodeMap.get(source);
-      typedEdges[index * 2 + 1] = nodeMap.get(target);
-    });
+    return graph2;
+  }
 
-    return { nodes, typedEdges, nodeCount };
-  };
-
-  const { nodes, typedEdges } = preprocessData(data);
-
-  const startTime = performance.now();
-
-  
-
-  const graph2 = new Graph();
-  graph2.import({
-    nodes: nodes.map(node => ({ key: node })),
-    edges: Array.from({ length: typedEdges.length / 2 }, (_, i) => ({
-      source: typedEdges[i * 2],
-      target: typedEdges[i * 2 + 1],
-    }))
-  });
-
-  const endTime = performance.now();
-  console.log(`Graph creation took ${endTime - startTime} milliseconds.`);
-
-  return graph2;
-}
-
-  useEffect(()=>{
+  useEffect(() => {
     let { nodes, links } = graphData;
     const nid = orgCommunities[selectedSegment];
-    const snode = nodes.filter(n=>{
+    const snode = nodes.filter((n) => {
       return n.id == nid;
-    })
+    });
 
-    if (snode.length == 0){
-      console.log("Not found!", nid)
+    if (snode.length == 0) {
+      console.log("Not found!", nid);
     }
 
     setMultiSelect(false);
     setSelectedNode(snode[0]);
-  },[selectedSegment])
-
+  }, [selectedSegment]);
 
   //useEffect(() => {
   const handleStart = () => {
     // Check if the graph is empty
-    const isEmptyGraph = data.every(arr => arr.length === 0);
+    const isEmptyGraph = data.every((arr) => arr.length === 0);
     setIsEmpty(isEmptyGraph);
-  
+
     if (isEmptyGraph) {
-      console.log('Graph is empty, nothing to layout.');
+      console.log("Graph is empty, nothing to layout.");
       return; // Do not attempt to plot if the graph is empty
     }
-  
+
     const graph = new Graph(); // Create a graph
     const communityGraph = new Graph(); // This will store the community graph
     const communitySizes = {}; // To store the size of each community
-  
-    const imapNodes = []
-    const imapEdges = []
 
-   
+    const imapNodes = [];
+    const imapEdges = [];
+
     let startTime = performance.now();
     //console.log(segments);
-      // Add nodes first
+    // Add nodes first
     data.forEach((_, nodeIndex) => {
-        if (!graph.hasNode(nodeIndex)) {
+      if (!graph.hasNode(nodeIndex)) {
         graph.addNode(nodeIndex);
-        }
-        imapNodes.push(nodeIndex)
+      }
+      imapNodes.push(nodeIndex);
     });
 
     // Then add edges
     data.forEach((edges, source) => {
-        edges.forEach(target => {
-          imapEdges.push({
-            source, target, value:1
-          })
+      edges.forEach((target) => {
+        imapEdges.push({
+          source,
+          target,
+          value: 1,
+        });
         // Ensure both source and target nodes exist
         if (!graph.hasNode(target)) {
-            graph.addNode(target);
+          graph.addNode(target);
         }
         if (!graph.hasEdge(source, target)) {
-            graph.addEdge(source, target);
+          graph.addEdge(source, target);
         }
-        });
+      });
     });
 
     let endTime = performance.now();
-    
-    console.log(`Graph1 build time: ${endTime  - startTime}ms`)
+
+    console.log(`Graph1 build time: ${endTime - startTime}ms`);
 
     startTime = performance.now();
-
-    /*let graph2 = new Graph(); // Create a graph
-
-    data.forEach((_, nodeIndex) => {
-      graph2.addNode(nodeIndex);
-    });
-
-    data.forEach((edges, source) => {
-        edges.forEach(target => {
-        graph2.addEdge(source, target);
-        });
-    });
-
-    endTime = performance.now();
-    
-    console.log(`Graph2 build time: ${endTime  - startTime}ms`)
-
-    startTime = performance.now();
-
-    graph2 = new Graph();
-
-    // Add nodes in a batch
-    const nodes2 = Array.from({ length: data.length }, (_, nodeIndex) => nodeIndex);
-    graph2.import({
-      nodes: nodes2.map(node => ({ key: node })),
-      edges: []
-    });
-    
-
-    // Add edges in a batch
-    const edges2 = [];
-    data.forEach((edgeList, source) => {
-      edgeList.forEach(target => {
-        edges2.push({ source, target });
-      });
-    });
-    graph2.import({
-      nodes: [],
-      edges: edges2
-    });
-
-    endTime = performance.now();
-    console.log(`Graph3 build time: ${endTime - startTime} ms`);
-    startTime = endTime;*/
 
     createGraph(data);
 
     // Detect communities
     let communities;
     switch (algorithm) {
-      case 'Louvain':
+      case "Louvain":
         communities = louvain(graph, {
           resolution: inputs.resolution,
-          randomWalk: inputs.randomWalk
+          randomWalk: inputs.randomWalk,
         });
         break;
-      case 'Louvain-SL':
+      case "Louvain-SL":
         // Step 1: Build streamline graph
         const streamlineGraph = new Graph();
         const streamlineMap = new Map(); // Map streamline index to array of segment indices
@@ -447,12 +425,20 @@ function createGraph(data) {
 
         // Now add edges to streamlineGraph
         streamlineMap.forEach((segmentIndices, streamlineIndex) => {
-          segmentIndices.forEach(segmentIndex => {
-            data[segmentIndex].forEach(neighborIndex => {
+          segmentIndices.forEach((segmentIndex) => {
+            data[segmentIndex].forEach((neighborIndex) => {
               const neighborStreamlineIndex = segments[neighborIndex].lineIDx;
               if (streamlineIndex !== neighborStreamlineIndex) {
-                if (!streamlineGraph.hasEdge(streamlineIndex, neighborStreamlineIndex)) {
-                  streamlineGraph.addEdge(streamlineIndex, neighborStreamlineIndex);
+                if (
+                  !streamlineGraph.hasEdge(
+                    streamlineIndex,
+                    neighborStreamlineIndex
+                  )
+                ) {
+                  streamlineGraph.addEdge(
+                    streamlineIndex,
+                    neighborStreamlineIndex
+                  );
                 }
               }
             });
@@ -462,215 +448,200 @@ function createGraph(data) {
         // Step 2: Perform Louvain community detection on streamlineGraph
         const streamlineCommunities = louvain(streamlineGraph, {
           resolution: inputs.resolution,
-          randomWalk: inputs.randomWalk
+          randomWalk: inputs.randomWalk,
         });
 
         // Step 3: Map communities back to individual segments
         communities = {};
         streamlineMap.forEach((segmentIndices, streamlineIndex) => {
           const communityId = streamlineCommunities[streamlineIndex];
-          segmentIndices.forEach(segmentIndex => {
+          segmentIndices.forEach((segmentIndex) => {
             communities[segmentIndex] = communityId;
           });
         });
         break;
-      case 'PCA':
-        communities = pcaKmeansStreamlineClustering(segments, inputs.dims, inputs.kmean);
+      case "PCA":
+        communities = pcaKmeansStreamlineClustering(
+          segments,
+          inputs.dims,
+          inputs.kmean
+        );
         break;
-      case 'Infomap':
+      case "Infomap":
         communities = infomap.jInfomap(imapNodes, imapEdges, inputs.min);
         break;
-      case 'Hamming Distance':
+      case "Hamming Distance":
         communities = hamming.jHamming(nodes, links, inputs.min);
         break;
-      case 'Label Propagation':
-        communities = llp.jLayeredLabelPropagation(imapNodes, imapEdges, inputs.gamma, inputs.max);
+      case "Label Propagation":
+        communities = llp.jLayeredLabelPropagation(
+          imapNodes,
+          imapEdges,
+          inputs.gamma,
+          inputs.max
+        );
         break;
-      case 'Blank':
-        communities = Array.from({ length: segments.length }, (_, i) => [i, 0]).reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+      case "Blank":
+        communities = Array.from({ length: segments.length }, (_, i) => [
+          i,
+          0,
+        ]).reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
         break;
     }
 
     endTime = performance.now();
 
-    console.log(`Comm detect time:${endTime  - startTime}ms`)
-    
-    const comms = {};
-    Object.keys(communities).forEach(k=>{comms[communities[k]]=1});
-    console.log("NUM COMMUNITIES: ",Object.keys(comms).length );
+    console.log(`Comm detect time:${endTime - startTime}ms`);
 
-    //console.log(node2com)
-    console.log("comms:", communities)
+    const comms = {};
+    Object.keys(communities).forEach((k) => {
+      comms[communities[k]] = 1;
+    });
+    console.log("NUM COMMUNITIES: ", Object.keys(comms).length);
+
+    console.log("comms:", communities);
 
     setOrgCommunities(communities);
 
     ///color all!!
     Object.entries(communities).forEach(([nodeId, communityIndex]) => {
-        const color= colorScale(communityIndex.toString())
-        //console.log(`Node ${nodeId}: Community ${communityIndex} Color: ${color}`);
-        if (!segments[parseInt(nodeId)])
-          console.log(nodeId)
-        else
-          segments[parseInt(nodeId)].color = color;
-        //setSegmentsSelected(segments)
-      });
+      const color = colorScale(communityIndex.toString());
+      //console.log(`Node ${nodeId}: Community ${communityIndex} Color: ${color}`);
+      if (!segments[parseInt(nodeId)]) console.log(nodeId);
+      else segments[parseInt(nodeId)].color = color;
+      //setSegmentsSelected(segments)
+    });
     //CHECKKKKK!!!
-    setSegmentsSelected(segments)
-  
+    setSegmentsSelected(segments);
+
     // Process communities, creating nodes for each community and counting sizes
     Object.entries(communities).forEach(([node, community]) => {
-      if (!segments[parseInt(node)])
-        return;
+      if (!segments[parseInt(node)]) return;
       if (!communityGraph.hasNode(community)) {
         communityGraph.addNode(community, { size: 1 });
       } else {
-        communityGraph.updateNodeAttribute(community, 'size', size => size + 1);
+        communityGraph.updateNodeAttribute(
+          community,
+          "size",
+          (size) => size + 1
+        );
       }
     });
-  
+
     // Now, let's prepare data for visualization
-    const nodes = communityGraph.nodes().map(node => ({
+    const nodes = communityGraph.nodes().map((node) => ({
       id: node,
-      size: communityGraph.getNodeAttribute(node, 'size')/2,
+      size: communityGraph.getNodeAttribute(node, "size") / 2,
     }));
 
     // After computing community sizes but before setting the graphData:
     const scaleFactor = 0.02; // Adjust this scaling factor as needed
-    const scaledNodes = nodes.map(node => ({
-        ...node,
-        size: node.size * scaleFactor,
+    const scaledNodes = nodes.map((node) => ({
+      ...node,
+      size: node.size * scaleFactor,
     }));
 
-    console.log("NODE SIZE: ", nodes[0].size * scaleFactor)
+    console.log("NODE SIZE: ", nodes[0].size * scaleFactor);
 
     // Assign a color to each community node
-    const nodesWithColors = scaledNodes.map(node => ({
-        ...node,
-        color: colorScale(node.id.toString()), // Convert node id to string for the scale function
+    const nodesWithColors = scaledNodes.map((node) => ({
+      ...node,
+      color: colorScale(node.id.toString()), // Convert node id to string for the scale function
     }));
-  
-    // No edges between communities are added for now, 
+
+    // No edges between communities are added for now,
     // as we don't have the information about inter-community connections here.
     // You might need additional logic to determine and add these connections if needed.
 
     // Detected communities: communities (a mapping of node -> community)
 
-
-    console.log("CHECKPOINT1")
+    console.log("CHECKPOINT1");
 
     // Use a set to store unique inter-community links in the format "smaller_larger" to ensure uniqueness
     const interCommunityLinksSet = new Set();
 
     data.forEach((edges, source) => {
-      edges.forEach(target => {
-          const sourceCommunity = communities[source];
-          const targetCommunity = communities[target];
-  
-          // Check if communities are different, now including community 0
-          if (sourceCommunity !== targetCommunity) {
-              // Ensure a consistent order for the pair to avoid duplicate entries in set
-              const sortedPair = [sourceCommunity, targetCommunity].sort().join('_');
-              interCommunityLinksSet.add(sortedPair);
-          }
+      edges.forEach((target) => {
+        const sourceCommunity = communities[source];
+        const targetCommunity = communities[target];
+
+        // Check if communities are different, now including community 0
+        if (sourceCommunity !== targetCommunity) {
+          // Ensure a consistent order for the pair to avoid duplicate entries in set
+          const sortedPair = [sourceCommunity, targetCommunity]
+            .sort()
+            .join("_");
+          interCommunityLinksSet.add(sortedPair);
+        }
       });
-  });
+    });
 
     // Convert the set back to an array of objects for further processing or output
-    let interCommunityLinks = Array.from(interCommunityLinksSet).map(pair => {
-        const [source, target] = pair.split('_');
-        return { source, target };
+    let interCommunityLinks = Array.from(interCommunityLinksSet).map((pair) => {
+      const [source, target] = pair.split("_");
+      return { source, target };
     });
-    console.log("CHECKPOINT2")
+    console.log("CHECKPOINT2");
     // Deduplicate the links
     const linkPairs = new Set();
-    interCommunityLinks = interCommunityLinks.filter(link => {
-        const sortedPair = [link.source, link.target].sort().join('_');
-        if (linkPairs.has(sortedPair)) {
+    interCommunityLinks = interCommunityLinks.filter((link) => {
+      const sortedPair = [link.source, link.target].sort().join("_");
+      if (linkPairs.has(sortedPair)) {
         return false;
-        } else {
+      } else {
         linkPairs.add(sortedPair);
         return true;
-        }
+      }
     });
-
-    /*interCommunityLinks = interCommunityLinks.map(obj => ({
-        source: obj.source.id,
-        target: obj.target.id}
-        ))*/
-    //console.log(interCommunityLinks)
-    //console.log(interCommunityLinks[0])
-    //console.log(interCommunityLinks[0].source)
-
-    // Now, interCommunityLinks contains all the edges between different communities.
-    console.log("CHECKPOINT3")
-    // Modify the nodes structure to include the original nodes for each community
+    console.log("CHECKPOINT3");
     const communityMembers = {};
     Object.entries(communities).forEach(([originalNode, communityId]) => {
-      if (!segments[parseInt(originalNode)])
-        return;
+      if (!segments[parseInt(originalNode)]) return;
 
-        if (!communityMembers[communityId]) {
+      if (!communityMembers[communityId]) {
         communityMembers[communityId] = [];
-        }
-        communityMembers[communityId].push(parseInt(originalNode, 10));
+      }
+      communityMembers[communityId].push(parseInt(originalNode, 10));
     });
 
-    const nodesWithCommunityMembers = nodesWithColors.map(node => ({
-        ...node,
-        members: communityMembers[node.id] || [],
-        groupID: []
+    const nodesWithCommunityMembers = nodesWithColors.map((node) => ({
+      ...node,
+      members: communityMembers[node.id] || [],
+      groupID: [],
     }));
 
     //console.log("nodesWithCommunityMembers: ",nodesWithCommunityMembers)
 
     setGraphData({
       //nodes,
-      nodes:nodesWithCommunityMembers,
-      links: interCommunityLinks//[], // No inter-community links for this simplified visualization
+      nodes: nodesWithCommunityMembers,
+      links: interCommunityLinks, //[], // No inter-community links for this simplified visualization
     });
 
     saveUndo();
-  
-  }//, [data]);
+  }; //, [data]);
 
   // Function to generate a random color
   const getRandomColor = () => {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
+    const letters = "0123456789ABCDEF";
+    let color = "#";
     for (let i = 0; i < 6; i++) {
       color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
   };
 
-  const isValidColor = (color) => {
-    const s = new Option().style;
-    s.color = color;
-    return s.color !== '';
-  };
-
-  // Function to update node and segment colors
-  const updateColors = (node, newColor) => {
-    setNodeColors(prevColors => ({
-      ...prevColors,
-      [node.id]: newColor
-    }));
-
-    const updatedSegments = segments.map(seg => 
-      node.members.includes(seg.globalIdx) ? { ...seg, color: newColor } : seg
-    );
-
-    setSegmentsSelected(updatedSegments);
-  };
-
   const promptForColor = () => {
-    const userInput = window.prompt("Enter a color (e.g., 'red', '#FF0000', or 'rgb(255,0,0)'):");
+    const userInput = window.prompt(
+      "Enter a color (e.g., 'red', '#FF0000', or 'rgb(255,0,0)'):"
+    );
     return userInput || null; // Return null if user cancels or inputs empty string
   };
 
   // Modified onNodeClick handler
   const handleNodeClick = (node, event) => {
-    if (event.button === 2) { // Right click
+    if (event.button === 2) {
+      // Right click
       event.preventDefault(); // Prevent default right-click menu
       let newColor;
       if (event.ctrlKey) {
@@ -680,7 +651,7 @@ function createGraph(data) {
       }
 
       node.color = newColor;
-      
+
       // Update node color without changing its structure
       /*setGraphData(prevState => ({
         ...prevState,
@@ -690,20 +661,23 @@ function createGraph(data) {
       }));*/
 
       // Update associated segments' colors
-      const updatedSegments = segments.map(seg => 
+      const updatedSegments = segments.map((seg) =>
         node.members.includes(seg.globalIdx) ? { ...seg, color: newColor } : seg
       );
 
       setSegmentsSelected(updatedSegments);
-    } else { // Left click (existing behavior)
+    } else {
+      // Left click (existing behavior)
       if (multiSelect) {
-        setSelectedNodes(prevSelectedNodes => {
-          const isNodeAlreadySelected = prevSelectedNodes.find(selectedNode => selectedNode.id === node.id);
+        setSelectedNodes((prevSelectedNodes) => {
+          const isNodeAlreadySelected = prevSelectedNodes.find(
+            (selectedNode) => selectedNode.id === node.id
+          );
           if (!isNodeAlreadySelected) {
             const newState = [...prevSelectedNodes, node];
             let selected = [];
-            newState.forEach(node => {
-              node.members.forEach(idx => {
+            newState.forEach((node) => {
+              node.members.forEach((idx) => {
                 let seg = segments[parseInt(idx)];
                 seg.color = node.color;
                 selected.push(seg);
@@ -721,10 +695,9 @@ function createGraph(data) {
           setSegmentsSelected(segments);
         } else {
           let selected = [];
-          node.members.forEach(idx => {
+          node.members.forEach((idx) => {
             let seg = segments[parseInt(idx)];
-            if (!seg)
-              console.log(`segment idx not found! ${idx}`);
+            if (!seg) console.log(`segment idx not found! ${idx}`);
             seg.color = node.color;
             selected.push(seg);
           });
@@ -734,113 +707,110 @@ function createGraph(data) {
       }
     }
   };
-  
+
   const renderInputs = () => {
     switch (algorithm) {
-      case 'Louvain':
-      case 'Louvain-SL':
+      case "Louvain":
+      case "Louvain-SL":
         return (
           <>
-            <label>
-              Resolution:
+            <div>
+              <label>Resolution:</label>
               <input
                 type="text"
-                style = {{ width: '100px' }}
+                style={{ width: "100px" }}
                 name="resolution"
                 value={inputs.resolution}
                 onChange={handleInputChange}
               />
-            </label>
-            <label>
-              Random Walk:
+            </div>
+            <div>
+              <label>Random Walk:</label>
               <input
                 type="checkbox"
                 name="randomWalk"
                 checked={inputs.randomWalk}
                 onChange={handleInputChange}
               />
-            </label>
+            </div>
           </>
         );
-      case 'PCA':
+      case "PCA":
         return (
           <>
-            <label>
-              Dims:
+            <div>
+              <label>Dims:</label>
               <input
                 type="text"
-                style = {{ width: '100px' }}
+                style={{ width: "100px" }}
                 name="Dims"
                 value={inputs.dims}
                 onChange={handleInputChange}
               />
-            </label>
-
-            <label>
-              kmeans:
+            </div>
+            <div>
+              <label>K Means:</label>
               <input
                 type="text"
-                style = {{ width: '100px' }}
+                style={{ width: "100px" }}
                 name="kmean"
                 value={inputs.kmean}
                 onChange={handleInputChange}
               />
-            </label>
+            </div>
           </>
-        )
-      case 'Infomap':
+        );
+      case "Infomap":
         return (
-          <label>
-            Min:
+          <div>
+            <label>Min:</label>
             <input
               type="text"
-              style = {{ width: '100px' }}
+              style={{ width: "100px" }}
               name="min"
               value={inputs.min}
               onChange={handleInputChange}
             />
-          </label>
+          </div>
         );
-      case 'Hamming Distance':
+      case "Hamming Distance":
         return (
-          <label>
-            Min:
+          <div>
+            <label>Min:</label>
             <input
-              style = {{ width: '100px' }}
+              style={{ width: "100px" }}
               type="text"
               name="min"
               value={inputs.min}
               onChange={handleInputChange}
             />
-          </label>
+          </div>
         );
-      case 'Blank':
-        return (
-          <></>
-        );
-      case 'Label Propagation':
+      case "Blank":
+        return <></>;
+      case "Label Propagation":
         return (
           <>
-            <label>
-              Gamma:
+            <div>
+              <label>Gamma:</label>
               <input
                 type="text"
-                style = {{ width: '100px' }}
+                style={{ width: "100px" }}
                 name="gamma"
                 value={inputs.gamma}
                 onChange={handleInputChange}
               />
-            </label>
-            <label>
-              Max:
+            </div>
+            <div>
+              <label>Max:</label>
               <input
                 type="text"
-                style = {{ width: '100px' }}
+                style={{ width: "100px" }}
                 name="max"
                 value={inputs.max}
                 onChange={handleInputChange}
               />
-            </label>
+            </div>
           </>
         );
       default:
@@ -851,73 +821,108 @@ function createGraph(data) {
   if (isEmpty) {
     // If the graph is empty, we can return null or some placeholder
     //return <div>No data available to plot the graph.</div>;
-    return (<div><button
-    onClick={() => handleStart()}
-    disabled={multiSelect}
-  >
-  Start
-  </button> 
-  <label>
-    Algorithm:
-    <select value={algorithm} onChange={(e) => setAlgorithm(e.target.value)}>
-      <option value="Louvain">Louvain</option>
-      <option value="Louvain-SL">Louvain-SL</option>
-      <option value="PCA">PCA k-means</option>
-      <option value="Infomap">Infomap</option>
-      <option value="Label Propagation">Label Propagation</option>
-      <option value="Hamming Distance">Hamming Distance</option>
-      <option value="Blank">Blank</option>
-    </select>
-  </label>
-  {renderInputs()}
-  <label>
-    Node Scale:
-    <input defaultValue={nodeScale} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setNodeScale(Number(e.target.value));}} />
-  </label>
-      Seed:
-  <input defaultValue={seed} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setSeed(Number(e.target.value)); seedrandom(seed, { global: true });}} />
-</div>)
+    return (
+      <div
+        style={{
+          margin: "5px",
+          gap: "10px",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <label style={{ fontWeight: "bold" }}>Settings</label>
+        <div id="graph-comm-settings" style={{ display: "flex", gap: "10px" }}>
+          <div style={{ flexDirection: "column" }}>
+            <div>
+              <label>Algorithm:</label>
+              <select
+                value={algorithm}
+                onChange={(e) => setAlgorithm(e.target.value)}
+              >
+                <option value="Louvain">Louvain</option>
+                <option value="Louvain-SL">Louvain-SL</option>
+                <option value="PCA">PCA K-Means</option>
+                <option value="Infomap">Infomap</option>
+                <option value="Label Propagation">Label Propagation</option>
+                <option value="Hamming Distance">Hamming Distance</option>
+                <option value="Blank">Blank</option>
+              </select>
+            </div>
+            <div>
+              <label>Node Scale:</label>
+              <input
+                defaultValue={nodeScale}
+                type="number"
+                onChange={(e) => {
+                  setNodeScale(Number(e.target.value));
+                }}
+              />
+            </div>
+            <div>
+              <label>Seed:</label>
+              <input
+                defaultValue={seed}
+                type="number"
+                onChange={(e) => {
+                  setSeed(Number(e.target.value));
+                  seedrandom(seed, { global: true });
+                }}
+              />
+            </div>
+          </div>
+          <div style={{ flexDirection: "column" }}>{renderInputs()}</div>
+        </div>
+        <button
+          style={{ width: "80%", maxWidth: "260px" }}
+          onClick={() => handleStart()}
+          disabled={multiSelect}
+        >
+          Start
+        </button>
+      </div>
+    );
   }
 
   function computeSizes(nodes) {
-      // Find min and max number of members
-      let minMembers = Infinity, maxMembers = -Infinity;
-      nodes.forEach(node => {
-          minMembers = Math.min(minMembers, node.members.length);
-          maxMembers = Math.max(maxMembers, node.members.length);
-      });
+    // Find min and max number of members
+    let minMembers = Infinity,
+      maxMembers = -Infinity;
+    nodes.forEach((node) => {
+      minMembers = Math.min(minMembers, node.members.length);
+      maxMembers = Math.max(maxMembers, node.members.length);
+    });
 
-      // Define the log base - using e (natural logarithm) for simplicity
-      const logBase = Math.E;
+    // Define the log base - using e (natural logarithm) for simplicity
+    const logBase = Math.E;
 
-      // Function to calculate size based on members count
-      const logScaleSize = (membersCount, a, b) => {
-          return a + b * Math.log(membersCount) / Math.log(logBase);
-      };
+    // Function to calculate size based on members count
+    const logScaleSize = (membersCount, a, b) => {
+      return a + (b * Math.log(membersCount)) / Math.log(logBase);
+    };
 
-      // Calculate constants a and b for the scale
-      // Solve for a and b using the equations for min and max members
-      const b = 9 / (Math.log(maxMembers) - Math.log(minMembers)); // (10 - 1) = 9 is the range of sizes
-      const a = 1 - b * Math.log(minMembers);
+    // Calculate constants a and b for the scale
+    // Solve for a and b using the equations for min and max members
+    const b = 9 / (Math.log(maxMembers) - Math.log(minMembers)); // (10 - 1) = 9 is the range of sizes
+    const a = 1 - b * Math.log(minMembers);
 
-      // Calculate and assign sizes
-      nodes.forEach(node => {
-          node.size = logScaleSize(node.members.length, a, b);
-          // Ensure size is within bounds
-          node.size = Math.max(1, Math.min(node.size, 10));
-      });
+    // Calculate and assign sizes
+    nodes.forEach((node) => {
+      node.size = logScaleSize(node.members.length, a, b);
+      // Ensure size is within bounds
+      node.size = Math.max(1, Math.min(node.size, 10));
+    });
 
-      return nodes;
+    return nodes;
   }
 
   const updateGroups = (nodes) => {
     const groups = {};
 
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (Array.isArray(node.groupID)) {
         //console.log(node.groupID)
-        node.groupID = [...new Set(node.groupID)]
-        node.groupID.forEach(groupID => {
+        node.groupID = [...new Set(node.groupID)];
+        node.groupID.forEach((groupID) => {
           if (groups.hasOwnProperty(groupID)) {
             groups[groupID]++; // Increment the frequency if the key exists
           } else {
@@ -929,288 +934,289 @@ function createGraph(data) {
 
     computeSizes(nodes);
     //console.log(groups)
-    console.log("GROUPS: ", groups)
+    console.log("GROUPS: ", groups);
     setAllGroups(groups);
     return groups;
-  }
+  };
 
   const handleMergeCommunitiesP = (pNodes) => {
-  
-    console.log(pNodes)
-    console.log(selectedNodes)
+    console.log(pNodes);
+    console.log(selectedNodes);
 
-      const toMerge = pNodes.map(node => node.id);
-      let { nodes, links } = graphData;
+    const toMerge = pNodes.map((node) => node.id);
+    let { nodes, links } = graphData;
 
-      if (pNodes[0].groupID.length > 0){//already in group
-          const mGroupID = pNodes[0].groupID;
-          
-      } 
-      const mergedGroupID = [].concat(...pNodes.map(obj => obj.groupID));
+    if (pNodes[0].groupID.length > 0) {
+      //already in group
+      const mGroupID = pNodes[0].groupID;
+    }
+    const mergedGroupID = [].concat(...pNodes.map((obj) => obj.groupID));
 
-      //console.log(orgCommunities)
-      
+    //console.log(orgCommunities)
 
-      //convert the links back
-      links = links.map(obj => ({
-          source: obj.source.id,
-          target: obj.target.id}
-          ))
+    //convert the links back
+    links = links.map((obj) => ({
+      source: obj.source.id,
+      target: obj.target.id,
+    }));
 
-      // Find an unused community index (node ID)
-      const allCommunityIndexes = nodes.map(node => node.id);
-      const maxCommunityIndex = allCommunityIndexes.length > 0 ? Math.max(...allCommunityIndexes) : 0;
-      const newCommunityIndex = maxCommunityIndex + 1;
+    // Find an unused community index (node ID)
+    const allCommunityIndexes = nodes.map((node) => node.id);
+    const maxCommunityIndex =
+      allCommunityIndexes.length > 0 ? Math.max(...allCommunityIndexes) : 0;
+    const newCommunityIndex = maxCommunityIndex + 1;
 
-      const mergeIds = pNodes.map(object => object.id);
-      // Iterate over the mergeArray
-      for (let key in orgCommunities) {
-        if (mergeIds.includes(orgCommunities[key].toString())) {
-          orgCommunities[key] = newCommunityIndex;
-          //console.log(key)
-        }
+    const mergeIds = pNodes.map((object) => object.id);
+    // Iterate over the mergeArray
+    for (let key in orgCommunities) {
+      if (mergeIds.includes(orgCommunities[key].toString())) {
+        orgCommunities[key] = newCommunityIndex;
+        //console.log(key)
       }
+    }
     setOrgCommunities(orgCommunities);
 
+    // Merge member lists of communities specified in 'toMerge'
+    const mergedMembers = toMerge.flatMap((communityIndex) => {
+      // Find the node that corresponds to the current community index and get its members
+      const node = nodes.find((n) => n.id === communityIndex);
+      return node ? node.members : [];
+    });
 
+    const removed_nodes = nodes.filter((node) => toMerge.includes(node.id));
 
-      // Merge member lists of communities specified in 'toMerge'
-      const mergedMembers = toMerge
-          .flatMap(communityIndex => {
-          // Find the node that corresponds to the current community index and get its members
-          const node = nodes.find(n => n.id === communityIndex);
-          return node ? node.members : [];
-          });
+    // Remove the nodes that are merged
+    nodes = nodes.filter((node) => !toMerge.includes(node.id));
 
+    const newsize = removed_nodes.reduce(
+      (totalSize, obj) => totalSize + obj.size,
+      0
+    );
 
-      const removed_nodes = nodes.filter(node => toMerge.includes(node.id));
+    // Create a new node for the merged community
+    const newCommunityNode = {
+      // Copy other properties
+      ...removed_nodes[0],
+      id: newCommunityIndex,
+      members: mergedMembers,
+      size: newsize,
+      groupID: [...mergedGroupID],
+    };
+    nodes.push(newCommunityNode);
 
-
-      // Remove the nodes that are merged
-      nodes = nodes.filter(node => !toMerge.includes(node.id));
-
-      const newsize = removed_nodes.reduce((totalSize, obj) => totalSize + obj.size, 0);
-
-      // Create a new node for the merged community
-      const newCommunityNode = {
-          // Copy other properties
-          ...removed_nodes[0],
-          id: newCommunityIndex,
-          members: mergedMembers,
-          size: newsize,
-          groupID: [...mergedGroupID]
-          
-      };
-      nodes.push(newCommunityNode);
-
-      // Update the links to reflect the merge
-      //console.log(toMerge)
-      //console.log(links[0])
-      links = links.map(link => {
-
-          // Update the source and target of the link if they refer to a community that was merged
-          return {
-          source: toMerge.includes(link.source) ? newCommunityIndex : link.source,
-          target: toMerge.includes(link.target) ? newCommunityIndex : link.target,
-          };
-      }).filter(link => link.source !== link.target); // Remove self-links
-
-
-      // Deduplicate the links
-      const linkPairs = new Set();
-      links = links.filter(link => {
-          const sortedPair = [link.source, link.target].sort().join('_');
-          if (linkPairs.has(sortedPair)) {
-          return false;
-          } else {
-          linkPairs.add(sortedPair);
-          return true;
-          }
-      });
-
-      //deselect the ui multiselect mode
-      setSelectedNodes([])
-      setMultiSelect(false)
-
-      //update the 3D view with the new merged segment colors
-      let selected = []
-      newCommunityNode.members.forEach(idx=>{
-          let seg = segments[parseInt(idx)];
-          seg.color = newCommunityNode.color;
-          //console.log(seg.color);
-          selected.push(seg)
+    // Update the links to reflect the merge
+    //console.log(toMerge)
+    //console.log(links[0])
+    links = links
+      .map((link) => {
+        // Update the source and target of the link if they refer to a community that was merged
+        return {
+          source: toMerge.includes(link.source)
+            ? newCommunityIndex
+            : link.source,
+          target: toMerge.includes(link.target)
+            ? newCommunityIndex
+            : link.target,
+        };
       })
-      setSegmentsSelected(selected)
-      setSelectedNode(newCommunityNode)
+      .filter((link) => link.source !== link.target); // Remove self-links
 
-      updateGroups(nodes);
+    // Deduplicate the links
+    const linkPairs = new Set();
+    links = links.filter((link) => {
+      const sortedPair = [link.source, link.target].sort().join("_");
+      if (linkPairs.has(sortedPair)) {
+        return false;
+      } else {
+        linkPairs.add(sortedPair);
+        return true;
+      }
+    });
 
-      // Set the updated nodes and links to the state
-      setGraphData({
-          nodes: nodes,
-          links: links,
-      });
+    //deselect the ui multiselect mode
+    setSelectedNodes([]);
+    setMultiSelect(false);
 
-      saveUndo();
-      return newCommunityNode;
-}
+    //update the 3D view with the new merged segment colors
+    let selected = [];
+    newCommunityNode.members.forEach((idx) => {
+      let seg = segments[parseInt(idx)];
+      seg.color = newCommunityNode.color;
+      //console.log(seg.color);
+      selected.push(seg);
+    });
+    setSegmentsSelected(selected);
+    setSelectedNode(newCommunityNode);
+
+    updateGroups(nodes);
+
+    // Set the updated nodes and links to the state
+    setGraphData({
+      nodes: nodes,
+      links: links,
+    });
+
+    saveUndo();
+    return newCommunityNode;
+  };
 
   const handleMergeCommunities = () => {
+    console.log(selectedNodes);
+    console.log(selectedNodes);
 
-      console.log(selectedNodes)
-      console.log(selectedNodes)
+    const toMerge = selectedNodes.map((node) => node.id);
+    let { nodes, links } = graphData;
 
-        const toMerge = selectedNodes.map(node => node.id);
-        let { nodes, links } = graphData;
+    if (selectedNodes[0].groupID.length > 0) {
+      //already in group
+      const mGroupID = selectedNodes[0].groupID;
+    }
+    const mergedGroupID = [].concat(...selectedNodes.map((obj) => obj.groupID));
 
-        if (selectedNodes[0].groupID.length > 0){//already in group
-            const mGroupID = selectedNodes[0].groupID;
-            
-        } 
-        const mergedGroupID = [].concat(...selectedNodes.map(obj => obj.groupID));
+    //console.log(orgCommunities)
 
-        //console.log(orgCommunities)
-        
+    //convert the links back
+    links = links.map((obj) => ({
+      source: obj.source.id,
+      target: obj.target.id,
+    }));
 
-        //convert the links back
-        links = links.map(obj => ({
-            source: obj.source.id,
-            target: obj.target.id}
-            ))
+    // Find an unused community index (node ID)
+    const allCommunityIndexes = nodes.map((node) => node.id);
+    const maxCommunityIndex =
+      allCommunityIndexes.length > 0 ? Math.max(...allCommunityIndexes) : 0;
+    const newCommunityIndex = maxCommunityIndex + 1;
 
-        // Find an unused community index (node ID)
-        const allCommunityIndexes = nodes.map(node => node.id);
-        const maxCommunityIndex = allCommunityIndexes.length > 0 ? Math.max(...allCommunityIndexes) : 0;
-        const newCommunityIndex = maxCommunityIndex + 1;
+    const mergeIds = selectedNodes.map((object) => object.id);
+    // Iterate over the mergeArray
+    for (let key in orgCommunities) {
+      if (mergeIds.includes(orgCommunities[key].toString())) {
+        orgCommunities[key] = newCommunityIndex;
+        //console.log(key)
+      }
+    }
+    setOrgCommunities(orgCommunities);
 
-        const mergeIds = selectedNodes.map(object => object.id);
-        // Iterate over the mergeArray
-        for (let key in orgCommunities) {
-          if (mergeIds.includes(orgCommunities[key].toString())) {
-            orgCommunities[key] = newCommunityIndex;
-            //console.log(key)
-          }
-        }
-      setOrgCommunities(orgCommunities);
+    // Merge member lists of communities specified in 'toMerge'
+    const mergedMembers = toMerge.flatMap((communityIndex) => {
+      // Find the node that corresponds to the current community index and get its members
+      const node = nodes.find((n) => n.id === communityIndex);
+      return node ? node.members : [];
+    });
 
+    const removed_nodes = nodes.filter((node) => toMerge.includes(node.id));
 
+    // Remove the nodes that are merged
+    nodes = nodes.filter((node) => !toMerge.includes(node.id));
 
-        // Merge member lists of communities specified in 'toMerge'
-        const mergedMembers = toMerge
-            .flatMap(communityIndex => {
-            // Find the node that corresponds to the current community index and get its members
-            const node = nodes.find(n => n.id === communityIndex);
-            return node ? node.members : [];
-            });
+    const newsize = removed_nodes.reduce(
+      (totalSize, obj) => totalSize + obj.size,
+      0
+    );
 
+    // Create a new node for the merged community
+    const newCommunityNode = {
+      // Copy other properties
+      ...removed_nodes[0],
+      id: newCommunityIndex,
+      members: mergedMembers,
+      size: newsize,
+      groupID: [...mergedGroupID],
+    };
+    nodes.push(newCommunityNode);
 
-        const removed_nodes = nodes.filter(node => toMerge.includes(node.id));
-
-
-        // Remove the nodes that are merged
-        nodes = nodes.filter(node => !toMerge.includes(node.id));
-
-        const newsize = removed_nodes.reduce((totalSize, obj) => totalSize + obj.size, 0);
-
-        // Create a new node for the merged community
-        const newCommunityNode = {
-            // Copy other properties
-            ...removed_nodes[0],
-            id: newCommunityIndex,
-            members: mergedMembers,
-            size: newsize,
-            groupID: [...mergedGroupID]
-            
+    // Update the links to reflect the merge
+    //console.log(toMerge)
+    //console.log(links[0])
+    links = links
+      .map((link) => {
+        // Update the source and target of the link if they refer to a community that was merged
+        return {
+          source: toMerge.includes(link.source)
+            ? newCommunityIndex
+            : link.source,
+          target: toMerge.includes(link.target)
+            ? newCommunityIndex
+            : link.target,
         };
-        nodes.push(newCommunityNode);
+      })
+      .filter((link) => link.source !== link.target); // Remove self-links
 
-        // Update the links to reflect the merge
-        //console.log(toMerge)
-        //console.log(links[0])
-        links = links.map(link => {
+    // Deduplicate the links
+    const linkPairs = new Set();
+    links = links.filter((link) => {
+      const sortedPair = [link.source, link.target].sort().join("_");
+      if (linkPairs.has(sortedPair)) {
+        return false;
+      } else {
+        linkPairs.add(sortedPair);
+        return true;
+      }
+    });
 
-            // Update the source and target of the link if they refer to a community that was merged
-            return {
-            source: toMerge.includes(link.source) ? newCommunityIndex : link.source,
-            target: toMerge.includes(link.target) ? newCommunityIndex : link.target,
-            };
-        }).filter(link => link.source !== link.target); // Remove self-links
+    //deselect the ui multiselect mode
+    setSelectedNodes([]);
+    setMultiSelect(false);
 
+    //update the 3D view with the new merged segment colors
+    let selected = [];
+    newCommunityNode.members.forEach((idx) => {
+      let seg = segments[parseInt(idx)];
+      seg.color = newCommunityNode.color;
+      //console.log(seg.color);
+      selected.push(seg);
+    });
+    setSegmentsSelected(selected);
+    setSelectedNode(newCommunityNode);
 
-        // Deduplicate the links
-        const linkPairs = new Set();
-        links = links.filter(link => {
-            const sortedPair = [link.source, link.target].sort().join('_');
-            if (linkPairs.has(sortedPair)) {
-            return false;
-            } else {
-            linkPairs.add(sortedPair);
-            return true;
-            }
-        });
+    updateGroups(nodes);
 
-        //deselect the ui multiselect mode
-        setSelectedNodes([])
-        setMultiSelect(false)
+    // Set the updated nodes and links to the state
+    setGraphData({
+      nodes: nodes,
+      links: links,
+    });
 
-        //update the 3D view with the new merged segment colors
-        let selected = []
-        newCommunityNode.members.forEach(idx=>{
-            let seg = segments[parseInt(idx)];
-            seg.color = newCommunityNode.color;
-            //console.log(seg.color);
-            selected.push(seg)
-        })
-        setSegmentsSelected(selected)
-        setSelectedNode(newCommunityNode)
-
-        updateGroups(nodes);
-
-        // Set the updated nodes and links to the state
-        setGraphData({
-            nodes: nodes,
-            links: links,
-        });
-
-        saveUndo();
-        return newCommunityNode;
-  }
+    saveUndo();
+    return newCommunityNode;
+  };
 
   const handleSplitCommunity = (splitInto) => {
-    const communityIndex = selectedNode.id
-    const X = 3
-    const orgSize = selectedNode.size
+    const communityIndex = selectedNode.id;
+    const X = 3;
+    const orgSize = selectedNode.size;
 
     let { nodes, links } = graphData;
 
     // Find an unused community index (node ID)
-    const allCommunityIndexes = nodes.map(node => node.id);
-    const maxCommunityIndex = allCommunityIndexes.length > 0 ? Math.max(...allCommunityIndexes) + 1 : 0 + 1;
+    const allCommunityIndexes = nodes.map((node) => node.id);
+    const maxCommunityIndex =
+      allCommunityIndexes.length > 0
+        ? Math.max(...allCommunityIndexes) + 1
+        : 0 + 1;
 
     //conver the links back
-    links = links.map(obj => ({
-        source: obj.source.id,
-        target: obj.target.id}
-        ))
+    links = links.map((obj) => ({
+      source: obj.source.id,
+      target: obj.target.id,
+    }));
 
     // Find the community node to split
-    let communityNode = nodes.find(node => node.id === communityIndex);
+    let communityNode = nodes.find((node) => node.id === communityIndex);
 
-    if (nodes.length == 1){
+    if (nodes.length == 1) {
       communityNode = nodes[0];
+    } else if (!communityNode) {
+      console.error("Community to split not found");
+      return;
     }
-    else if (!communityNode) {
-        console.error("Community to split not found");
-        return;
-    }
-
 
     // Calculate new community size, assume communityNode.members is an array of member IDs
     const totalMembers = communityNode.members.length;
     const membersPerNewCommunity = Math.ceil(totalMembers / X);
-    
+
     // Remove the original community node
-    nodes = nodes.filter(node => node.id !== communityIndex);
+    nodes = nodes.filter((node) => node.id !== communityIndex);
     //communityNode.groupID=[];
 
     /*
@@ -1261,430 +1267,466 @@ function createGraph(data) {
     links = links.filter(link => link.source !== link.target);*/
 
     //////////
-    let newLinks = links.filter(link => link.source !== communityIndex && link.target !== communityIndex); // Exclude original community's links
-    console.log(`${newLinks.length} ${links.length}`)
-    console.log(newLinks)
+    let newLinks = links.filter(
+      (link) => link.source !== communityIndex && link.target !== communityIndex
+    ); // Exclude original community's links
+    console.log(`${newLinks.length} ${links.length}`);
+    console.log(newLinks);
 
-    let fnodes, fdata,interCommunityLinks;
+    let fnodes, fdata, interCommunityLinks;
     const graph = new Graph(); // Create a graph
     const communityGraph = new Graph(); // This will store the community graph
-    
+
     const indicesToFilter = communityNode.members;
 
+    const imapNodes = [];
+    const imapEdges = [];
 
-    const imapNodes = []
-    const imapEdges = []
-
-    if (splitInto){
+    if (splitInto) {
       fnodes = splitInto.nodes;
       fdata = splitInto;
       interCommunityLinks = fdata.links;
       //alert("ARASD")
-    }else{
+    } else {
       //alert("HERE")
 
-
-    fdata = indicesToFilter.map(index => data[index]);
+      fdata = indicesToFilter.map((index) => data[index]);
       // Add nodes first
-    fdata.forEach((_, nodeIndex) => {
+      fdata.forEach((_, nodeIndex) => {
         if (!graph.hasNode(indicesToFilter[nodeIndex])) {
-            //console.log(nodeIndex)
-            graph.addNode(indicesToFilter[nodeIndex]);
+          //console.log(nodeIndex)
+          graph.addNode(indicesToFilter[nodeIndex]);
         }
-        imapNodes.push(indicesToFilter[nodeIndex])
-    });
-    
-    // Then add edges
-    fdata.forEach((edges, source) => {
-        const src = source
-        edges.forEach(target => {
-        //if (!indicesToFilter[source])
-            //console.log(`${source} ${indicesToFilter[source]}`)
-        source = indicesToFilter[src]
-        target = target
-        //WARNING
-        if ((source === 0 && target) || (source && target)){
-          imapEdges.push({
-            source, target, value:1
-          })
+        imapNodes.push(indicesToFilter[nodeIndex]);
+      });
+
+      // Then add edges
+      fdata.forEach((edges, source) => {
+        const src = source;
+        edges.forEach((target) => {
+          //if (!indicesToFilter[source])
+          //console.log(`${source} ${indicesToFilter[source]}`)
+          source = indicesToFilter[src];
+          target = target;
+          //WARNING
+          if ((source === 0 && target) || (source && target)) {
+            imapEdges.push({
+              source,
+              target,
+              value: 1,
+            });
             //console.log(`FOUND SRC TGT: ${source}, ${target}`)
             // Ensure both source and target nodes exist
             if (!graph.hasNode(target)) {
-                //graph.addNode(target);
-                //console.log(`WARNING! ${target}`)
-            }else if (!graph.hasEdge(source, target)) {
-                graph.addEdge(source, target);
-                //console.log(`ADDED! ${[source,target]}`)
+              //graph.addNode(target);
+              //console.log(`WARNING! ${target}`)
+            } else if (!graph.hasEdge(source, target)) {
+              graph.addEdge(source, target);
+              //console.log(`ADDED! ${[source,target]}`)
             }
-        }else{
+          } else {
             //console.log(`UNDEFINED SRC TGT: ${source}, ${target}`)
-        }
-        });
-        
-    });
-    //console.log(graph)
-    
-    console.log("imapNodes",imapNodes)
-    console.log("imapEdges",imapEdges)
-  
-    // Detect communities
-    //const communities = louvain(graph);
-    let communities;
-    switch (algorithm) {
-      case 'Louvain':
-        communities = louvain(graph, {
-          resolution: inputs.resolution,
-          randomWalk: inputs.randomWalk
-        });
-        break;
-      case 'Infomap':
-        communities = infomap.jInfomap(imapNodes, imapEdges, inputs.min);
-        break;
-      case 'Hamming Distance':
-        communities = hamming.jHamming(nodes, links, inputs.min);
-        break;
-      case 'Label Propagation':
-        communities = llp.jLayeredLabelPropagation(imapNodes, imapEdges, inputs.gamma, inputs.max);
-        break;
-
-      case 'Selected':
-        communities = Array.from({ length: imapNodes.length }, (_, i) => [i, 0]).reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
-        console.log("segmentsSelected:",segmentsSelected)
-        segmentsSelected.forEach(seg=>{
-          if (communities[seg.globalIdx] !== undefined){
-            communities[seg.globalIdx] = 1;
           }
-        })
-        break;
-  
+        });
+      });
+      //console.log(graph)
 
-    }
+      console.log("imapNodes", imapNodes);
+      console.log("imapEdges", imapEdges);
 
-    
+      // Detect communities
+      //const communities = louvain(graph);
+      let communities;
+      switch (algorithm) {
+        case "Louvain":
+          communities = louvain(graph, {
+            resolution: inputs.resolution,
+            randomWalk: inputs.randomWalk,
+          });
+          break;
+        case "Infomap":
+          communities = infomap.jInfomap(imapNodes, imapEdges, inputs.min);
+          break;
+        case "Hamming Distance":
+          communities = hamming.jHamming(nodes, links, inputs.min);
+          break;
+        case "Label Propagation":
+          communities = llp.jLayeredLabelPropagation(
+            imapNodes,
+            imapEdges,
+            inputs.gamma,
+            inputs.max
+          );
+          break;
 
-    console.log("comm: ",communities)
-  
-    // Process communities, creating nodes for each community and counting sizes
-    Object.entries(communities).forEach(([node, community]) => {
-      if (!communityGraph.hasNode(community)) {
-        communityGraph.addNode(community, { size: 1 });
-      } else {
-        communityGraph.updateNodeAttribute(community, 'size', size => size + 1);
+        case "Selected":
+          communities = Array.from({ length: imapNodes.length }, (_, i) => [
+            i,
+            0,
+          ]).reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+          console.log("segmentsSelected:", segmentsSelected);
+          segmentsSelected.forEach((seg) => {
+            if (communities[seg.globalIdx] !== undefined) {
+              communities[seg.globalIdx] = 1;
+            }
+          });
+          break;
       }
-    });
 
-    //let groupColor = d3.rgb(colorScale(maxCommunityIndex.toString())); // Convert to RGB
-    let groupColor = chroma(colorScale(maxCommunityIndex.toString())).rgb(); // Convert to RGB
-    let groupColorWithOpacity = `rgba(${groupColor[0]}, ${groupColor[1]}, ${groupColor[2]}, 0.1)`;
-  
-    // Now, let's prepare data for visualization
-    fnodes = communityGraph.nodes().map(node => ({
-      id: node.toString(),
-      size: (communityGraph.getNodeAttribute(node, 'size')/totalMembers)*orgSize,
-      color: colorScale(node.toString()),
-      groupID: (algorithm !== 'Selected')?[...communityNode.groupID, maxCommunityIndex]:[...communityNode.groupID],
-      groupColor: groupColorWithOpacity,//colorScale(maxCommunityIndex.toString()),
-      groupSize: communityGraph.nodes().length
-    }));
+      console.log("comm: ", communities);
 
-    //if (algorithm == 'Selected')
-    //  fnodes.groupID = [];
-
-    // Detected communities: communities (a mapping of node -> community)
-
-    interCommunityLinks = [];
-
-    // Assuming `data` is an adjacency list representation of the original graph
-
-    if (algorithm !== 'Selected')
-    fdata.forEach((edges, source) => {
-    source = indicesToFilter[source]
-    edges.forEach(target => {
-        //target = indicesToFilter[target]
-        const sourceCommunity = communities[source] + maxCommunityIndex;
-        const targetCommunity = communities[target] + maxCommunityIndex;
-
-        //WARNING
-        if (targetCommunity && sourceCommunity != communityIndex && targetCommunity != communityIndex){
-
-
-            if (sourceCommunity !== targetCommunity) {
-            // This is an inter-community link
-            const linkExists = interCommunityLinks.some(link => 
-                (link.source === sourceCommunity && link.target === targetCommunity) ||
-                (link.source === targetCommunity && link.target === sourceCommunity)
-            );
-
-            if (!sourceCommunity || !targetCommunity)
-                console.log([sourceCommunity,targetCommunity,source, target])
-            if (!linkExists && sourceCommunity != 0) {
-                interCommunityLinks.push({
-                source: sourceCommunity.toString(),
-                target: targetCommunity.toString()
-                });
-                //console.log([sourceCommunity,targetCommunity,sourceCommunity.toString(), targetCommunity.toString()])
-            }
-            }
+      // Process communities, creating nodes for each community and counting sizes
+      Object.entries(communities).forEach(([node, community]) => {
+        if (!communityGraph.hasNode(community)) {
+          communityGraph.addNode(community, { size: 1 });
+        } else {
+          communityGraph.updateNodeAttribute(
+            community,
+            "size",
+            (size) => size + 1
+          );
         }
-    });
-    });
-    //test
-    //console.log(`removing ${communityIndex}`)
+      });
 
-    if (algorithm !== 'Selected')
-    data.forEach((edges, source) => {
+      //let groupColor = d3.rgb(colorScale(maxCommunityIndex.toString())); // Convert to RGB
+      let groupColor = chroma(colorScale(maxCommunityIndex.toString())).rgb(); // Convert to RGB
+      let groupColorWithOpacity = `rgba(${groupColor[0]}, ${groupColor[1]}, ${groupColor[2]}, 0.1)`;
 
-        edges.forEach(target => {
+      // Now, let's prepare data for visualization
+      fnodes = communityGraph.nodes().map((node) => ({
+        id: node.toString(),
+        size:
+          (communityGraph.getNodeAttribute(node, "size") / totalMembers) *
+          orgSize,
+        color: colorScale(node.toString()),
+        groupID:
+          algorithm !== "Selected"
+            ? [...communityNode.groupID, maxCommunityIndex]
+            : [...communityNode.groupID],
+        groupColor: groupColorWithOpacity, //colorScale(maxCommunityIndex.toString()),
+        groupSize: communityGraph.nodes().length,
+      }));
+
+      //if (algorithm == 'Selected')
+      //  fnodes.groupID = [];
+
+      // Detected communities: communities (a mapping of node -> community)
+
+      interCommunityLinks = [];
+
+      // Assuming `data` is an adjacency list representation of the original graph
+
+      if (algorithm !== "Selected")
+        fdata.forEach((edges, source) => {
+          source = indicesToFilter[source];
+          edges.forEach((target) => {
+            //target = indicesToFilter[target]
+            const sourceCommunity = communities[source] + maxCommunityIndex;
+            const targetCommunity = communities[target] + maxCommunityIndex;
+
+            //WARNING
+            if (
+              targetCommunity &&
+              sourceCommunity != communityIndex &&
+              targetCommunity != communityIndex
+            ) {
+              if (sourceCommunity !== targetCommunity) {
+                // This is an inter-community link
+                const linkExists = interCommunityLinks.some(
+                  (link) =>
+                    (link.source === sourceCommunity &&
+                      link.target === targetCommunity) ||
+                    (link.source === targetCommunity &&
+                      link.target === sourceCommunity)
+                );
+
+                if (!sourceCommunity || !targetCommunity)
+                  console.log([
+                    sourceCommunity,
+                    targetCommunity,
+                    source,
+                    target,
+                  ]);
+                if (!linkExists && sourceCommunity != 0) {
+                  interCommunityLinks.push({
+                    source: sourceCommunity.toString(),
+                    target: targetCommunity.toString(),
+                  });
+                  //console.log([sourceCommunity,targetCommunity,sourceCommunity.toString(), targetCommunity.toString()])
+                }
+              }
+            }
+          });
+        });
+      //test
+      //console.log(`removing ${communityIndex}`)
+
+      if (algorithm !== "Selected")
+        data.forEach((edges, source) => {
+          edges.forEach((target) => {
             const sourceCommunity = orgCommunities[source];
             let targetCommunity = orgCommunities[target];
-            if (sourceCommunity == communityIndex || targetCommunity != communityIndex || communities[target] + maxCommunityIndex == communityIndex)
-                return;
+            if (
+              sourceCommunity == communityIndex ||
+              targetCommunity != communityIndex ||
+              communities[target] + maxCommunityIndex == communityIndex
+            )
+              return;
 
             targetCommunity = communities[target] + maxCommunityIndex;
-    
+
             if (sourceCommunity !== targetCommunity) {
-            // This is an inter-community link
-            const linkExists = interCommunityLinks.some(link => 
-                (link.source === sourceCommunity && link.target === targetCommunity) ||
-                (link.source === targetCommunity && link.target === sourceCommunity)
-            );
-    
-            if (!linkExists && sourceCommunity != 0) {
+              // This is an inter-community link
+              const linkExists = interCommunityLinks.some(
+                (link) =>
+                  (link.source === sourceCommunity &&
+                    link.target === targetCommunity) ||
+                  (link.source === targetCommunity &&
+                    link.target === sourceCommunity)
+              );
+
+              if (!linkExists && sourceCommunity != 0) {
                 interCommunityLinks.push({
-                source: sourceCommunity.toString(),
-                target: targetCommunity.toString()
+                  source: sourceCommunity.toString(),
+                  target: targetCommunity.toString(),
                 });
                 //console.log([sourceCommunity,targetCommunity,sourceCommunity.toString(), targetCommunity.toString()])
+              }
             }
-            }
+          });
         });
-        });
 
-      
+      //endtest
 
-    //endtest
-
-    // Deduplicate the links
-    const linkPairs = new Set();
-    interCommunityLinks = interCommunityLinks.filter(link => {
-        const sortedPair = [link.source, link.target].sort().join('_');
+      // Deduplicate the links
+      const linkPairs = new Set();
+      interCommunityLinks = interCommunityLinks.filter((link) => {
+        const sortedPair = [link.source, link.target].sort().join("_");
         if (linkPairs.has(sortedPair)) {
-        return false;
+          return false;
         } else {
-        linkPairs.add(sortedPair);
-        return true;
+          linkPairs.add(sortedPair);
+          return true;
         }
-    });
+      });
 
-    // Now, interCommunityLinks contains all the edges between different communities.
-    //console.log(communities)
-    //console.log(orgCommunities)
+      // Now, interCommunityLinks contains all the edges between different communities.
+      //console.log(communities)
+      //console.log(orgCommunities)
 
-    // Create a new object by adding the constant to each key and value of obj2
-    let adjustedComm = Object.keys(communities).reduce((newObj, key) => {
+      // Create a new object by adding the constant to each key and value of obj2
+      let adjustedComm = Object.keys(communities).reduce((newObj, key) => {
         // Convert key to a number since Object.keys returns an array of strings
         let adjustedKey = parseInt(key) + maxCommunityIndex;
         let adjustedValue = communities[key] + maxCommunityIndex;
         newObj[key] = adjustedValue;
         return newObj;
-    }, {});
+      }, {});
 
-    console.log(adjustedComm)
-    setOrgCommunities({...orgCommunities, ...adjustedComm})
+      console.log(adjustedComm);
+      setOrgCommunities({ ...orgCommunities, ...adjustedComm });
 
-    //console.log(indicesToFilter)
-    //console.log(interCommunityLinks)
-    
-    // Modify the nodes structure to include the original nodes for each community
-    const communityMembers = {};
-    Object.entries(communities).forEach(([originalNode, communityId]) => {
+      //console.log(indicesToFilter)
+      //console.log(interCommunityLinks)
+
+      // Modify the nodes structure to include the original nodes for each community
+      const communityMembers = {};
+      Object.entries(communities).forEach(([originalNode, communityId]) => {
         //communityId += maxCommunityIndex
         if (!communityMembers[communityId]) {
-            communityMembers[communityId] = [];
+          communityMembers[communityId] = [];
         }
         //communityMembers[communityId].push(parseInt(indicesToFilter[originalNode], 10));
         communityMembers[communityId].push(parseInt(originalNode, 10));
-    });
+      });
 
-  
+      //console.log(indicesToFilter)
 
-    //console.log(indicesToFilter)
-    
-    //console.log(communityMembers)
+      //console.log(communityMembers)
 
-    fnodes = fnodes.map(node => ({
+      fnodes = fnodes.map((node) => ({
         ...node,
         id: (parseInt(node.id) + maxCommunityIndex).toString(),
         members: communityMembers[node.id] || [],
-    }));
+      }));
+    }
 
-  }
+    let seenIds = new Set();
+    let duplicates = [];
 
-  let seenIds = new Set();
-  let duplicates = [];
-  
-  fnodes.forEach(node => {
+    fnodes.forEach((node) => {
       if (seenIds.has(node.id)) {
-          duplicates.push(node); // This node is a duplicate
+        duplicates.push(node); // This node is a duplicate
       } else {
-          seenIds.add(node.id);
+        seenIds.add(node.id);
       }
-  });
-  
-  if (duplicates.length > 0) {
+    });
+
+    if (duplicates.length > 0) {
       console.log("Duplicate nodes found:", duplicates);
-  } else {
+    } else {
       console.log("No duplicate nodes found.");
-  }
+    }
 
     //console.log(fnodes)
-    fnodes = nodes.concat(fnodes)
-    newLinks = newLinks.concat(interCommunityLinks)
+    fnodes = nodes.concat(fnodes);
+    newLinks = newLinks.concat(interCommunityLinks);
 
     /////////
 
     updateGroups(fnodes);
-    
+
     // Set the updated nodes and links to the state
     setGraphData({
-        nodes: fnodes,
-        links: newLinks
-        //links: newLinks,
+      nodes: fnodes,
+      links: newLinks,
+      //links: newLinks,
     });
 
     saveUndo();
-  }
+  };
 
-  const handleCollaspeGroup = ()=>{
-    const communityIndex = selectedNode.id
-    const groupID = selectedNode.groupID[0] //first group for now
+  const handleCollaspeGroup = () => {
+    const communityIndex = selectedNode.id;
+    const groupID = selectedNode.groupID[0]; //first group for now
     let { nodes, links } = graphData;
 
     // Find an unused community index (node ID)
-    
 
-    const nodeMembers = nodes.filter(node => node.groupID.includes(groupID));
-    let linkMembers = links.filter(link => link.source.groupID.includes(groupID) || link.target.groupID.includes(groupID));
+    const nodeMembers = nodes.filter((node) => node.groupID.includes(groupID));
+    let linkMembers = links.filter(
+      (link) =>
+        link.source.groupID.includes(groupID) ||
+        link.target.groupID.includes(groupID)
+    );
 
     //convert the links back
-    linkMembers = linkMembers.map(obj => ({
+    linkMembers = linkMembers.map((obj) => ({
       source: obj.source.id,
-      target: obj.target.id}
-      ))
+      target: obj.target.id,
+    }));
 
-      const storedGraphdata = {
-        nodes: nodeMembers,
-        links: linkMembers
-      }
+    const storedGraphdata = {
+      nodes: nodeMembers,
+      links: linkMembers,
+    };
 
-      //selectedNodes = nodeMembers;
-      const newNode = handleMergeCommunitiesP(nodeMembers);
-      newNode.storedGraphdata = storedGraphdata;
-  }
+    //selectedNodes = nodeMembers;
+    const newNode = handleMergeCommunitiesP(nodeMembers);
+    newNode.storedGraphdata = storedGraphdata;
+  };
 
-  const handleExpandGroup = () =>{
+  const handleExpandGroup = () => {
     const storedData = selectedNode.storedGraphdata;
-    if (!storedData)
-      return;
+    if (!storedData) return;
 
-      /*let { nodes, links } = graphData;
+    /*let { nodes, links } = graphData;
       //convert the links back
       links = links.map(obj => ({
       source: obj.source.id,
       target: obj.target.id}
       ))*/
 
-      handleSplitCommunity(storedData)
-
-  }
+    handleSplitCommunity(storedData);
+  };
 
   function calculateCentroid(pts) {
     //console.log(pts)
-    let firstPoint = pts[0], lastPoint = pts[pts.length - 1];
-  if (firstPoint[0] !== lastPoint[0] || firstPoint[1] !== lastPoint[1]) pts.push(firstPoint);
-  let twiceArea = 0,
-      x = 0, y = 0,
+    let firstPoint = pts[0],
+      lastPoint = pts[pts.length - 1];
+    if (firstPoint[0] !== lastPoint[0] || firstPoint[1] !== lastPoint[1])
+      pts.push(firstPoint);
+    let twiceArea = 0,
+      x = 0,
+      y = 0,
       nPts = pts.length,
-      p1, p2, f;
-  
-  for (let i = 0, j = nPts - 1; i < nPts; j = i++) {
-    p1 = pts[i]; p2 = pts[j];
-    f = p1[0] * p2[1] - p2[0] * p1[1];
-    twiceArea += f;          
-    x += (p1[0] + p2[0]) * f;
-    y += (p1[1] + p2[1]) * f;
-  }
-  f = twiceArea * 3;
-  return [x / f, y / f];
-}
+      p1,
+      p2,
+      f;
 
-  function drawHullOnCanvas(points, ctx, color, stretchFactor=1.5) {
+    for (let i = 0, j = nPts - 1; i < nPts; j = i++) {
+      p1 = pts[i];
+      p2 = pts[j];
+      f = p1[0] * p2[1] - p2[0] * p1[1];
+      twiceArea += f;
+      x += (p1[0] + p2[0]) * f;
+      y += (p1[1] + p2[1]) * f;
+    }
+    f = twiceArea * 3;
+    return [x / f, y / f];
+  }
+
+  function drawHullOnCanvas(points, ctx, color, stretchFactor = 1.5) {
     points = JSON.parse(JSON.stringify(points)); //deepcopy
-    if (points.length < 3 || !points[0])
-    return;
+    if (points.length < 3 || !points[0]) return;
     //console.log(color)
     // Compute the convex hull
     //let hull = d3.polygonHull(points);
     //console.log(`HERE ${points}`)
     let hullIndices = convexHull(points);
-    
-    
-    let hull = hullIndices.map(edge => {
+
+    let hull = hullIndices.map((edge) => {
       // edge is a pair of indices, like [0, 1]
-      return points[edge[0]]//[points[edge[0]], points[edge[1]]];
+      return points[edge[0]]; //[points[edge[0]], points[edge[1]]];
     });
 
     //console.log(hull)
-
 
     // Compute the centroid of the convex hull
     //const centroid = d3.polygonCentroid(hull);
     const centroid = calculateCentroid(hull);
     //console.log(centroid)
     //console.log(centroid)
-  
+
     // Create a new hull array with points moved away from the centroid
-    const expandedHull = hull.map(point => {
+    const expandedHull = hull.map((point) => {
       const vector = [point[0] - centroid[0], point[1] - centroid[1]];
       //console.log(`${point} ${vector} ${centroid}`)
-      return [centroid[0] + vector[0] * stretchFactor, centroid[1] + vector[1] * stretchFactor];
+      return [
+        centroid[0] + vector[0] * stretchFactor,
+        centroid[1] + vector[1] * stretchFactor,
+      ];
     });
 
-    
-
-    hull = expandedHull
+    hull = expandedHull;
     // Add first point at the end to close the loop for Bezier curves
-  hull.push(hull[0]);
-  
+    hull.push(hull[0]);
+
     ctx.beginPath();
     for (let i = 0; i < hull.length; i++) {
-        const startPt = hull[i];
-        const endPt = hull[(i + 1) % hull.length];
-        const midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2];
+      const startPt = hull[i];
+      const endPt = hull[(i + 1) % hull.length];
+      const midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2];
 
-        if (i === 0) {
+      if (i === 0) {
         // Move to the first midpoint
         ctx.moveTo(midPt[0], midPt[1]);
-        } else {
+      } else {
         // Draw quadratic Bezier curve from previous midpoint
-        const prevMidPt = [(hull[i - 1][0] + startPt[0]) / 2, (hull[i - 1][1] + startPt[1]) / 2];
+        const prevMidPt = [
+          (hull[i - 1][0] + startPt[0]) / 2,
+          (hull[i - 1][1] + startPt[1]) / 2,
+        ];
         ctx.quadraticCurveTo(startPt[0], startPt[1], midPt[0], midPt[1]);
-        }
+      }
     }
 
     // Close the path for the last curve
-    const lastMidPt = [(hull[hull.length - 1][0] + hull[0][0]) / 2, (hull[hull.length - 1][1] + hull[0][1]) / 2];
+    const lastMidPt = [
+      (hull[hull.length - 1][0] + hull[0][0]) / 2,
+      (hull[hull.length - 1][1] + hull[0][1]) / 2,
+    ];
     ctx.quadraticCurveTo(hull[0][0], hull[0][1], lastMidPt[0], lastMidPt[1]);
 
     ctx.closePath();
 
     // Set the style for the dashed line
     ctx.setLineDash([5, 5]); // Sets up the dash pattern, adjust the numbers for different patterns
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)'; // Color for the dashed line
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.7)"; // Color for the dashed line
     ctx.lineWidth = 1; // Width of the dashed line
     ctx.stroke(); // Apply the line style to the hull
 
-    ctx.fillStyle = color//'rgba(150, 150, 250, 0.1)'; // Fill color
+    ctx.fillStyle = color; //'rgba(150, 150, 250, 0.1)'; // Fill color
     ctx.fill();
 
     // Reset the dashed line to default for any subsequent drawing
@@ -1693,67 +1735,71 @@ function createGraph(data) {
     return centroid;
   }
 
-  const handleDownload = () =>{
-    const fileName = window.prompt('Enter file name', 'myImage.png');
+  const handleDownload = () => {
+    const fileName = window.prompt("Enter file name", "myImage.png");
 
-    if (fileName){
-    const data = [];
-    graphData.nodes.forEach(node=>{
-      data.push(node.members);
-    })
+    if (fileName) {
+      const data = [];
+      graphData.nodes.forEach((node) => {
+        data.push(node.members);
+      });
 
-    console.log("NODES:",graphData.nodes)
+      console.log("NODES:", graphData.nodes);
 
-    let text = JSON.stringify(data);
+      let text = JSON.stringify(data);
 
-      const link = document.createElement('a');
-      link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+      const link = document.createElement("a");
+      link.setAttribute(
+        "href",
+        "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+      );
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
     }
-
 
     if (false) {
       //let text = undoState;
-      const nlinks = graphData.links.map(obj => ({
+      const nlinks = graphData.links.map((obj) => ({
         source: obj.source.id,
-        target: obj.target.id}
-        ))
-  
+        target: obj.target.id,
+      }));
+
       const sGraphData = {
-        nodes:graphData.nodes,
-        links:nlinks
-      }
-  
+        nodes: graphData.nodes,
+        links: nlinks,
+      };
+
       const undo = {
-        graphData:sGraphData,
+        graphData: sGraphData,
         orgCommunities,
         isEmpty,
         selectedNode,
         selectedNodes,
         multiSelect,
-        allGroups
-      }
-  
+        allGroups,
+      };
+
       let text = JSON.stringify(undo);
 
-      const link = document.createElement('a');
-      link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+      const link = document.createElement("a");
+      link.setAttribute(
+        "href",
+        "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+      );
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
-  }
+  };
 
   const handleFileChange = (event) => {
     const fileReader = new FileReader();
     fileReader.readAsText(event.target.files[0], "UTF-8");
 
-    fileReader.onload = e => {
+    fileReader.onload = (e) => {
       try {
         //const parsedJson = JSON.parse(e.target.result);
         //setJsonData(parsedJson);
@@ -1763,122 +1809,98 @@ function createGraph(data) {
       }
     };
   };
-  
+
   const handleButtonClick = () => {
-    document.getElementById('jsonFileInput').click();
+    document.getElementById("jsonFileInput").click();
   };
 
   const handleUpdateMatrix = () => {
-    if (selectedNodes.length <= 0)
-      return;
+    if (selectedNodes.length <= 0) return;
 
-    const allmembers = selectedNodes.map(obj => obj.members).flat();
+    const allmembers = selectedNodes.map((obj) => obj.members).flat();
     //console.log(allmembers)
-    let filteredPixels = pixelData.filter(pair => {
-        return allmembers.includes(pair[0]) && allmembers.includes(pair[1]);
+    let filteredPixels = pixelData.filter((pair) => {
+      return allmembers.includes(pair[0]) && allmembers.includes(pair[1]);
     });
 
-    let indexMapping = {},RindexMapping = {};
+    let indexMapping = {},
+      RindexMapping = {};
     allmembers.forEach((val, idx) => {
-        indexMapping[val] = idx + 1;
-        RindexMapping[idx+1]=val;
+      indexMapping[val] = idx + 1;
+      RindexMapping[idx + 1] = val;
     });
 
     // Now, filter and remap the giant array
     let remappedArray = filteredPixels
-    .filter(pair => allmembers.includes(pair[0]) && allmembers.includes(pair[1]))
-    .map(pair => [indexMapping[pair[0]], indexMapping[pair[1]],pair[2]]);
+      .filter(
+        (pair) => allmembers.includes(pair[0]) && allmembers.includes(pair[1])
+      )
+      .map((pair) => [indexMapping[pair[0]], indexMapping[pair[1]], pair[2]]);
 
-    setPixelMapData(RindexMapping)
-    setPixelData(remappedArray)
-  }
-  const linkVisibility = (link) => algorithm !== 'PCA';
+    setPixelMapData(RindexMapping);
+    setPixelData(remappedArray);
+  };
+  const linkVisibility = (link) => algorithm !== "PCA";
 
   return (
     <div>
-      <button
-          onClick={() => handleStart()}
-          disabled={multiSelect}
-        >
+      <button onClick={() => handleStart()} disabled={multiSelect}>
         Start
-        </button>
-      
-        <button
+      </button>
+
+      <button
         onClick={handleMergeCommunities}
         disabled={!multiSelect || selectedNodes.length <= 1}
-        >
+      >
         Merge
-        </button>
+      </button>
 
-        <button
-        onClick={() => handleSplitCommunity()}
-        disabled={multiSelect}
-        >
+      <button onClick={() => handleSplitCommunity()} disabled={multiSelect}>
         Split
-        </button>
+      </button>
 
-        <button
-        onClick={() => handleCollaspeGroup()}
-        disabled={multiSelect}
-        >
+      <button onClick={() => handleCollaspeGroup()} disabled={multiSelect}>
         Collasp Group
-        </button>
+      </button>
 
-
-        <button
-        onClick={() => handleExpandGroup()}
-        disabled={multiSelect}
-        >
+      <button onClick={() => handleExpandGroup()} disabled={multiSelect}>
         Expand Group
-        </button>
+      </button>
 
-        <button
-        onClick={() => handleUpdateMatrix()}
-    
-        >
-        Update Matrix
-        </button>
+      <button onClick={() => handleUpdateMatrix()}>Update Matrix</button>
 
+      <button onClick={() => handleUndo()}>Undo</button>
+      <button onClick={() => handleDownload()}>💾</button>
 
-        <button
-        onClick={() => handleUndo()}
-        >
-        Undo
-        </button>
-        <button
-        onClick={() => handleDownload()}
-        >
-        💾
-        </button>
+      <button onClick={() => handleButtonClick()}>📁</button>
 
-        <button
-        onClick={() => handleButtonClick()}
-        >
-        📁
-        </button>
-
-        <input
+      <input
         type="file"
         id="jsonFileInput"
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         accept=".json"
         onChange={handleFileChange}
       />
 
-<input defaultValue={seed} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setSeed(Number(e.target.value));}} />
-<label>
-      
       <input
-        type="checkbox"
-        checked={use3D}
+        defaultValue={seed}
+        style={{ maxWidth: "45px" }}
+        type="number"
         onChange={(e) => {
-          setUse3D(e.target.checked);
+          setSeed(Number(e.target.value));
         }}
       />
-      Use3D
-    </label>
-<label>
-      
+      <label>
+        <input
+          type="checkbox"
+          checked={use3D}
+          onChange={(e) => {
+            setUse3D(e.target.checked);
+          }}
+        />
+        Use3D
+      </label>
+      <label>
         <input
           type="checkbox"
           checked={multiSelect}
@@ -1891,99 +1913,119 @@ function createGraph(data) {
         />
         Multi select
       </label>
-        <br/>
-        <div>
-      <label>
-        Algorithm:
-        <select value={algorithm} onChange={(e) => setAlgorithm(e.target.value)}>
-          <option value="Louvain">Louvain</option>
-          <option value="Louvain-SL">Louvain-SL</option>
-          <option value="PCA">PCA k-means</option>
-          <option value="Infomap">Infomap</option>
-          <option value="Label Propagation">Label Propagation</option>
-          <option value="Hamming Distance">Hamming Distance</option>
-          <option value="Selected">Selected</option>
-        </select>
-      </label>
-      {renderInputs()}
-      <label>
-    Node Scale:
-    <input defaultValue={nodeScale} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setNodeScale(Number(e.target.value));}} />
-    Seed:
-    <input defaultValue={seed} style={{ maxWidth: '45px' }} type="number" onChange={(e)=>{setSeed(Number(e.target.value));}} />
-  </label>
-    </div>
-    <br/>
+      <br />
+      <div>
+        <label>
+          Algorithm:
+          <select
+            value={algorithm}
+            onChange={(e) => setAlgorithm(e.target.value)}
+          >
+            <option value="Louvain">Louvain</option>
+            <option value="Louvain-SL">Louvain-SL</option>
+            <option value="PCA">PCA k-means</option>
+            <option value="Infomap">Infomap</option>
+            <option value="Label Propagation">Label Propagation</option>
+            <option value="Hamming Distance">Hamming Distance</option>
+            <option value="Selected">Selected</option>
+          </select>
+        </label>
+        {renderInputs()}
+        <label>
+          Node Scale:
+          <input
+            defaultValue={nodeScale}
+            style={{ maxWidth: "45px" }}
+            type="number"
+            onChange={(e) => {
+              setNodeScale(Number(e.target.value));
+            }}
+          />
+          Seed:
+          <input
+            defaultValue={seed}
+            style={{ maxWidth: "45px" }}
+            type="number"
+            onChange={(e) => {
+              setSeed(Number(e.target.value));
+            }}
+          />
+        </label>
+      </div>
+      <br />
       {/* Optional: Display the list of selected node IDs */}
       {multiSelect && selectedNodes.length > 0 && (
         <div>
           Selected Nodes:
           <ul>
             {selectedNodes.map((node, index) => (
-              <li key={index}>Community {node.id}: {node.members.length} Members</li>
+              <li key={index}>
+                Community {node.id}: {node.members.length} Members
+              </li>
             ))}
           </ul>
         </div>
       )}
-    {!use3D && (<ForceGraph2D
-      linkVisibility={linkVisibility}
-      graphData={graphData}
-      nodeLabel="id"
-      ref={fgRef}
-      //cooldownTicks={100}
-      //onEngineStop={() => fgRef.current.zoomToFit(400)}
-      onNodeClick={handleNodeClick}
+      {!use3D && (
+        <ForceGraph2D
+          linkVisibility={linkVisibility}
+          graphData={graphData}
+          nodeLabel="id"
+          ref={fgRef}
+          //cooldownTicks={100}
+          //onEngineStop={() => fgRef.current.zoomToFit(400)}
+          onNodeClick={handleNodeClick}
           onNodeRightClick={(node, event) => handleNodeClick(node, event)} // Add this line
-      nodeCanvasObject={(node, ctx, globalScale) => {
+          nodeCanvasObject={(node, ctx, globalScale) => {
+            const label = node.id.toString();
 
+            const fontSize = 12 / globalScale; // Adjust font size against zoom level
+            let size = node.size / nodeScale;
 
-        const label = node.id.toString();
-        
-        const fontSize = 12/globalScale; // Adjust font size against zoom level
-        let size = node.size/nodeScale;
+            if (size < 8) size = 8;
+            if (size > 45) size = 45;
 
-        if (size < 8)
-            size = 8;
-        if (size > 45)
-            size = 45;
+            // let nS = nodeScale;
+            // if (nodeScale == 1)
+            //     nS = 1.1;
+            // let size = node.size / Math.log(nS);
 
-        // let nS = nodeScale;
-        // if (nodeScale == 1)
-        //     nS = 1.1;
-        // let size = node.size / Math.log(nS);
+            // Draw group background or outline if the node has a groupID
+            if (node.groupID.length > 0 && node.x) {
+              //size *= 1.5;
+              //var groupID = ;
+              node.groupID.forEach((groupID) => {
+                if (!window.tempt) window.tempt = {};
+                if (!window.tempt[groupID]) window.tempt[groupID] = [];
+                window.tempt[groupID].push([node.x, node.y]);
+                //console.log(node)
+                //console.log(JSON.stringify(node));
+                //console.log({...node}.x)
+                if (window.tempt[groupID].length == allGroups[groupID]) {
+                  const centroid = drawHullOnCanvas(
+                    window.tempt[groupID],
+                    ctx,
+                    node.groupColor
+                  );
+                  window.tempt[groupID] = false;
 
-        // Draw group background or outline if the node has a groupID
-        if(node.groupID.length > 0 && node.x) {
-            //size *= 1.5;
-            //var groupID = ;
-            node.groupID.forEach(groupID =>{
-              if (!window.tempt)
-                window.tempt = {}
-              if (!window.tempt[groupID])
-                  window.tempt[groupID] = []
-              window.tempt[groupID].push([node.x, node.y])
-              //console.log(node)
-              //console.log(JSON.stringify(node));
-              //console.log({...node}.x)
-              if (window.tempt[groupID].length == allGroups[groupID]){
-                
-                const centroid = drawHullOnCanvas(window.tempt[groupID], ctx, node.groupColor);
-                window.tempt[groupID] = false;
-
-                if (centroid){
-
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                  ctx.font = `${fontSize}px Sans-Serif`;
-                  ctx.fillText((groupID-1).toString(), centroid[0], centroid[1]);
+                  if (centroid) {
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                    ctx.font = `${fontSize}px Sans-Serif`;
+                    ctx.fillText(
+                      (groupID - 1).toString(),
+                      centroid[0],
+                      centroid[1]
+                    );
+                  }
                 }
-            }
-          })
+              });
 
-        //console.log("here")
-          // You can add custom logic to determine the color or shape based on groupID
-          /*
+              //console.log("here")
+              // You can add custom logic to determine the color or shape based on groupID
+              /*
           const backgroundPadding = 1; // Add some padding around the node
           const outlineSize = size + backgroundPadding; // The size of the outline/background
       
@@ -1995,33 +2037,33 @@ function createGraph(data) {
             ctx.stroke();
             ctx.setLineDash([]); // Reset the dash pattern so it doesn't affect other drawings
             */
-        }
-      
-        // Now draw the actual node on top
-        
-        //ctx.fillStyle = node.color || 'rgba(0, 0, 0, 1)';
+            }
 
-        // Assuming node.color is a hex color like "#RRGGBB"
-        const hexColor = node.color;
-        let alpha = 0.4; // 50% transparency
-        if (selectedNode){
-          if (selectedNode.id == node.id)
-            alpha = 1;
-        }else if (selectedNodes.length > 0){
-          if (selectedNodes.map(node => node.id).includes(node.id))
-            alpha = 1;
-        }else { //nothing is selected
-          alpha = 1;
-        }
+            // Now draw the actual node on top
 
-        // Parse the hex color into RGB components
-        const r = parseInt(hexColor.slice(1, 3), 16);
-        const g = parseInt(hexColor.slice(3, 5), 16);
-        const b = parseInt(hexColor.slice(5, 7), 16);
+            //ctx.fillStyle = node.color || 'rgba(0, 0, 0, 1)';
 
-        // Set the fillStyle with RGBA format
-        
-        /*
+            // Assuming node.color is a hex color like "#RRGGBB"
+            const hexColor = node.color;
+            let alpha = 0.4; // 50% transparency
+            if (selectedNode) {
+              if (selectedNode.id == node.id) alpha = 1;
+            } else if (selectedNodes.length > 0) {
+              if (selectedNodes.map((node) => node.id).includes(node.id))
+                alpha = 1;
+            } else {
+              //nothing is selected
+              alpha = 1;
+            }
+
+            // Parse the hex color into RGB components
+            const r = parseInt(hexColor.slice(1, 3), 16);
+            const g = parseInt(hexColor.slice(3, 5), 16);
+            const b = parseInt(hexColor.slice(5, 7), 16);
+
+            // Set the fillStyle with RGBA format
+
+            /*
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
         ctx.beginPath();
@@ -2029,94 +2071,102 @@ function createGraph(data) {
         //console.log(node.x, node.y)
         ctx.fill();
         */
-       
-        var x = node.x; // x coordinate of the circle's center
-        var y = node.y; // y coordinate of the circle's center
 
-        if (x === undefined || y === undefined){
-          console.log("INVALID NODE XY: ", x,y);
-          return;
-        }
+            var x = node.x; // x coordinate of the circle's center
+            var y = node.y; // y coordinate of the circle's center
 
-        if (!size){
-          console.log("INVALID NODE SIZE: ", size);
-          return;
-        }
+            if (x === undefined || y === undefined) {
+              console.log("INVALID NODE XY: ", x, y);
+              return;
+            }
 
-        //shadow
-        ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
-                
-       
+            if (!size) {
+              console.log("INVALID NODE SIZE: ", size);
+              return;
+            }
 
-        var innerRadius = 0; // Radius of the inner circle (start of the gradient)
-        var outerRadius = size; // Radius of the outer circle (end of the gradient)
+            //shadow
+            ctx.fillStyle = "rgba(200, 200, 200, 0.7)";
 
-         // Draw the shadow
-         ctx.beginPath();
-         ctx.arc(x+1, y+1, outerRadius, 0, 2 * Math.PI, false);
-         ctx.fill();
-         //--
-        
-        // Create gradient
-        var gradient = ctx.createRadialGradient(x, y, innerRadius, x, y, outerRadius);
-        //gradient.addColorStop(1, 'rgba(255, 255, 255, 1)'); // Start color: white
-        gradient.addColorStop(0, `rgba(${r*3}, ${g*3}, ${b*3}, ${alpha})`);
-        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${alpha})`); 
-        
-        // Set the gradient as fill style
-        ctx.fillStyle = gradient;
-        
-        // Draw the circle
-        ctx.beginPath();
-        ctx.arc(x, y, outerRadius, 0, 2 * Math.PI, false);
-        ctx.fill();
+            var innerRadius = 0; // Radius of the inner circle (start of the gradient)
+            var outerRadius = size; // Radius of the outer circle (end of the gradient)
 
-        //console.log(outerRadius,gradient)
+            // Draw the shadow
+            ctx.beginPath();
+            ctx.arc(x + 1, y + 1, outerRadius, 0, 2 * Math.PI, false);
+            ctx.fill();
+            //--
 
-        let scolor = `rgba(${1}, ${1}, ${1}, ${alpha})`;
-        if (node.groupColor){
-          scolor = node.groupColor;
-          const r2 = parseInt(node.groupColor.slice(1, 3), 16);
-        const g2 = parseInt(node.groupColor.slice(3, 5), 16);
-        const b2 = parseInt(node.groupColor.slice(5, 7), 16);
+            // Create gradient
+            var gradient = ctx.createRadialGradient(
+              x,
+              y,
+              innerRadius,
+              x,
+              y,
+              outerRadius
+            );
+            //gradient.addColorStop(1, 'rgba(255, 255, 255, 1)'); // Start color: white
+            gradient.addColorStop(
+              0,
+              `rgba(${r * 3}, ${g * 3}, ${b * 3}, ${alpha})`
+            );
+            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${alpha})`);
 
-          //scolor = `rgba(${r2}, ${g2}, ${b2}, ${1})`;
-          //alert(scolor)
-        }
+            // Set the gradient as fill style
+            ctx.fillStyle = gradient;
 
-        ctx.strokeStyle = scolor
-        
-        //ctx.strokeStyle = node.groupColor; // Color for the dashed line
-        ctx.lineWidth = 0.4; // Width of the dashed line
-        ctx.stroke(); // Apply the line style to the hull
-        
-        //ctx.strokeStyle = 'black';
-      
-        // Draw labels for larger nodes
-        if (size > 5/globalScale) {
-          let fontSize_ = Math.round(fontSize+size/globalScale);
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = 'black';//`rgba(255, 255, 255, ${alpha*2})`;
-          ctx.font = `${fontSize_}px Sans-Serif`;
-          ctx.fillText(label, node.x, node.y);
-          //ctx.fillText(size.toString(), node.x, node.y);
-        }
-      }}
-      linkDirectionalArrowLength={2.5}
-        linkDirectionalArrowRelPos={0.6}
-        linkDirectionalArrowColor={'black'}
-        linkCurvature={0.25}
-        linkOpacity={1}
-        linkColor = {'black'}
-        linkWidth={4}
-        d3Force="charge" // Modify the charge force
-        d3ReheatSimulation={true}
-        //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
-        //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
-        d3ForceConfig={{
-            charge: { 
-              strength: -220, 
+            // Draw the circle
+            ctx.beginPath();
+            ctx.arc(x, y, outerRadius, 0, 2 * Math.PI, false);
+            ctx.fill();
+
+            //console.log(outerRadius,gradient)
+
+            let scolor = `rgba(${1}, ${1}, ${1}, ${alpha})`;
+            if (node.groupColor) {
+              scolor = node.groupColor;
+              const r2 = parseInt(node.groupColor.slice(1, 3), 16);
+              const g2 = parseInt(node.groupColor.slice(3, 5), 16);
+              const b2 = parseInt(node.groupColor.slice(5, 7), 16);
+
+              //scolor = `rgba(${r2}, ${g2}, ${b2}, ${1})`;
+              //alert(scolor)
+            }
+
+            ctx.strokeStyle = scolor;
+
+            //ctx.strokeStyle = node.groupColor; // Color for the dashed line
+            ctx.lineWidth = 0.4; // Width of the dashed line
+            ctx.stroke(); // Apply the line style to the hull
+
+            //ctx.strokeStyle = 'black';
+
+            // Draw labels for larger nodes
+            if (size > 5 / globalScale) {
+              let fontSize_ = Math.round(fontSize + size / globalScale);
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.fillStyle = "black"; //`rgba(255, 255, 255, ${alpha*2})`;
+              ctx.font = `${fontSize_}px Sans-Serif`;
+              ctx.fillText(label, node.x, node.y);
+              //ctx.fillText(size.toString(), node.x, node.y);
+            }
+          }}
+          linkDirectionalArrowLength={2.5}
+          linkDirectionalArrowRelPos={0.6}
+          linkDirectionalArrowColor={"black"}
+          linkCurvature={0.25}
+          linkOpacity={1}
+          linkColor={"black"}
+          linkWidth={4}
+          d3Force="charge" // Modify the charge force
+          d3ReheatSimulation={true}
+          //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
+          //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
+          d3ForceConfig={{
+            charge: {
+              strength: -220,
               distanceMax: 300, // Optional: Increase to allow repulsion over larger distances
               //distanceMin: 1    // Optional: Decrease to enhance repulsion for closely positioned nodes
             },
@@ -2125,20 +2175,16 @@ function createGraph(data) {
               strength: (link) => {
                 const sourceNode = graphData.nodes[link.source];
                 const targetNode = graphData.nodes[link.target];
-                alert("HERE")
+                alert("HERE");
                 return sourceNode.groupID === targetNode.groupID ? 1 : 4; // Modify as needed
               },
               // You can also configure other link force parameters here
-            }
-        }}
-    />)}
-
-
-    
-      
+            },
+          }}
+        />
+      )}
     </div>
   );
 };
 
 export default GraphCommunities;
-
