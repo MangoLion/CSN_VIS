@@ -5,6 +5,7 @@ import LineSegmentUploader from "./LineSegmentUploader";
 
 import "rc-dock/dist/rc-dock.css";
 import BarChart from "./PlotView";
+import { Canvas } from "@react-three/fiber";
 
 import "./styles/App.css";
 import { Allotment } from "allotment";
@@ -127,31 +128,33 @@ const App = () => {
             </div>
           </Allotment.Pane>
           <Allotment.Pane preferredSize={"40%"}>
-            <LineSegments
-              {...{
-                radius,
-                tubeRes,
-                setSelectedSegment,
-                drawAll,
-                segments,
-                setSelectRegion,
-                segmentsSelected,
-                setSegmentsSelected,
-                dGraphData,
-                dGraph,
-                sphereRadius,
-                selectionMode,
-                shapeMode,
-                transformMode,
-                setTransformMode,
-                objFile,
-                intensity,
-                opacity,
-                showCaps,
-                cylinderHeight,
-              }}
-              key="line3D"
-            />
+            <Canvas style={{ width: "100%", height: "100%" }}>
+              <LineSegments
+                {...{
+                  radius,
+                  tubeRes,
+                  setSelectedSegment,
+                  drawAll,
+                  segments,
+                  setSelectRegion,
+                  segmentsSelected,
+                  setSegmentsSelected,
+                  dGraphData,
+                  dGraph,
+                  sphereRadius,
+                  selectionMode,
+                  shapeMode,
+                  transformMode,
+                  setTransformMode,
+                  objFile,
+                  intensity,
+                  opacity,
+                  showCaps,
+                  cylinderHeight,
+                }}
+                key="line3D"
+              />
+            </Canvas>
           </Allotment.Pane>
         </Allotment>
 
