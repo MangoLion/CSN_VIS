@@ -1,23 +1,9 @@
-import React, {
-  useMemo,
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import { extend, useThree, useFrame } from "@react-three/fiber";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2";
 extend({ LineSegments2 });
 import * as THREE from "three";
-
-import { Vector3 } from "three";
-import {
-  InstancedMesh,
-  Matrix4,
-  MeshPhongMaterial,
-  Color,
-  Quaternion,
-} from "three";
+import { TrackballControls } from "@react-three/drei";
 
 extend({ TrackballControls });
 
@@ -92,7 +78,6 @@ const LineSegments = ({
         });
 
         setSelectedSegment(closestSegmentIndex);
-        console.log("Selected segment: ", closestSegmentIndex);
       }
     },
     [camera, raycaster, gl.domElement, setSelectedSegment, segments, mouse]
@@ -162,8 +147,8 @@ const LineSegments = ({
     const dummy = new THREE.Object3D();
 
     data.forEach((segment, i) => {
-      const startPoint = new Vector3(...segment.startPoint);
-      const endPoint = new Vector3(...segment.endPoint);
+      const startPoint = new THREE.Vector3(...segment.startPoint);
+      const endPoint = new THREE.Vector3(...segment.endPoint);
 
       const direction = new THREE.Vector3().subVectors(endPoint, startPoint);
 
@@ -186,7 +171,7 @@ const LineSegments = ({
       tubeMesh.setMatrixAt(i, dummy.matrix);
 
       // Update the color of the cylinder
-      tubeMesh.setColorAt(i, new Color(segment.color));
+      tubeMesh.setColorAt(i, new THREE.Color(segment.color));
     });
 
     tubeMesh.instanceMatrix.needsUpdate = true;
