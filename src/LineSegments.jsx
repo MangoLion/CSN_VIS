@@ -82,7 +82,7 @@ const LineSegments = ({
         setSelectedSegment(closestSegmentIndex);
       }
     },
-    [camera, raycaster, gl.domElement, setSelectedSegment, segments, mouse]
+    [camera, raycaster, gl.domElement, setSelectedSegment, segments]
   );
 
   useEffect(() => {
