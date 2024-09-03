@@ -6,18 +6,9 @@ import React, {
   useEffect,
 } from "react";
 import { extend, useThree, useFrame } from "@react-three/fiber";
-import { TubeGeometry, BufferGeometry } from "three";
-import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2";
 extend({ LineSegments2 });
-import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
-import { OrbitControls, TrackballControls } from "@react-three/drei";
 import * as THREE from "three";
-import {
-  mergeGeometries,
-  mergeBufferGeometries,
-} from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { distance3D } from "./knnHelper.js";
 
 import { Vector3 } from "three";
 import {
