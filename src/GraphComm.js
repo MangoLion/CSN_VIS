@@ -830,7 +830,7 @@ const GraphCommunities = ({
           flexDirection: "column",
         }}
       >
-        <label style={{ fontWeight: "bold" }}>Settings</label>
+        <label style={{ fontWeight: "bold" }}>Graph Community Settings</label>
         <div id="graph-comm-settings" style={{ display: "flex", gap: "10px" }}>
           <div style={{ flexDirection: "column" }}>
             <div>

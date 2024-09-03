@@ -21,25 +21,6 @@ const Matrix = ({ matrix, onSelectRegion }) => {
     }
   };
 
-  const calculateSelectedCellsKeepPrevious = () => {
-    const cells = [];
-
-    if (!selection.start || !selection.end) return cells;
-
-    const iMin = Math.min(selection.start.i, selection.end.i);
-    const iMax = Math.max(selection.start.i, selection.end.i);
-    const jMin = Math.min(selection.start.j, selection.end.j);
-    const jMax = Math.max(selection.start.j, selection.end.j);
-
-    for (let i = iMin; i <= iMax; i++) {
-      for (let j = jMin; j <= jMax; j++) {
-        cells.push(`${i}-${j}`);
-      }
-    }
-
-    return [...new Set([...selectedCells, ...cells])];
-  };
-
   const calculateSelectedCells = () => {
     const cells = [];
 
