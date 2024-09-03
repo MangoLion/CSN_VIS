@@ -37,7 +37,6 @@ const LineSegments = ({
   const { scene } = useThree();
   const { camera, raycaster, gl } = useThree();
   const meshesRef = useRef([]);
-  const mouse = new THREE.Vector2();
 
   const handleClick = useCallback(
     (event) => {
@@ -47,8 +46,11 @@ const LineSegments = ({
       if (event.button !== 2) return;
 
       const rect = gl.domElement.getBoundingClientRect();
-      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      const mouse = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+      );
 
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(meshesRef.current, true);
