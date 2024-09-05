@@ -2,12 +2,34 @@ import React, { useState, useEffect, useRef } from "react";
 import "./styles/LineSegmentUploader.css";
 const { GPU } = require("gpu.js");
 const gpu = new GPU();
+import { Grid2, TextField, Box, Button, Typography } from "@mui/material";
+import { styled } from "@mui/material/styles";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import MemoryIcon from "@mui/icons-material/Memory";
+import {
+  CustomNumberInput,
+  CustomCheckBox,
+} from "./components/CustomComponents";
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
 
 const LineSegmentUploader = React.memo(
   ({
     setShowPlotView,
     showPlotView,
+    radius,
     setRadius,
+    tubeRes,
     setTubeRes,
     swapLayout,
     setSwapLayout,
@@ -33,9 +55,11 @@ const LineSegmentUploader = React.memo(
     manualProgress,
     intensity,
     setIntensity,
+    opacity,
     setOpacity,
     showCaps,
     setShowCaps,
+    cylinderHeight,
     setCylinderHeight,
   }) => {
     const [lines, setLines] = useState([]);
@@ -282,184 +306,138 @@ const LineSegmentUploader = React.memo(
       setExclude(Number(event.target.value));
     };
 
-    const [algorithm, setAlgorithm] = useState("KNN");
-    const [param, setParam] = useState("1");
-    const [distanceMetric, setDistanceMetric] = useState("shortest");
-    const [progress, setProgress] = useState(0);
-
-    useEffect(() => {
-      setProgress(manualProgress);
-    }, [manualProgress]);
-
     const handleStart = () => {
       setManualStart(true);
     };
 
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          margin: "5px",
-          gap: "10px",
-        }}
-      >
-        <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-          <input
-            type="file"
-            onChange={handleFileUpload}
-            ref={fileInputRef}
-            style={{ display: "none" }}
-          />
-          <button onClick={() => fileInputRef.current.click()}>
-            Choose File
-          </button>
-          <button onClick={handleUpload}>Upload</button> <br />
-          <label>{file ? file.name : "No file chosen"}</label>
-        </div>
-        <label>
-          Streamlines: {lines.length}&nbsp; Segments: {numSegments}
-        </label>
-        <br />
-        <label style={{ fontWeight: "bold" }}>Settings</label>
-        <div id="settings" style={{ display: "flex", gap: "10px" }}>
-          <div
-            style={{
-              flexDirection: "column",
-              width: "50%",
-            }}
-          >
-            <div className="setting">
-              <label>Intensity:</label>
-              <input
-                type="number"
-                value={intensity}
-                onChange={(e) => {
-                  setIntensity(Number(e.target.value));
-                }}
+      <Box sx={{ p: 3 }}>
+        <Grid2 container spacing={1}>
+          <Grid2 container size={12} spacing={2}>
+            <Grid2
+              item
+              size={3}
+              sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+            >
+              <Button
+                component="label"
+                role={undefined}
+                variant="contained"
+                tabIndex={-1}
+                startIcon={<CloudUploadIcon />}
+                fullWidth
+                sx={{ flexGrow: 1 }}
+              >
+                Upload
+                <VisuallyHiddenInput type="file" onChange={handleFileUpload} />
+              </Button>
+            </Grid2>
+
+            <Grid2
+              item
+              size={3}
+              sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+            >
+              <Button
+                component="label"
+                onClick={handleUpload}
+                variant="contained"
+                fullWidth
+                startIcon={<MemoryIcon />}
+                sx={{ flexGrow: 1 }}
+              >
+                Process
+              </Button>
+            </Grid2>
+
+            <Grid2
+              item
+              size={6}
+              sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+            >
+              <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
+                <Typography noWrap>
+                  {file ? file.name : "No file chosen"}
+                </Typography>
+              </Box>
+            </Grid2>
+          </Grid2>
+
+          <Typography sx={{ fontWeight: "bold" }}>
+            Rendering Settings
+          </Typography>
+
+          <Grid2 container size={12} spacing={2}>
+            <Grid2 item size={6}>
+              <CustomNumberInput
+                name="Intensity"
+                onChange={(e) => setIntensity(Number(e.target.value))}
+                defaultValue={intensity}
               />
-            </div>
-            <div className="setting">
-              <label>Skip every x lines:</label>
-              <input
-                type="number"
-                value={skipLines}
-                onChange={(e) => {
-                  setSkipLines(Number(e.target.value) + 1);
-                }}
+              <CustomNumberInput
+                name="Skip Every X Lines"
+                onChange={(e) => setSkipLines(Number(e.target.value) + 1)}
+                defaultValue={skipLines}
               />
-            </div>
-            <div className="setting">
-              <label>Merge x segments together:</label>
-              <input
-                type="number"
-                value={skipSegments}
-                onChange={(e) => {
-                  setSkipSegments(Number(e.target.value));
-                }}
+              <CustomNumberInput
+                name="Merge X Segments Together"
+                onChange={(e) => setSkipSegments(Number(e.target.value))}
+                defaultValue={skipSegments}
               />
-            </div>
-            <div className="setting">
-              <label>PlotView:</label>
-              <input
-                type="checkbox"
-                checked={showPlotView}
-                onChange={() => {
-                  setShowPlotView(!showPlotView);
-                }}
+              <CustomCheckBox
+                name="PlotView"
+                onChange={() => setShowPlotView(!showPlotView)}
+                defaultValue={showPlotView}
               />
-            </div>
-            <div className="setting">
-              <label>Exclude close segments:</label>
-              <input
-                type="number"
-                value={exclude}
+              <CustomNumberInput
+                name="Exclude Close Segments"
                 onChange={handleExcludeChange}
+                defaultValue={exclude}
               />
-            </div>
-            <div className="setting">
-              <label>Tube Radius:</label>
-              <input
-                defaultValue={0.45}
-                step={0.05}
-                type="number"
-                onChange={(e) => {
-                  setRadius(Number(e.target.value));
-                }}
+              <CustomNumberInput
+                name="Tube Radius"
+                onChange={(e) => setRadius(Number(e.target.value))}
+                defaultValue={radius}
+                stepValue={0.05}
               />
-            </div>
-          </div>
-          <div
-            style={{
-              flexDirection: "column",
-              width: "50%",
-            }}
-          >
-            <div className="setting">
-              <label>Tube Resolution:</label>
-              <input
-                defaultValue={20}
-                type="number"
-                onChange={(e) => {
-                  setTubeRes(Number(e.target.value));
-                }}
+            </Grid2>
+            <Grid2 item size={6}>
+              <CustomNumberInput
+                name="Tube Resolution"
+                onChange={(e) => setTubeRes(Number(e.target.value))}
+                defaultValue={tubeRes}
               />
-            </div>
-            <div className="setting">
-              <label>Manual Update</label>
-              <input
-                type="checkbox"
-                checked={manualUpdate}
-                onChange={() => {
-                  setManualUpdate(!manualUpdate);
-                }}
+              <CustomCheckBox
+                name="Manual Update"
+                onChange={() => setManualUpdate(!manualUpdate)}
+                defaultValue={manualUpdate}
               />
-            </div>
-            <div className="setting">
-              <label>Draw All Segments</label>
-              <input
-                type="checkbox"
-                checked={drawAll}
-                onChange={() => {
-                  setDrawAll(!drawAll);
-                }}
+              <CustomCheckBox
+                name="Draw All Segments"
+                onChange={() => setDrawAll(!drawAll)}
+                defaultValue={drawAll}
               />
-            </div>
-            <div className="setting">
-              <label>Opacity:</label>
-              <input
-                type="number"
-                defaultValue={0.4}
-                step={0.05}
-                onChange={(e) => {
-                  setOpacity(Number(e.target.value));
-                }}
+              <CustomNumberInput
+                name="Opacity"
+                onChange={(e) => setOpacity(Number(e.target.value))}
+                defaultValue={opacity}
+                stepValue={0.05}
               />
-            </div>
-            <div className="setting">
-              <label>Show Caps</label>
-              <input
-                type="checkbox"
-                checked={showCaps}
-                onChange={() => {
-                  setShowCaps(!showCaps);
-                }}
+              <CustomCheckBox
+                name="Show Caps"
+                onChange={() => setShowCaps(!showCaps)}
+                defaultValue={showCaps}
               />
-            </div>
-            <div className="setting">
-              <label>Cylinder Height:</label>
-              <input
-                type="number"
-                defaultValue={1}
-                step={0.05}
-                onChange={(e) => {
-                  setCylinderHeight(Number(e.target.value));
-                }}
+              <CustomNumberInput
+                name="Cylinder Height"
+                onChange={(e) => setCylinderHeight(Number(e.target.value))}
+                defaultValue={cylinderHeight}
+                stepValue={0.05}
               />
-            </div>
-          </div>
-        </div>
-      </div>
+            </Grid2>
+          </Grid2>
+        </Grid2>
+      </Box>
     );
   }
 );
