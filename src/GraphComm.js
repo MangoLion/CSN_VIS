@@ -660,14 +660,6 @@ const GraphCommunities = ({
 
       node.color = newColor;
 
-      // Update node color without changing its structure
-      /*setGraphData(prevState => ({
-        ...prevState,
-        nodes: prevState.nodes.map(n => 
-          n.id === node.id ? { ...n, color: newColor } : n
-        )
-      }));*/
-
       // Update associated segments' colors
       const updatedSegments = segments.map((seg) =>
         node.members.includes(seg.globalIdx) ? { ...seg, color: newColor } : seg

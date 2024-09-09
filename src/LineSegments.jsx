@@ -97,9 +97,8 @@ const LineSegments = ({
 
     if (segmentsSelected.length > 0) {
       render(segmentsSelected);
-    } else if (segments.length > 0) {
-      render(segments);
-    }
+      render(segments, opacity / 10);
+    } else if (segments.length > 0) render(segments);
 
     // Cleanup function to remove the previous instanced mesh
     return () => {
@@ -125,10 +124,10 @@ const LineSegments = ({
     scene,
   ]);
 
-  const render = (data) => {
+  const render = (data, o = -1) => {
     const material = new THREE.MeshPhongMaterial({
       transparent: true,
-      opacity: opacity,
+      opacity: o === -1 ? opacity : o,
     });
 
     const tubeGeometry = new THREE.CylinderGeometry(
@@ -202,7 +201,7 @@ const LineSegments = ({
             new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
             new THREE.MeshStandardMaterial({
               color: segment.color,
-              opacity: opacity,
+              opacity: o === -1 ? opacity : o,
               transparent: true,
             }) // Adjust material properties
           );
@@ -218,7 +217,7 @@ const LineSegments = ({
             new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
             new THREE.MeshStandardMaterial({
               color: segment.color,
-              opacity: opacity,
+              opacity: o === -1 ? opacity : o,
               transparent: true,
             }) // Adjust material properties
           );
