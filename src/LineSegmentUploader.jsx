@@ -12,6 +12,7 @@ import {
 } from "./components/CustomComponents";
 
 const VisuallyHiddenInput = styled("input")({
+  accept: ".txt",
   clip: "rect(0 0 0 0)",
   clipPath: "inset(50%)",
   height: 1,
@@ -329,7 +330,11 @@ const LineSegmentUploader = React.memo(
                 sx={{ flexGrow: 1 }}
               >
                 Upload
-                <VisuallyHiddenInput type="file" onChange={handleFileUpload} />
+                <VisuallyHiddenInput
+                  type="file"
+                  accept=".txt"
+                  onChange={handleFileUpload}
+                />
               </Button>
             </Grid2>
 

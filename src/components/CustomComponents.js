@@ -1,27 +1,27 @@
 import React, { useEffect } from "react";
-import { Box, TextField, Checkbox, Typography } from "@mui/material";
+import { Box, TextField, Checkbox, Typography, MenuItem } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles({
   smallInput: {
-    // Adjust padding to reduce height
     "& .MuiInputBase-root": {
       height: "30px",
-      padding: "1px 1px", // Adjust padding to make the input smaller
+      padding: "1px 1px",
+      fontSize: "14px",
     },
     "& input": {
-      height: "22px", // Adjust height to make the input vertically shorter
+      height: "22px",
     },
   },
   label: {
     overflow: "hidden",
-    textOverflow: "ellipsis", // Truncate text with ellipsis
-    whiteSpace: "nowrap", // Prevent text from wrapping
-    fontSize: "0.75rem !important", // Adjust font size
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    fontSize: "0.75rem !important",
   },
   labelContainer: {
-    flex: "1 1 0", // Allow the container to shrink
-    minWidth: 0, // Ensure the container can shrink to 0 width
+    flex: "1 1 0",
+    minWidth: 0,
   },
 });
 
@@ -63,6 +63,39 @@ export const CustomCheckBox = ({ name, onChange, defaultValue }) => {
         sx={{ display: "flex", justifyContent: "center" }}
       >
         <Checkbox onChange={onChange} defaultChecked={defaultValue} />
+      </Box>
+    </Box>
+  );
+};
+
+export const CustomSelect = ({ name, onChange, defaultValue, options }) => {
+  const classes = useStyles();
+  return (
+    <Box display="flex" alignItems="center" gap={2} sx={{ height: "30px" }}>
+      <Box className={classes.labelContainer}>
+        <Typography className={classes.label}>{name}</Typography>
+      </Box>
+      <Box
+        className={classes.labelContainer}
+        sx={{ display: "flex", justifyContent: "center" }}
+      >
+        <TextField
+          className={classes.smallInput}
+          select
+          defaultValue={defaultValue}
+          onChange={onChange}
+          fullWidth
+        >
+          {options.map((option) => (
+            <MenuItem
+              key={option.value}
+              value={option.value}
+              sx={{ fontSize: "12px" }}
+            >
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
       </Box>
     </Box>
   );

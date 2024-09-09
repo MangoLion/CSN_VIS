@@ -20,6 +20,14 @@ const infomap = require("infomap");
 const llp = require("layered-label-propagation");
 const hamming = require("./distance-hamming");
 
+import {
+  CustomNumberInput,
+  CustomCheckBox,
+  CustomSelect,
+} from "./components/CustomComponents";
+import { Box, Typography, Grid2, Button } from "@mui/material";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+
 //import { node } from 'webpack';
 
 // Use an ordinal scale for colors with a D3 color scheme
@@ -714,103 +722,65 @@ const GraphCommunities = ({
       case "Louvain-SL":
         return (
           <>
-            <div>
-              <label>Resolution:</label>
-              <input
-                type="text"
-                style={{ width: "100px" }}
-                name="resolution"
-                value={inputs.resolution}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <label>Random Walk:</label>
-              <input
-                type="checkbox"
-                name="randomWalk"
-                checked={inputs.randomWalk}
-                onChange={handleInputChange}
-              />
-            </div>
+            <CustomNumberInput
+              name={"Resolution"}
+              onChange={handleInputChange}
+              defaultValue={inputs.resolution}
+            />
+            <CustomCheckBox
+              name={"Random Walk"}
+              onChange={handleInputChange}
+              defaultValue={inputs.randomWalk}
+            />
           </>
         );
       case "PCA":
         return (
           <>
-            <div>
-              <label>Dims:</label>
-              <input
-                type="text"
-                style={{ width: "100px" }}
-                name="Dims"
-                value={inputs.dims}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <label>K Means:</label>
-              <input
-                type="text"
-                style={{ width: "100px" }}
-                name="kmean"
-                value={inputs.kmean}
-                onChange={handleInputChange}
-              />
-            </div>
+            <CustomNumberInput
+              name={"Dims"}
+              onChange={handleInputChange}
+              defaultValue={inputs.dims}
+            />
+
+            <CustomNumberInput
+              name={"K Means"}
+              onChange={handleInputChange}
+              defaultValue={inputs.kmean}
+            />
           </>
         );
       case "Infomap":
         return (
-          <div>
-            <label>Min:</label>
-            <input
-              type="text"
-              style={{ width: "100px" }}
-              name="min"
-              value={inputs.min}
-              onChange={handleInputChange}
-            />
-          </div>
+          <CustomNumberInput
+            name={"Min"}
+            onChange={handleInputChange}
+            defaultValue={inputs.min}
+          />
         );
       case "Hamming Distance":
         return (
-          <div>
-            <label>Min:</label>
-            <input
-              style={{ width: "100px" }}
-              type="text"
-              name="min"
-              value={inputs.min}
-              onChange={handleInputChange}
-            />
-          </div>
+          <CustomNumberInput
+            name={"Min"}
+            onChange={handleInputChange}
+            defaultValue={inputs.min}
+          />
         );
       case "Blank":
         return <></>;
       case "Label Propagation":
         return (
           <>
-            <div>
-              <label>Gamma:</label>
-              <input
-                type="text"
-                style={{ width: "100px" }}
-                name="gamma"
-                value={inputs.gamma}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <label>Max:</label>
-              <input
-                type="text"
-                style={{ width: "100px" }}
-                name="max"
-                value={inputs.max}
-                onChange={handleInputChange}
-              />
-            </div>
+            <CustomNumberInput
+              name={"Gamma"}
+              onChange={handleInputChange}
+              defaultValue={inputs.gamma}
+            />
+            <CustomNumberInput
+              name={"Max"}
+              onChange={handleInputChange}
+              defaultValue={inputs.max}
+            />
           </>
         );
       default:
@@ -822,64 +792,71 @@ const GraphCommunities = ({
     // If the graph is empty, we can return null or some placeholder
     //return <div>No data available to plot the graph.</div>;
     return (
-      <div
-        style={{
-          margin: "5px",
-          gap: "10px",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <label style={{ fontWeight: "bold" }}>Graph Community Settings</label>
-        <div id="graph-comm-settings" style={{ display: "flex", gap: "10px" }}>
-          <div style={{ flexDirection: "column" }}>
-            <div>
-              <label>Algorithm:</label>
-              <select
-                value={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value)}
+      <Box sx={{ p: 3 }}>
+        <Grid2 container spacing={1}>
+          <Grid2 container size={12} spacing={2}>
+            <Grid2 item size={4.5}></Grid2>
+            <Grid2
+              item
+              size={3}
+              sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+            >
+              <Button
+                component="label"
+                variant="contained"
+                tabIndex={-1}
+                startIcon={<PlayArrowIcon />}
+                fullWidth
+                disabled={multiSelect}
+                sx={{ flexGrow: 1 }}
+                onClick={() => handleStart()}
               >
-                <option value="Louvain">Louvain</option>
-                <option value="Louvain-SL">Louvain-SL</option>
-                <option value="PCA">PCA K-Means</option>
-                <option value="Infomap">Infomap</option>
-                <option value="Label Propagation">Label Propagation</option>
-                <option value="Hamming Distance">Hamming Distance</option>
-                <option value="Blank">Blank</option>
-              </select>
-            </div>
-            <div>
-              <label>Node Scale:</label>
-              <input
-                defaultValue={nodeScale}
-                type="number"
-                onChange={(e) => {
-                  setNodeScale(Number(e.target.value));
-                }}
+                Start
+              </Button>
+            </Grid2>
+            <Grid2 item size={4.5}></Grid2>
+          </Grid2>
+
+          <Typography sx={{ fontWeight: "bold" }}>
+            Graph Community Settings
+          </Typography>
+
+          <Grid2 container size={12} spacing={2}>
+            <Grid2 item size={6}>
+              <CustomSelect
+                name={"Algorithm"}
+                onChange={(e) => setAlgorithm(e.target.value)}
+                defaultValue={algorithm}
+                options={[
+                  { value: "Louvain", label: "Louvain" },
+                  { value: "Louvain-SL", label: "Louvain-SL" },
+                  { value: "PCA", label: "PCA K-Means" },
+                  { value: "Infomap", label: "Infomap" },
+                  { value: "Label Propagation", label: "Label Propagation" },
+                  { value: "Hamming Distance", label: "Hamming Distance" },
+                  { value: "Blank", label: "Blank" },
+                ]}
               />
-            </div>
-            <div>
-              <label>Seed:</label>
-              <input
-                defaultValue={seed}
-                type="number"
+              <CustomNumberInput
+                name={"Node Scale"}
+                onChange={(e) => setNodeScale(Number(e.target.value))}
+                defaultValue={nodeScale}
+              />
+              <CustomNumberInput
+                name={"Seed"}
                 onChange={(e) => {
                   setSeed(Number(e.target.value));
                   seedrandom(seed, { global: true });
                 }}
+                defaultValue={seed}
               />
-            </div>
-          </div>
-          <div style={{ flexDirection: "column" }}>{renderInputs()}</div>
-        </div>
-        <button
-          style={{ width: "80%", maxWidth: "260px" }}
-          onClick={() => handleStart()}
-          disabled={multiSelect}
-        >
-          Start
-        </button>
-      </div>
+            </Grid2>
+            <Grid2 item size={6}>
+              {renderInputs()}
+            </Grid2>
+          </Grid2>
+        </Grid2>
+      </Box>
     );
   }
 
@@ -1211,62 +1188,11 @@ const GraphCommunities = ({
       return;
     }
 
-    // Calculate new community size, assume communityNode.members is an array of member IDs
     const totalMembers = communityNode.members.length;
     const membersPerNewCommunity = Math.ceil(totalMembers / X);
 
-    // Remove the original community node
     nodes = nodes.filter((node) => node.id !== communityIndex);
-    //communityNode.groupID=[];
 
-    /*
-
-    // Hold new communities to update links later
-    let newCommunityIndexes = [];
-
-    // Create new community nodes
-    let newCommunityNodes = [];
-    for (let i = 0; i < X; i++) {
-        // Slice the array for members of each new community
-        const start = i * membersPerNewCommunity;
-        const end = start + membersPerNewCommunity;
-        const newCommunityMembers = communityNode.members.slice(start, Math.min(end, totalMembers));
-        
-        // Find a new id for the community
-        const newId = Math.max(...nodes.map(node => parseInt(node.id))) + 1 + i;
-        newCommunityIndexes.push(newId.toString()); // Save new community ID for link duplication
-
-        // Create new community object
-        const newCommunity = {
-            ...communityNode, // Copy properties from the original community
-            id: newId.toString(),
-            members: newCommunityMembers,
-            size: (newCommunityMembers.length/totalMembers)*orgSize,
-            color: colorScale(newId.toString())
-        };
-
-        newCommunityNodes.push(newCommunity);
-        nodes.push(newCommunity); // Add new community to nodes list
-    }
-
-    // Duplicate links for each new community created
-    const originalCommunityLinks = links.filter(link => link.source === communityIndex || link.target === communityIndex);
-    let newLinks = links.filter(link => link.source !== communityIndex && link.target !== communityIndex); // Exclude original community's links
-
-    // Add duplicated links for each new community
-    newCommunityIndexes.forEach(newIndex => {
-        originalCommunityLinks.forEach(link => {
-            const newLink = { ...link };
-            if (newLink.source === communityIndex) newLink.source = newIndex;
-            if (newLink.target === communityIndex) newLink.target = newIndex;
-            newLinks.push(newLink);
-        });
-    });
-
-    // Filter out links that no longer connect two different communities
-    links = links.filter(link => link.source !== link.target);*/
-
-    //////////
     let newLinks = links.filter(
       (link) => link.source !== communityIndex && link.target !== communityIndex
     ); // Exclude original community's links
@@ -1758,41 +1684,6 @@ const GraphCommunities = ({
       link.click();
       document.body.removeChild(link);
     }
-
-    if (false) {
-      //let text = undoState;
-      const nlinks = graphData.links.map((obj) => ({
-        source: obj.source.id,
-        target: obj.target.id,
-      }));
-
-      const sGraphData = {
-        nodes: graphData.nodes,
-        links: nlinks,
-      };
-
-      const undo = {
-        graphData: sGraphData,
-        orgCommunities,
-        isEmpty,
-        selectedNode,
-        selectedNodes,
-        multiSelect,
-        allGroups,
-      };
-
-      let text = JSON.stringify(undo);
-
-      const link = document.createElement("a");
-      link.setAttribute(
-        "href",
-        "data:text/plain;charset=utf-8," + encodeURIComponent(text)
-      );
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
   };
 
   const handleFileChange = (event) => {
@@ -1914,44 +1805,39 @@ const GraphCommunities = ({
         Multi select
       </label>
       <br />
-      <div>
-        <label>
-          Algorithm:
-          <select
-            value={algorithm}
+      <Grid2 container spacing={1}></Grid2>
+      <Grid2 container size={12} spacing={2}>
+        <Grid2 item size={6}>
+          <CustomSelect
+            name={"Algorithm"}
             onChange={(e) => setAlgorithm(e.target.value)}
-          >
-            <option value="Louvain">Louvain</option>
-            <option value="Louvain-SL">Louvain-SL</option>
-            <option value="PCA">PCA k-means</option>
-            <option value="Infomap">Infomap</option>
-            <option value="Label Propagation">Label Propagation</option>
-            <option value="Hamming Distance">Hamming Distance</option>
-            <option value="Selected">Selected</option>
-          </select>
-        </label>
-        {renderInputs()}
-        <label>
-          Node Scale:
-          <input
+            defaultValue={algorithm}
+            options={[
+              { value: "Louvain", label: "Louvain" },
+              { value: "Louvain-SL", label: "Louvain-SL" },
+              { value: "PCA", label: "PCA K-Means" },
+              { value: "Infomap", label: "Infomap" },
+              { value: "Label Propagation", label: "Label Propagation" },
+              { value: "Hamming Distance", label: "Hamming Distance" },
+              { value: "Selected", label: "Selected" },
+            ]}
+          />
+          <CustomNumberInput
+            name={"Node Scale"}
+            onChange={(e) => setNodeScale(Number(e.target.value))}
             defaultValue={nodeScale}
-            style={{ maxWidth: "45px" }}
-            type="number"
-            onChange={(e) => {
-              setNodeScale(Number(e.target.value));
-            }}
           />
-          Seed:
-          <input
+          <CustomNumberInput
+            name={"Seed"}
+            onChange={(e) => setSeed(Number(e.target.value))}
             defaultValue={seed}
-            style={{ maxWidth: "45px" }}
-            type="number"
-            onChange={(e) => {
-              setSeed(Number(e.target.value));
-            }}
           />
-        </label>
-      </div>
+        </Grid2>
+        <Grid2 item size={6}>
+          {renderInputs()}
+        </Grid2>
+      </Grid2>
+
       <br />
       {/* Optional: Display the list of selected node IDs */}
       {multiSelect && selectedNodes.length > 0 && (
