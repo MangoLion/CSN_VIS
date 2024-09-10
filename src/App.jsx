@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import HugeCanvas from "./HugeCanvas";
-import LineSegments from "./LineSegments";
+import LineSegmentsRenderer from "./LineSegmentsRenderer";
 import LineSegmentUploader from "./LineSegmentUploader";
+import Uploader from "./Uploader";
 
 import "rc-dock/dist/rc-dock.css";
 import BarChart from "./PlotView";
@@ -11,7 +12,7 @@ import "./styles/App.css";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import Vis from "./components/Vis";
-import GraphCommunities from "./GraphComm";
+import GraphCommunities from "./GraphCommunities";
 import { Matrix3 } from "three";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -19,8 +20,6 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 const App = () => {
   const [streamLines, setStreamLines] = useState([]);
   const [dGraphData, setDGraphData] = useState([]);
-  const [exclude, setExclude] = useState(-1);
-  const [manualUpdate, setManualUpdate] = useState(false);
   const [drawAll, setDrawAll] = useState(true);
   const [swapLayout, setSwapLayout] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState(-1);
@@ -29,7 +28,6 @@ const App = () => {
   const [showCaps, setShowCaps] = useState(true);
   const [opacity, setOpacity] = useState(0.4);
   const [cylinderHeight, setCylinderHeight] = useState(1.0);
-  const [showPlotView, setShowPlotView] = useState(true);
   const [layerProps, setLayerProps] = useState({
     x: 0,
     y: 0,
@@ -90,72 +88,41 @@ const App = () => {
     <div className="App">
       <ThemeProvider theme={theme}>
         <Allotment key="main">
-          <Allotment vertical={true} defaultSizes={[1, 2]}>
+          <Allotment vertical={true} defaultSizes={[1, 1, 3]}>
             <Allotment.Pane>
-              <div>
-                <LineSegmentUploader
-                  {...{
-                    setShowPlotView,
-                    showPlotView,
-                    radius,
-                    setRadius,
-                    tubeRes,
-                    setTubeRes,
-                    manualUpdate,
-                    setManualUpdate,
-                    setStreamLines,
-                    setSegments,
-                    setExclude,
-                    drawAll,
-                    setDrawAll,
-                    swapLayout,
-                    setSwapLayout,
-                    settings,
-                    setSettings,
-                    setSphereRadius,
-                    sphereRadius,
-                    selectionMode,
-                    setSelectionMode,
-                    shapeMode,
-                    setShapeMode,
-                    transformMode,
-                    setTransformMode,
-                    setObjFile,
-                    setManualStart,
-                    manualProgress,
-                    intensity,
-                    setIntensity,
-                    opacity,
-                    setOpacity,
-                    showCaps,
-                    setShowCaps,
-                    cylinderHeight,
-                    setCylinderHeight,
-                  }}
-                  key="uploader"
-                />
-              </div>
+              <Uploader {...{ setSegments, setStreamLines }} />
+            </Allotment.Pane>
+            <Allotment.Pane>
+              <LineSegmentUploader
+                {...{
+                  radius,
+                  setRadius,
+                  tubeRes,
+                  setTubeRes,
+                  drawAll,
+                  setDrawAll,
+                  intensity,
+                  setIntensity,
+                  opacity,
+                  setOpacity,
+                  showCaps,
+                  setShowCaps,
+                  cylinderHeight,
+                  setCylinderHeight,
+                }}
+                key="uploader"
+              />
             </Allotment.Pane>
             <Allotment.Pane>
               <Canvas style={{ width: "100%", height: "100%" }}>
-                <LineSegments
+                <LineSegmentsRenderer
                   {...{
                     radius,
                     tubeRes,
-                    setSelectedSegment,
                     drawAll,
                     segments,
-                    setSelectRegion,
                     segmentsSelected,
-                    setSegmentsSelected,
-                    dGraphData,
-                    dGraph,
-                    sphereRadius,
-                    selectionMode,
-                    shapeMode,
-                    transformMode,
-                    setTransformMode,
-                    objFile,
+                    setSelectedSegment,
                     intensity,
                     opacity,
                     showCaps,
@@ -168,38 +135,19 @@ const App = () => {
           </Allotment>
 
           <Allotment.Pane>
-            {showPlotView ? (
-              <GraphCommunities
-                setPixelMapData={setPixelMapData}
-                matRef={matRef}
-                data={dGraphData}
-                setPixelData={setPixelData}
-                pixelData={pixelData}
-                segmentsSelected={segmentsSelected}
-                setSegmentsSelected={setSegmentsSelected}
-                segments={segments}
-                selectedSegment={selectedSegment}
-                selectionMode={selectionMode}
-                setSelectionMode={setSelectionMode}
-              />
-            ) : (
-              <div>
-                <HugeCanvas
-                  {...{
-                    selectedSegment,
-                    manualUpdate,
-                    exclude,
-                    layerProps,
-                    handleLayerChange,
-                    setSegmentsSelected,
-                  }}
-                  streamLines2={streamLines}
-                  segments2={segments}
-                  key="canvas2"
-                  cid={2}
-                />
-              </div>
-            )}
+            <GraphCommunities
+              setPixelMapData={setPixelMapData}
+              matRef={matRef}
+              data={dGraphData}
+              setPixelData={setPixelData}
+              pixelData={pixelData}
+              segmentsSelected={segmentsSelected}
+              setSegmentsSelected={setSegmentsSelected}
+              segments={segments}
+              selectedSegment={selectedSegment}
+              selectionMode={selectionMode}
+              setSelectionMode={setSelectionMode}
+            />
           </Allotment.Pane>
 
           <Allotment.Pane>
@@ -207,8 +155,6 @@ const App = () => {
               <HugeCanvas
                 {...{
                   selectedSegment,
-                  manualUpdate,
-                  exclude,
                   layerProps,
                   handleLayerChange,
                   setSegmentsSelected,

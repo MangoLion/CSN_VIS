@@ -13,7 +13,7 @@ import {
   pcaKmeansStreamlineClustering,
   drawHullOnCanvas,
   getRandomColor,
-} from "./GraphCommHelper";
+} from "./GraphCommunitiesHelper";
 
 //import * as d3 from 'd3';
 import chroma from "chroma-js";
@@ -127,10 +127,6 @@ const GraphCommunities = ({
     if (windowRef.current) resizeObserver.observe(windowRef.current);
     return () => resizeObserver.disconnect();
   }, []);
-
-  useEffect(() => {
-    console.log("dimensions: ", dimensions);
-  }, [dimensions]);
 
   const saveUndo = () => {
     const nlinks = graphData.links.map((obj) => ({

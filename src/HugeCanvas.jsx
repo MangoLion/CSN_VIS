@@ -23,6 +23,11 @@ import { interpolateHsl, interpolateRgb } from "d3-interpolate";
 import { rgb } from "d3-color";
 import OpacityTable from "./OpacityTable.js";
 
+import {
+  CustomNumberInput,
+  CustomCheckBox,
+} from "./components/CustomComponents";
+
 const MUworker = new MUworkerT();
 let AMCSworker = new AMCSworkerT();
 let AMCSworker2 = new AMCSworkerT();
@@ -31,9 +36,7 @@ const HugeCanvas = React.memo(
   ({
     selectedSegment,
     cid,
-    manualUpdate,
     layerProps,
-    exclude,
     onLayerChange,
     segments2,
     streamLines2,
@@ -61,6 +64,8 @@ const HugeCanvas = React.memo(
       { target: 0, alpha: 1 },
       { target: 1, alpha: 0 },
     ]);
+    const [exclude, setExclude] = useState(-1);
+    const [manualUpdate, setManualUpdate] = useState(false);
 
     const [slRange, setSlRange] = useState(false);
 
@@ -1809,6 +1814,16 @@ const HugeCanvas = React.memo(
             <div
               style={{ display: "flex", flexDirection: "column", gap: "20px" }}
             >
+              <CustomNumberInput
+                name="Exclude Close Segments"
+                onChange={(event) => setExclude(Number(event.target.value))}
+                defaultValue={exclude}
+              />
+              <CustomCheckBox
+                name="Manual Update"
+                onChange={() => setManualUpdate(!manualUpdate)}
+                defaultValue={manualUpdate}
+              />
               <div id="csng" style={{ display: "flex", gap: "10px" }}>
                 <div style={{ flexDirection: "column", width: "50%" }}>
                   <div>
