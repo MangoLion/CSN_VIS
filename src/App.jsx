@@ -136,7 +136,7 @@ const App = () => {
                 />
               </div>
             </Allotment.Pane>
-            <Allotment.Pane preferredSize={"40%"}>
+            <Allotment.Pane>
               <Canvas style={{ width: "100%", height: "100%" }}>
                 <LineSegments
                   {...{

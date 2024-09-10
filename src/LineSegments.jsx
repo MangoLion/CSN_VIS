@@ -118,6 +118,7 @@ const LineSegments = ({
     segments,
     segmentsSelected,
     setSelectedSegment,
+    intensity,
     opacity,
     showCaps,
     cylinderHeight,
