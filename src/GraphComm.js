@@ -12,6 +12,8 @@ import { schemeCategory10 } from "d3-scale-chromatic"; // Or any other D3 color 
 import { PCA } from "ml-pca";
 const kmeans = require("ml-kmeans");
 
+import { Allotment } from "allotment";
+
 //import * as d3 from 'd3';
 import convexHull from "convex-hull";
 import chroma from "chroma-js";
@@ -109,6 +111,26 @@ const GraphCommunities = ({
     console.log("data updated!");
   }, [data]);
 
+  const windowRef = useRef(null); // Ref to the parent box
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (windowRef.current) {
+        const { offsetWidth, offsetHeight } = windowRef.current;
+        setDimensions({ width: offsetWidth, height: offsetHeight });
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (windowRef.current) resizeObserver.observe(windowRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    console.log("dimensions: ", dimensions);
+  }, [dimensions]);
+
   const saveUndo = () => {
     const nlinks = graphData.links.map((obj) => ({
       source: obj.source.id,
@@ -150,7 +172,6 @@ const GraphCommunities = ({
     setAllGroups(undo.allGroups);
   };
 
-  // Function to get an object with only keys from 0 to n-1
   function getFirstNKeys(obj, n) {
     const result = {};
     for (let i = 0; i < n; i++) {
@@ -779,78 +800,6 @@ const GraphCommunities = ({
         return null;
     }
   };
-
-  if (isEmpty) {
-    // If the graph is empty, we can return null or some placeholder
-    //return <div>No data available to plot the graph.</div>;
-    return (
-      <Box sx={{ p: 3 }}>
-        <Grid2 container spacing={1}>
-          <Grid2 container size={12} spacing={2}>
-            <Grid2 item size={4.5}></Grid2>
-            <Grid2
-              item
-              size={3}
-              sx={{ display: "flex", flexDirection: "column", height: "100%" }}
-            >
-              <Button
-                component="label"
-                variant="contained"
-                tabIndex={-1}
-                startIcon={<PlayArrowIcon />}
-                fullWidth
-                disabled={multiSelect}
-                sx={{ flexGrow: 1 }}
-                onClick={() => handleStart()}
-              >
-                Start
-              </Button>
-            </Grid2>
-            <Grid2 item size={4.5}></Grid2>
-          </Grid2>
-
-          <Typography sx={{ fontWeight: "bold" }}>
-            Graph Community Settings
-          </Typography>
-
-          <Grid2 container size={12} spacing={2}>
-            <Grid2 item size={6}>
-              <CustomSelect
-                name={"Algorithm"}
-                onChange={(e) => setAlgorithm(e.target.value)}
-                defaultValue={algorithm}
-                options={[
-                  { value: "Louvain", label: "Louvain" },
-                  { value: "Louvain-SL", label: "Louvain-SL" },
-                  { value: "PCA", label: "PCA K-Means" },
-                  { value: "Infomap", label: "Infomap" },
-                  { value: "Label Propagation", label: "Label Propagation" },
-                  { value: "Hamming Distance", label: "Hamming Distance" },
-                  { value: "Blank", label: "Blank" },
-                ]}
-              />
-              <CustomNumberInput
-                name={"Node Scale"}
-                onChange={(e) => setNodeScale(Number(e.target.value))}
-                defaultValue={nodeScale}
-              />
-              <CustomNumberInput
-                name={"Seed"}
-                onChange={(e) => {
-                  setSeed(Number(e.target.value));
-                  seedrandom(seed, { global: true });
-                }}
-                defaultValue={seed}
-              />
-            </Grid2>
-            <Grid2 item size={6}>
-              {renderInputs()}
-            </Grid2>
-          </Grid2>
-        </Grid2>
-      </Box>
-    );
-  }
 
   function computeSizes(nodes) {
     // Find min and max number of members
@@ -1726,222 +1675,283 @@ const GraphCommunities = ({
   const linkVisibility = (link) => algorithm !== "PCA";
 
   return (
-    <div>
-      <button onClick={() => handleStart()} disabled={multiSelect}>
-        Start
-      </button>
+    <Allotment vertical={true} defaultSizes={[1, 2]}>
+      <Allotment.Pane>
+        {isEmpty && (
+          <Box sx={{ p: 3 }}>
+            <Grid2 container spacing={1}>
+              <Grid2 container size={12} spacing={2}>
+                <Grid2 item size={4.5}></Grid2>
+                <Grid2
+                  item
+                  size={3}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                  }}
+                >
+                  <Button
+                    component="label"
+                    variant="contained"
+                    tabIndex={-1}
+                    startIcon={<PlayArrowIcon />}
+                    fullWidth
+                    disabled={multiSelect}
+                    sx={{ flexGrow: 1 }}
+                    onClick={() => handleStart()}
+                  >
+                    Start
+                  </Button>
+                </Grid2>
+                <Grid2 item size={4.5}></Grid2>
+              </Grid2>
 
-      <button
-        onClick={handleMergeCommunities}
-        disabled={!multiSelect || selectedNodes.length <= 1}
-      >
-        Merge
-      </button>
+              <Typography sx={{ fontWeight: "bold" }}>
+                Graph Community Settings
+              </Typography>
 
-      <button onClick={() => handleSplitCommunity()} disabled={multiSelect}>
-        Split
-      </button>
+              <Grid2 container size={12} spacing={2}>
+                <Grid2 item size={6}>
+                  <CustomSelect
+                    name={"Algorithm"}
+                    onChange={(e) => setAlgorithm(e.target.value)}
+                    defaultValue={algorithm}
+                    options={[
+                      { value: "Louvain", label: "Louvain" },
+                      { value: "Louvain-SL", label: "Louvain-SL" },
+                      { value: "PCA", label: "PCA K-Means" },
+                      { value: "Infomap", label: "Infomap" },
+                      {
+                        value: "Label Propagation",
+                        label: "Label Propagation",
+                      },
+                      { value: "Hamming Distance", label: "Hamming Distance" },
+                      { value: "Blank", label: "Blank" },
+                    ]}
+                  />
+                  <CustomNumberInput
+                    name={"Node Scale"}
+                    onChange={(e) => setNodeScale(Number(e.target.value))}
+                    defaultValue={nodeScale}
+                  />
+                  <CustomNumberInput
+                    name={"Seed"}
+                    onChange={(e) => {
+                      setSeed(Number(e.target.value));
+                      seedrandom(seed, { global: true });
+                    }}
+                    defaultValue={seed}
+                  />
+                </Grid2>
+                <Grid2 item size={6}>
+                  {renderInputs()}
+                </Grid2>
+              </Grid2>
+            </Grid2>
+          </Box>
+        )}
+        {!isEmpty && (
+          <>
+            <button onClick={() => handleStart()} disabled={multiSelect}>
+              Start
+            </button>
 
-      <button onClick={() => handleCollaspeGroup()} disabled={multiSelect}>
-        Collasp Group
-      </button>
+            <button
+              onClick={handleMergeCommunities}
+              disabled={!multiSelect || selectedNodes.length <= 1}
+            >
+              Merge
+            </button>
 
-      <button onClick={() => handleExpandGroup()} disabled={multiSelect}>
-        Expand Group
-      </button>
+            <button
+              onClick={() => handleSplitCommunity()}
+              disabled={multiSelect}
+            >
+              Split
+            </button>
 
-      <button onClick={() => handleUpdateMatrix()}>Update Matrix</button>
+            <button
+              onClick={() => handleCollaspeGroup()}
+              disabled={multiSelect}
+            >
+              Collasp Group
+            </button>
 
-      <button onClick={() => handleUndo()}>Undo</button>
-      <button onClick={() => handleDownload()}>💾</button>
+            <button onClick={() => handleExpandGroup()} disabled={multiSelect}>
+              Expand Group
+            </button>
 
-      <button onClick={() => handleButtonClick()}>📁</button>
+            <button onClick={() => handleUpdateMatrix()}>Update Matrix</button>
 
-      <input
-        type="file"
-        id="jsonFileInput"
-        style={{ display: "none" }}
-        accept=".json"
-        onChange={handleFileChange}
-      />
+            <button onClick={() => handleUndo()}>Undo</button>
+            <button onClick={() => handleDownload()}>💾</button>
 
-      <input
-        defaultValue={seed}
-        style={{ maxWidth: "45px" }}
-        type="number"
-        onChange={(e) => {
-          setSeed(Number(e.target.value));
-        }}
-      />
-      <label>
-        <input
-          type="checkbox"
-          checked={use3D}
-          onChange={(e) => {
-            setUse3D(e.target.checked);
-          }}
-        />
-        Use3D
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={multiSelect}
-          onChange={(e) => {
-            setMultiSelect(e.target.checked);
-            if (!e.target.checked) {
-              setSelectedNodes([]); // Clear selected nodes when multi-select is turned off
-            }
-          }}
-        />
-        Multi select
-      </label>
-      <br />
-      <Grid2 container spacing={1}></Grid2>
-      <Grid2 container size={12} spacing={2}>
-        <Grid2 item size={6}>
-          <CustomSelect
-            name={"Algorithm"}
-            onChange={(e) => setAlgorithm(e.target.value)}
-            defaultValue={algorithm}
-            options={[
-              { value: "Louvain", label: "Louvain" },
-              { value: "Louvain-SL", label: "Louvain-SL" },
-              { value: "PCA", label: "PCA K-Means" },
-              { value: "Infomap", label: "Infomap" },
-              { value: "Label Propagation", label: "Label Propagation" },
-              { value: "Hamming Distance", label: "Hamming Distance" },
-              { value: "Selected", label: "Selected" },
-            ]}
-          />
-          <CustomNumberInput
-            name={"Node Scale"}
-            onChange={(e) => setNodeScale(Number(e.target.value))}
-            defaultValue={nodeScale}
-          />
-          <CustomNumberInput
-            name={"Seed"}
-            onChange={(e) => setSeed(Number(e.target.value))}
-            defaultValue={seed}
-          />
-        </Grid2>
-        <Grid2 item size={6}>
-          {renderInputs()}
-        </Grid2>
-      </Grid2>
+            <button onClick={() => handleButtonClick()}>📁</button>
 
-      <br />
-      {/* Optional: Display the list of selected node IDs */}
-      {multiSelect && selectedNodes.length > 0 && (
-        <div>
-          Selected Nodes:
-          <ul>
-            {selectedNodes.map((node, index) => (
-              <li key={index}>
-                Community {node.id}: {node.members.length} Members
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {!use3D && (
-        <ForceGraph2D
-          linkVisibility={linkVisibility}
-          graphData={graphData}
-          nodeLabel="id"
-          ref={fgRef}
-          //cooldownTicks={100}
-          //onEngineStop={() => fgRef.current.zoomToFit(400)}
-          onNodeClick={handleNodeClick}
-          onNodeRightClick={(node, event) => handleNodeClick(node, event)} // Add this line
-          nodeCanvasObject={(node, ctx, globalScale) => {
-            const label = node.id.toString();
+            <input
+              type="file"
+              id="jsonFileInput"
+              style={{ display: "none" }}
+              accept=".json"
+              onChange={handleFileChange}
+            />
 
-            const fontSize = 12 / globalScale; // Adjust font size against zoom level
-            let size = node.size / nodeScale;
-
-            if (size < 8) size = 8;
-            if (size > 45) size = 45;
-
-            // let nS = nodeScale;
-            // if (nodeScale == 1)
-            //     nS = 1.1;
-            // let size = node.size / Math.log(nS);
-
-            // Draw group background or outline if the node has a groupID
-            if (node.groupID.length > 0 && node.x) {
-              //size *= 1.5;
-              //var groupID = ;
-              node.groupID.forEach((groupID) => {
-                if (!window.tempt) window.tempt = {};
-                if (!window.tempt[groupID]) window.tempt[groupID] = [];
-                window.tempt[groupID].push([node.x, node.y]);
-                //console.log(node)
-                //console.log(JSON.stringify(node));
-                //console.log({...node}.x)
-                if (window.tempt[groupID].length == allGroups[groupID]) {
-                  const centroid = drawHullOnCanvas(
-                    window.tempt[groupID],
-                    ctx,
-                    node.groupColor
-                  );
-                  window.tempt[groupID] = false;
-
-                  if (centroid) {
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-                    ctx.font = `${fontSize}px Sans-Serif`;
-                    ctx.fillText(
-                      (groupID - 1).toString(),
-                      centroid[0],
-                      centroid[1]
-                    );
+            <input
+              defaultValue={seed}
+              style={{ maxWidth: "45px" }}
+              type="number"
+              onChange={(e) => {
+                setSeed(Number(e.target.value));
+              }}
+            />
+            <label>
+              <input
+                type="checkbox"
+                checked={use3D}
+                onChange={(e) => {
+                  setUse3D(e.target.checked);
+                }}
+              />
+              Use3D
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={multiSelect}
+                onChange={(e) => {
+                  setMultiSelect(e.target.checked);
+                  if (!e.target.checked) {
+                    setSelectedNodes([]); // Clear selected nodes when multi-select is turned off
                   }
+                }}
+              />
+              Multi select
+            </label>
+            <br />
+            <Grid2 container spacing={1}></Grid2>
+            <Grid2 container size={12} spacing={2}>
+              <Grid2 item size={6}>
+                <CustomSelect
+                  name={"Algorithm"}
+                  onChange={(e) => setAlgorithm(e.target.value)}
+                  defaultValue={algorithm}
+                  options={[
+                    { value: "Louvain", label: "Louvain" },
+                    { value: "Louvain-SL", label: "Louvain-SL" },
+                    { value: "PCA", label: "PCA K-Means" },
+                    { value: "Infomap", label: "Infomap" },
+                    { value: "Label Propagation", label: "Label Propagation" },
+                    { value: "Hamming Distance", label: "Hamming Distance" },
+                    { value: "Selected", label: "Selected" },
+                  ]}
+                />
+                <CustomNumberInput
+                  name={"Node Scale"}
+                  onChange={(e) => setNodeScale(Number(e.target.value))}
+                  defaultValue={nodeScale}
+                />
+                <CustomNumberInput
+                  name={"Seed"}
+                  onChange={(e) => setSeed(Number(e.target.value))}
+                  defaultValue={seed}
+                />
+              </Grid2>
+              <Grid2 item size={6}>
+                {renderInputs()}
+              </Grid2>
+            </Grid2>
+
+            <br />
+            {/* Optional: Display the list of selected node IDs */}
+            {multiSelect && selectedNodes.length > 0 && (
+              <div>
+                Selected Nodes:
+                <ul>
+                  {selectedNodes.map((node, index) => (
+                    <li key={index}>
+                      Community {node.id}: {node.members.length} Members
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </Allotment.Pane>
+      <Allotment.Pane preferredSize={"40%"}>
+        <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
+          {!use3D && (
+            <ForceGraph2D
+              width={dimensions.width}
+              height={dimensions.height}
+              linkVisibility={linkVisibility}
+              graphData={graphData}
+              nodeLabel="id"
+              ref={fgRef}
+              onNodeClick={handleNodeClick}
+              onNodeRightClick={(node, event) => handleNodeClick(node, event)} // Add this line
+              nodeCanvasObject={(node, ctx, globalScale) => {
+                const label = node.id.toString();
+
+                const fontSize = 12 / globalScale; // Adjust font size against zoom level
+                let size = node.size / nodeScale;
+
+                if (size < 8) size = 8;
+                if (size > 45) size = 45;
+                // Draw group background or outline if the node has a groupID
+                if (node.groupID.length > 0 && node.x) {
+                  //size *= 1.5;
+                  //var groupID = ;
+                  node.groupID.forEach((groupID) => {
+                    if (!window.tempt) window.tempt = {};
+                    if (!window.tempt[groupID]) window.tempt[groupID] = [];
+                    window.tempt[groupID].push([node.x, node.y]);
+                    //console.log(node)
+                    //console.log(JSON.stringify(node));
+                    //console.log({...node}.x)
+                    if (window.tempt[groupID].length == allGroups[groupID]) {
+                      const centroid = drawHullOnCanvas(
+                        window.tempt[groupID],
+                        ctx,
+                        node.groupColor
+                      );
+                      window.tempt[groupID] = false;
+
+                      if (centroid) {
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                        ctx.font = `${fontSize}px Sans-Serif`;
+                        ctx.fillText(
+                          (groupID - 1).toString(),
+                          centroid[0],
+                          centroid[1]
+                        );
+                      }
+                    }
+                  });
                 }
-              });
+                const hexColor = node.color;
+                let alpha = 0.4; // 50% transparency
+                if (selectedNode) {
+                  if (selectedNode.id == node.id) alpha = 1;
+                } else if (selectedNodes.length > 0) {
+                  if (selectedNodes.map((node) => node.id).includes(node.id))
+                    alpha = 1;
+                } else {
+                  //nothing is selected
+                  alpha = 1;
+                }
 
-              //console.log("here")
-              // You can add custom logic to determine the color or shape based on groupID
-              /*
-          const backgroundPadding = 1; // Add some padding around the node
-          const outlineSize = size + backgroundPadding; // The size of the outline/background
-      
-          ctx.setLineDash([1, 3]); // Create dashed lines with pattern [dashSize, gapSize]
-            ctx.strokeStyle = node.groupColor; // Color of the dashed outline
-            ctx.lineWidth = 2; // Width of the outline
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, size, 0, Math.PI * 2, false);
-            ctx.stroke();
-            ctx.setLineDash([]); // Reset the dash pattern so it doesn't affect other drawings
-            */
-            }
+                // Parse the hex color into RGB components
+                const r = parseInt(hexColor.slice(1, 3), 16);
+                const g = parseInt(hexColor.slice(3, 5), 16);
+                const b = parseInt(hexColor.slice(5, 7), 16);
 
-            // Now draw the actual node on top
+                // Set the fillStyle with RGBA format
 
-            //ctx.fillStyle = node.color || 'rgba(0, 0, 0, 1)';
-
-            // Assuming node.color is a hex color like "#RRGGBB"
-            const hexColor = node.color;
-            let alpha = 0.4; // 50% transparency
-            if (selectedNode) {
-              if (selectedNode.id == node.id) alpha = 1;
-            } else if (selectedNodes.length > 0) {
-              if (selectedNodes.map((node) => node.id).includes(node.id))
-                alpha = 1;
-            } else {
-              //nothing is selected
-              alpha = 1;
-            }
-
-            // Parse the hex color into RGB components
-            const r = parseInt(hexColor.slice(1, 3), 16);
-            const g = parseInt(hexColor.slice(3, 5), 16);
-            const b = parseInt(hexColor.slice(5, 7), 16);
-
-            // Set the fillStyle with RGBA format
-
-            /*
+                /*
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
         ctx.beginPath();
@@ -1950,118 +1960,120 @@ const GraphCommunities = ({
         ctx.fill();
         */
 
-            var x = node.x; // x coordinate of the circle's center
-            var y = node.y; // y coordinate of the circle's center
+                var x = node.x; // x coordinate of the circle's center
+                var y = node.y; // y coordinate of the circle's center
 
-            if (x === undefined || y === undefined) {
-              console.log("INVALID NODE XY: ", x, y);
-              return;
-            }
+                if (x === undefined || y === undefined) {
+                  console.log("INVALID NODE XY: ", x, y);
+                  return;
+                }
 
-            if (!size) {
-              console.log("INVALID NODE SIZE: ", size);
-              return;
-            }
+                if (!size) {
+                  console.log("INVALID NODE SIZE: ", size);
+                  return;
+                }
 
-            //shadow
-            ctx.fillStyle = "rgba(200, 200, 200, 0.7)";
+                //shadow
+                ctx.fillStyle = "rgba(200, 200, 200, 0.7)";
 
-            var innerRadius = 0; // Radius of the inner circle (start of the gradient)
-            var outerRadius = size; // Radius of the outer circle (end of the gradient)
+                var innerRadius = 0; // Radius of the inner circle (start of the gradient)
+                var outerRadius = size; // Radius of the outer circle (end of the gradient)
 
-            // Draw the shadow
-            ctx.beginPath();
-            ctx.arc(x + 1, y + 1, outerRadius, 0, 2 * Math.PI, false);
-            ctx.fill();
-            //--
+                // Draw the shadow
+                ctx.beginPath();
+                ctx.arc(x + 1, y + 1, outerRadius, 0, 2 * Math.PI, false);
+                ctx.fill();
+                //--
 
-            // Create gradient
-            var gradient = ctx.createRadialGradient(
-              x,
-              y,
-              innerRadius,
-              x,
-              y,
-              outerRadius
-            );
-            //gradient.addColorStop(1, 'rgba(255, 255, 255, 1)'); // Start color: white
-            gradient.addColorStop(
-              0,
-              `rgba(${r * 3}, ${g * 3}, ${b * 3}, ${alpha})`
-            );
-            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${alpha})`);
+                // Create gradient
+                var gradient = ctx.createRadialGradient(
+                  x,
+                  y,
+                  innerRadius,
+                  x,
+                  y,
+                  outerRadius
+                );
+                //gradient.addColorStop(1, 'rgba(255, 255, 255, 1)'); // Start color: white
+                gradient.addColorStop(
+                  0,
+                  `rgba(${r * 3}, ${g * 3}, ${b * 3}, ${alpha})`
+                );
+                gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${alpha})`);
 
-            // Set the gradient as fill style
-            ctx.fillStyle = gradient;
+                // Set the gradient as fill style
+                ctx.fillStyle = gradient;
 
-            // Draw the circle
-            ctx.beginPath();
-            ctx.arc(x, y, outerRadius, 0, 2 * Math.PI, false);
-            ctx.fill();
+                // Draw the circle
+                ctx.beginPath();
+                ctx.arc(x, y, outerRadius, 0, 2 * Math.PI, false);
+                ctx.fill();
 
-            //console.log(outerRadius,gradient)
+                //console.log(outerRadius,gradient)
 
-            let scolor = `rgba(${1}, ${1}, ${1}, ${alpha})`;
-            if (node.groupColor) {
-              scolor = node.groupColor;
-              const r2 = parseInt(node.groupColor.slice(1, 3), 16);
-              const g2 = parseInt(node.groupColor.slice(3, 5), 16);
-              const b2 = parseInt(node.groupColor.slice(5, 7), 16);
+                let scolor = `rgba(${1}, ${1}, ${1}, ${alpha})`;
+                if (node.groupColor) {
+                  scolor = node.groupColor;
+                  const r2 = parseInt(node.groupColor.slice(1, 3), 16);
+                  const g2 = parseInt(node.groupColor.slice(3, 5), 16);
+                  const b2 = parseInt(node.groupColor.slice(5, 7), 16);
 
-              //scolor = `rgba(${r2}, ${g2}, ${b2}, ${1})`;
-              //alert(scolor)
-            }
+                  //scolor = `rgba(${r2}, ${g2}, ${b2}, ${1})`;
+                  //alert(scolor)
+                }
 
-            ctx.strokeStyle = scolor;
+                ctx.strokeStyle = scolor;
 
-            //ctx.strokeStyle = node.groupColor; // Color for the dashed line
-            ctx.lineWidth = 0.4; // Width of the dashed line
-            ctx.stroke(); // Apply the line style to the hull
+                //ctx.strokeStyle = node.groupColor; // Color for the dashed line
+                ctx.lineWidth = 0.4; // Width of the dashed line
+                ctx.stroke(); // Apply the line style to the hull
 
-            //ctx.strokeStyle = 'black';
+                //ctx.strokeStyle = 'black';
 
-            // Draw labels for larger nodes
-            if (size > 5 / globalScale) {
-              let fontSize_ = Math.round(fontSize + size / globalScale);
-              ctx.textAlign = "center";
-              ctx.textBaseline = "middle";
-              ctx.fillStyle = "black"; //`rgba(255, 255, 255, ${alpha*2})`;
-              ctx.font = `${fontSize_}px Sans-Serif`;
-              ctx.fillText(label, node.x, node.y);
-              //ctx.fillText(size.toString(), node.x, node.y);
-            }
-          }}
-          linkDirectionalArrowLength={2.5}
-          linkDirectionalArrowRelPos={0.6}
-          linkDirectionalArrowColor={"black"}
-          linkCurvature={0.25}
-          linkOpacity={1}
-          linkColor={"black"}
-          linkWidth={4}
-          d3Force="charge" // Modify the charge force
-          d3ReheatSimulation={true}
-          //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
-          //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
-          d3ForceConfig={{
-            charge: {
-              strength: -220,
-              distanceMax: 300, // Optional: Increase to allow repulsion over larger distances
-              //distanceMin: 1    // Optional: Decrease to enhance repulsion for closely positioned nodes
-            },
-            link: {
-              // Adjust the strength of the link force based on groupID
-              strength: (link) => {
-                const sourceNode = graphData.nodes[link.source];
-                const targetNode = graphData.nodes[link.target];
-                alert("HERE");
-                return sourceNode.groupID === targetNode.groupID ? 1 : 4; // Modify as needed
-              },
-              // You can also configure other link force parameters here
-            },
-          }}
-        />
-      )}
-    </div>
+                // Draw labels for larger nodes
+                if (size > 5 / globalScale) {
+                  let fontSize_ = Math.round(fontSize + size / globalScale);
+                  ctx.textAlign = "center";
+                  ctx.textBaseline = "middle";
+                  ctx.fillStyle = "black"; //`rgba(255, 255, 255, ${alpha*2})`;
+                  ctx.font = `${fontSize_}px Sans-Serif`;
+                  ctx.fillText(label, node.x, node.y);
+                  //ctx.fillText(size.toString(), node.x, node.y);
+                }
+              }}
+              linkDirectionalArrowLength={2.5}
+              linkDirectionalArrowRelPos={0.6}
+              linkDirectionalArrowColor={"black"}
+              linkCurvature={0.25}
+              linkOpacity={1}
+              linkColor={"black"}
+              linkWidth={4}
+              d3Force="charge" // Modify the charge force
+              d3ReheatSimulation={true}
+              //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
+              //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
+              d3ForceConfig={{
+                charge: {
+                  strength: -220,
+                  distanceMax: 300, // Optional: Increase to allow repulsion over larger distances
+                  //distanceMin: 1    // Optional: Decrease to enhance repulsion for closely positioned nodes
+                },
+                link: {
+                  // Adjust the strength of the link force based on groupID
+                  strength: (link) => {
+                    const sourceNode = graphData.nodes[link.source];
+                    const targetNode = graphData.nodes[link.target];
+                    alert("HERE");
+                    return sourceNode.groupID === targetNode.groupID ? 1 : 4; // Modify as needed
+                  },
+                  // You can also configure other link force parameters here
+                },
+              }}
+            />
+          )}
+        </div>
+      </Allotment.Pane>
+    </Allotment>
   );
 };
 
