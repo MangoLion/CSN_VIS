@@ -48,17 +48,18 @@ const LineSegmentUploader = React.memo(
                 onChange={(e) => setTubeRes(Number(e.target.value))}
                 defaultValue={tubeRes}
               />
-              <CustomCheckBox
-                name="Draw All Segments"
-                onChange={() => setDrawAll(!drawAll)}
-                defaultValue={drawAll}
-              />
-            </Grid2>
-            <Grid2 item size={6}>
               <CustomNumberInput
                 name="Opacity"
                 onChange={(e) => setOpacity(Number(e.target.value))}
                 defaultValue={opacity}
+                stepValue={0.05}
+              />
+            </Grid2>
+            <Grid2 item size={6}>
+              <CustomNumberInput
+                name="Cylinder Height"
+                onChange={(e) => setCylinderHeight(Number(e.target.value))}
+                defaultValue={cylinderHeight}
                 stepValue={0.05}
               />
               <CustomCheckBox
@@ -66,11 +67,10 @@ const LineSegmentUploader = React.memo(
                 onChange={() => setShowCaps(!showCaps)}
                 defaultValue={showCaps}
               />
-              <CustomNumberInput
-                name="Cylinder Height"
-                onChange={(e) => setCylinderHeight(Number(e.target.value))}
-                defaultValue={cylinderHeight}
-                stepValue={0.05}
+              <CustomCheckBox
+                name="Draw All Segments"
+                onChange={() => setDrawAll(!drawAll)}
+                defaultValue={drawAll}
               />
             </Grid2>
           </Grid2>
