@@ -21,7 +21,7 @@ const LineSegments = ({
   const [intensity, setIntensity] = useState(2);
 
   return (
-    <Allotment vertical={true} defaultSizes={[2, 3, 7]}>
+    <Allotment vertical={true} defaultSizes={[4, 5, 15]}>
       <Allotment.Pane>
         <Uploader {...{ setSegments, setStreamLines }} />
       </Allotment.Pane>

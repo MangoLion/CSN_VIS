@@ -1334,6 +1334,138 @@ const GraphCommunities = ({
   };
   const linkVisibility = (link) => algorithm !== "PCA";
 
+  const handleNodeCanvasObject = (node, ctx, globalScale) => {
+    const label = node.id.toString();
+
+    const fontSize = 12 / globalScale; // Adjust font size against zoom level
+    let size = node.size / nodeScale;
+
+    if (size < 8) size = 8;
+    if (size > 45) size = 45;
+    // Draw group background or outline if the node has a groupID
+    if (node.groupID.length > 0 && node.x) {
+      //size *= 1.5;
+      //var groupID = ;
+      node.groupID.forEach((groupID) => {
+        if (!window.tempt) window.tempt = {};
+        if (!window.tempt[groupID]) window.tempt[groupID] = [];
+        window.tempt[groupID].push([node.x, node.y]);
+        //console.log(node)
+        //console.log(JSON.stringify(node));
+        //console.log({...node}.x)
+        if (window.tempt[groupID].length == allGroups[groupID]) {
+          const centroid = drawHullOnCanvas(
+            window.tempt[groupID],
+            ctx,
+            node.groupColor
+          );
+          window.tempt[groupID] = false;
+
+          if (centroid) {
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+            ctx.font = `${fontSize}px Sans-Serif`;
+            ctx.fillText((groupID - 1).toString(), centroid[0], centroid[1]);
+          }
+        }
+      });
+    }
+    const hexColor = node.color;
+    let alpha = 0.4; // 50% transparency
+    if (selectedNode) {
+      if (selectedNode.id == node.id) alpha = 1;
+    } else if (selectedNodes.length > 0) {
+      if (selectedNodes.map((node) => node.id).includes(node.id)) alpha = 1;
+    } else {
+      //nothing is selected
+      alpha = 1;
+    }
+
+    // Parse the hex color into RGB components
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+
+    var x = node.x; // x coordinate of the circle's center
+    var y = node.y; // y coordinate of the circle's center
+
+    if (x === undefined || y === undefined) {
+      console.log("INVALID NODE XY: ", x, y);
+      return;
+    }
+
+    if (!size) {
+      console.log("INVALID NODE SIZE: ", size);
+      return;
+    }
+
+    //shadow
+    ctx.fillStyle = "rgba(200, 200, 200, 0.7)";
+
+    var innerRadius = 0; // Radius of the inner circle (start of the gradient)
+    var outerRadius = size; // Radius of the outer circle (end of the gradient)
+
+    // Draw the shadow
+    ctx.beginPath();
+    ctx.arc(x + 1, y + 1, outerRadius, 0, 2 * Math.PI, false);
+    ctx.fill();
+    //--
+
+    // Create gradient
+    var gradient = ctx.createRadialGradient(
+      x,
+      y,
+      innerRadius,
+      x,
+      y,
+      outerRadius
+    );
+    //gradient.addColorStop(1, 'rgba(255, 255, 255, 1)'); // Start color: white
+    gradient.addColorStop(0, `rgba(${r * 3}, ${g * 3}, ${b * 3}, ${alpha})`);
+    gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${alpha})`);
+
+    // Set the gradient as fill style
+    ctx.fillStyle = gradient;
+
+    // Draw the circle
+    ctx.beginPath();
+    ctx.arc(x, y, outerRadius, 0, 2 * Math.PI, false);
+    ctx.fill();
+
+    //console.log(outerRadius,gradient)
+
+    let scolor = `rgba(${1}, ${1}, ${1}, ${alpha})`;
+    if (node.groupColor) {
+      scolor = node.groupColor;
+      const r2 = parseInt(node.groupColor.slice(1, 3), 16);
+      const g2 = parseInt(node.groupColor.slice(3, 5), 16);
+      const b2 = parseInt(node.groupColor.slice(5, 7), 16);
+
+      //scolor = `rgba(${r2}, ${g2}, ${b2}, ${1})`;
+      //alert(scolor)
+    }
+
+    ctx.strokeStyle = scolor;
+
+    //ctx.strokeStyle = node.groupColor; // Color for the dashed line
+    ctx.lineWidth = 0.4; // Width of the dashed line
+    ctx.stroke(); // Apply the line style to the hull
+
+    //ctx.strokeStyle = 'black';
+
+    // Draw labels for larger nodes
+    if (size > 5 / globalScale) {
+      let fontSize_ = Math.round(fontSize + size / globalScale);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "black"; //`rgba(255, 255, 255, ${alpha*2})`;
+      ctx.font = `${fontSize_}px Sans-Serif`;
+      ctx.fillText(label, node.x, node.y);
+      //ctx.fillText(size.toString(), node.x, node.y);
+    }
+  };
+
   return (
     <Allotment vertical={true} defaultSizes={[1, 2]}>
       <Allotment.Pane>
@@ -1539,6 +1671,7 @@ const GraphCommunities = ({
           </>
         )}
       </Allotment.Pane>
+
       <Allotment.Pane>
         <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
           {!use3D && (
@@ -1550,157 +1683,8 @@ const GraphCommunities = ({
               nodeLabel="id"
               ref={fgRef}
               onNodeClick={handleNodeClick}
-              onNodeRightClick={(node, event) => handleNodeClick(node, event)} // Add this line
-              nodeCanvasObject={(node, ctx, globalScale) => {
-                const label = node.id.toString();
-
-                const fontSize = 12 / globalScale; // Adjust font size against zoom level
-                let size = node.size / nodeScale;
-
-                if (size < 8) size = 8;
-                if (size > 45) size = 45;
-                // Draw group background or outline if the node has a groupID
-                if (node.groupID.length > 0 && node.x) {
-                  //size *= 1.5;
-                  //var groupID = ;
-                  node.groupID.forEach((groupID) => {
-                    if (!window.tempt) window.tempt = {};
-                    if (!window.tempt[groupID]) window.tempt[groupID] = [];
-                    window.tempt[groupID].push([node.x, node.y]);
-                    //console.log(node)
-                    //console.log(JSON.stringify(node));
-                    //console.log({...node}.x)
-                    if (window.tempt[groupID].length == allGroups[groupID]) {
-                      const centroid = drawHullOnCanvas(
-                        window.tempt[groupID],
-                        ctx,
-                        node.groupColor
-                      );
-                      window.tempt[groupID] = false;
-
-                      if (centroid) {
-                        ctx.textAlign = "center";
-                        ctx.textBaseline = "middle";
-                        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-                        ctx.font = `${fontSize}px Sans-Serif`;
-                        ctx.fillText(
-                          (groupID - 1).toString(),
-                          centroid[0],
-                          centroid[1]
-                        );
-                      }
-                    }
-                  });
-                }
-                const hexColor = node.color;
-                let alpha = 0.4; // 50% transparency
-                if (selectedNode) {
-                  if (selectedNode.id == node.id) alpha = 1;
-                } else if (selectedNodes.length > 0) {
-                  if (selectedNodes.map((node) => node.id).includes(node.id))
-                    alpha = 1;
-                } else {
-                  //nothing is selected
-                  alpha = 1;
-                }
-
-                // Parse the hex color into RGB components
-                const r = parseInt(hexColor.slice(1, 3), 16);
-                const g = parseInt(hexColor.slice(3, 5), 16);
-                const b = parseInt(hexColor.slice(5, 7), 16);
-
-                // Set the fillStyle with RGBA format
-
-                /*
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false); // Use size for radius
-        //console.log(node.x, node.y)
-        ctx.fill();
-        */
-
-                var x = node.x; // x coordinate of the circle's center
-                var y = node.y; // y coordinate of the circle's center
-
-                if (x === undefined || y === undefined) {
-                  console.log("INVALID NODE XY: ", x, y);
-                  return;
-                }
-
-                if (!size) {
-                  console.log("INVALID NODE SIZE: ", size);
-                  return;
-                }
-
-                //shadow
-                ctx.fillStyle = "rgba(200, 200, 200, 0.7)";
-
-                var innerRadius = 0; // Radius of the inner circle (start of the gradient)
-                var outerRadius = size; // Radius of the outer circle (end of the gradient)
-
-                // Draw the shadow
-                ctx.beginPath();
-                ctx.arc(x + 1, y + 1, outerRadius, 0, 2 * Math.PI, false);
-                ctx.fill();
-                //--
-
-                // Create gradient
-                var gradient = ctx.createRadialGradient(
-                  x,
-                  y,
-                  innerRadius,
-                  x,
-                  y,
-                  outerRadius
-                );
-                //gradient.addColorStop(1, 'rgba(255, 255, 255, 1)'); // Start color: white
-                gradient.addColorStop(
-                  0,
-                  `rgba(${r * 3}, ${g * 3}, ${b * 3}, ${alpha})`
-                );
-                gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${alpha})`);
-
-                // Set the gradient as fill style
-                ctx.fillStyle = gradient;
-
-                // Draw the circle
-                ctx.beginPath();
-                ctx.arc(x, y, outerRadius, 0, 2 * Math.PI, false);
-                ctx.fill();
-
-                //console.log(outerRadius,gradient)
-
-                let scolor = `rgba(${1}, ${1}, ${1}, ${alpha})`;
-                if (node.groupColor) {
-                  scolor = node.groupColor;
-                  const r2 = parseInt(node.groupColor.slice(1, 3), 16);
-                  const g2 = parseInt(node.groupColor.slice(3, 5), 16);
-                  const b2 = parseInt(node.groupColor.slice(5, 7), 16);
-
-                  //scolor = `rgba(${r2}, ${g2}, ${b2}, ${1})`;
-                  //alert(scolor)
-                }
-
-                ctx.strokeStyle = scolor;
-
-                //ctx.strokeStyle = node.groupColor; // Color for the dashed line
-                ctx.lineWidth = 0.4; // Width of the dashed line
-                ctx.stroke(); // Apply the line style to the hull
-
-                //ctx.strokeStyle = 'black';
-
-                // Draw labels for larger nodes
-                if (size > 5 / globalScale) {
-                  let fontSize_ = Math.round(fontSize + size / globalScale);
-                  ctx.textAlign = "center";
-                  ctx.textBaseline = "middle";
-                  ctx.fillStyle = "black"; //`rgba(255, 255, 255, ${alpha*2})`;
-                  ctx.font = `${fontSize_}px Sans-Serif`;
-                  ctx.fillText(label, node.x, node.y);
-                  //ctx.fillText(size.toString(), node.x, node.y);
-                }
-              }}
+              onNodeRightClick={handleNodeClick} // Add this line
+              nodeCanvasObject={handleNodeCanvasObject}
               linkDirectionalArrowLength={2.5}
               linkDirectionalArrowRelPos={0.6}
               linkDirectionalArrowColor={"black"}
