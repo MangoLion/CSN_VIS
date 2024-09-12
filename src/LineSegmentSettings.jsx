@@ -6,7 +6,7 @@ import {
   CustomCheckBox,
 } from "./components/CustomComponents";
 
-const LineSegmentUploader = React.memo(
+const LineSegmentSettings = React.memo(
   ({
     radius,
     setRadius,
@@ -80,4 +80,4 @@ const LineSegmentUploader = React.memo(
   }
 );
 
-export default LineSegmentUploader;
+export default LineSegmentSettings;

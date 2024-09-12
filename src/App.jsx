@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import HugeCanvas from "./HugeCanvas";
 import LineSegments from "./LineSegments";
+import GraphCommunities1 from "./GraphCommunities1";
 
 import "rc-dock/dist/rc-dock.css";
 import BarChart from "./PlotView";
@@ -54,7 +55,6 @@ const App = () => {
   const matRef = React.createRef();
 
   const [manualStart, setManualStart] = useState(false);
-  const [manualProgress, setManualProgress] = useState(0);
 
   useEffect(() => {
     console.log(matRef.current);
@@ -82,7 +82,7 @@ const App = () => {
             setStreamLines,
           }}
         />
-
+        {/* 
         <Allotment.Pane>
           <GraphCommunities
             setPixelMapData={setPixelMapData}
@@ -97,9 +97,15 @@ const App = () => {
             selectionMode={selectionMode}
             setSelectionMode={setSelectionMode}
           />
-        </Allotment.Pane>
+        </Allotment.Pane> */}
 
-        <Allotment.Pane>
+        <GraphCommunities1
+          setSegmentsSelected={setSegmentsSelected}
+          segments={segments}
+          streamLines={streamLines}
+        />
+
+        {/* <Allotment.Pane>
           <div style2={{ display: "none", maxWidth: "0px" }}>
             <HugeCanvas
               {...{
@@ -116,7 +122,6 @@ const App = () => {
                 setCanvasData,
                 setCSNG,
                 manualStart,
-                setManualProgress,
                 setDGraph,
               }}
               onLayerChange={handleLayerChange}
@@ -127,7 +132,7 @@ const App = () => {
               cid={1}
             />
           </div>
-        </Allotment.Pane>
+        </Allotment.Pane> */}
       </Allotment>
     </div>
   );

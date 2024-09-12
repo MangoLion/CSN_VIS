@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, TextField, Checkbox, Typography, MenuItem } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 
@@ -41,7 +41,7 @@ export const CustomNumberInput = ({
         <TextField
           className={classes.smallInput}
           type="number"
-          defaultValue={defaultValue}
+          value={defaultValue}
           onChange={onChange}
           fullWidth
           slotProps={{ htmlInput: { step: stepValue } }}
@@ -62,7 +62,7 @@ export const CustomCheckBox = ({ name, onChange, defaultValue }) => {
         className={classes.labelContainer}
         sx={{ display: "flex", justifyContent: "center" }}
       >
-        <Checkbox onChange={onChange} defaultChecked={defaultValue} />
+        <Checkbox onChange={onChange} checked={defaultValue} />
       </Box>
     </Box>
   );
@@ -82,7 +82,7 @@ export const CustomSelect = ({ name, onChange, defaultValue, options }) => {
         <TextField
           className={classes.smallInput}
           select
-          defaultValue={defaultValue}
+          value={defaultValue}
           onChange={onChange}
           fullWidth
         >

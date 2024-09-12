@@ -103,11 +103,11 @@ self.addEventListener("message", (event) => {
     constructTree,
     doSort,
     param,
-    segments2,
-    algorithm,
+    unmodifiedSegments,
+    treeAlgorithm,
     distanceMetric,
     exclude,
-    streamlines2,
+    unmodifiedStreamLines,
     sortType,
   } = event.data;
 
@@ -115,18 +115,18 @@ self.addEventListener("message", (event) => {
 
   // Precompute the tree once the segments are uploaded
   if (constructTree) {
-    lineSegments = processSegments(segments2);
+    lineSegments = processSegments(unmodifiedSegments);
     tree = createLineSegmentKDTree(lineSegments);
     return;
   }
 
   // If the tree or lineSegments aren't precomputed for some reason, compute them
-  if (!lineSegments) lineSegments = processSegments(segments2);
+  if (!lineSegments) lineSegments = processSegments(unmodifiedSegments);
   if (!tree) createLineSegmentKDTree(lineSegments);
 
   console.log("ex: ", exclude);
-  let streamlines = streamlines2;
-  let segments = segments2;
+  let streamlines = unmodifiedStreamLines;
+  let segments = unmodifiedSegments;
   if (doSort)
     streamlines.map((sl) => {
       sl.push(0);
@@ -134,7 +134,7 @@ self.addEventListener("message", (event) => {
     });
 
   let KR = Number(param);
-  if (algorithm == "RBN") {
+  if (treeAlgorithm == "RBN") {
     const bounds = computeBounds(lineSegments);
     KR = KR * computeDiagonalLength(bounds);
   }
@@ -155,7 +155,7 @@ self.addEventListener("message", (event) => {
   for (let i = 0; i < lineSegments.length; i++) {
     //for (let i=0; i <  2; i++){
     const segment = lineSegments[i];
-    const fun = algorithm == "RBN" ? findRBN2 : findKNearestNeighbors;
+    const fun = treeAlgorithm == "RBN" ? findRBN2 : findKNearestNeighbors;
 
     let funRes = fun(tree, segment, lineSegments, KR, distanceMetric);
     let neighbors = funRes[0];
@@ -173,7 +173,7 @@ self.addEventListener("message", (event) => {
     // }
 
     //let distances = funRes[1];
-    if (exclude > 0 && algorithm == "KNN") {
+    if (exclude > 0 && treeAlgorithm == "KNN") {
       let excluded = 0;
       const sIdx = segments[i].globalIdx;
       neighbors.forEach((n) => {
@@ -304,10 +304,10 @@ self.addEventListener("message", (event) => {
     for (let i = 0; i < lineSegments.length; i++) {
       //for (let i=0; i <  2; i++){
       const segment = lineSegments[i];
-      const fun = algorithm == "RBN" ? findRBN2 : findKNearestNeighbors;
+      const fun = treeAlgorithm == "RBN" ? findRBN2 : findKNearestNeighbors;
 
       let neighbors = fun(tree, segment, lineSegments, KR, distanceMetric);
-      if (exclude > 0 && algorithm == "KNN") {
+      if (exclude > 0 && treeAlgorithm == "KNN") {
         let excluded = 0;
         const sIdx = segments[i].globalIdx;
         neighbors.forEach((n) => {

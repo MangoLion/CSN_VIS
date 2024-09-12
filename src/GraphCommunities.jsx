@@ -1243,7 +1243,6 @@ const GraphCommunities = ({
       links: linkMembers,
     };
 
-    //selectedNodes = nodeMembers;
     const newNode = handleMergeCommunitiesP(nodeMembers);
     newNode.storedGraphdata = storedGraphdata;
   };

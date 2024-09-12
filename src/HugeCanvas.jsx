@@ -273,8 +273,6 @@ const HugeCanvas = React.memo(
         }
       });
       setSlRange(slR);
-      console.log("UPDATE SL RANGE");
-      console.log(slR);
     };
 
     const AMCSWorkerFunc = (event) => {
@@ -666,76 +664,8 @@ const HugeCanvas = React.memo(
 
       if (!manualUpdate) updateView();
 
-      //console.log('Selected region:', selection);
-
-      //for (let i=selection.x; i < selection.x + selection.width;i++){
-
-      if (false) {
-        for (let i of ranges.aboveDiagonalColumnIndexes) {
-          const neighbors = graph[i];
-          neighbors.forEach((n) => {
-            if (
-              //(n > selection.x && n < selection.x+ selection.width)
-              n > selection.y &&
-              n < selection.y + selection.height
-            )
-              segments[n].color = "blue";
-          });
-        }
-
-        //for (let i=selection.y; i < selection.y + selection.height;i++){
-        for (let i of ranges.belowDiagonalRowIndexes) {
-          if (i < 0 || i > segments.length - 1) continue;
-          const neighbors = graph[i];
-          neighbors.forEach((n) => {
-            if (n > selection.x && n < selection.x + selection.width)
-              //  if (n > selection.y && n < selection.y+selection.height)
-              segments[n].color = "blue";
-          });
-        }
-
-        console.log(ranges);
-        for (let aboveIdx of ranges.aboveDiagonalColumnIndexes) {
-          if (segments[aboveIdx].globalIdx != aboveIdx)
-            console.log(aboveIdx, segments[aboveIdx].globalIdx);
-          console.log(aboveIdx);
-          segments[aboveIdx].color = "orange";
-        }
-        for (let belowIdx of ranges.belowDiagonalRowIndexes) {
-          segments[belowIdx].color = "orange";
-        }
-
-        const selectedRange = listIndicesInRange(
-          selection.x,
-          selection.x + selection.width,
-          selection.y,
-          selection.y + selection.height
-        );
-        const selected = [];
-        selectedRange.forEach((n) => {
-          selected.push(segments[n]);
-        });
-      }
-
-      //console.log(selection.x,selection.x+selection.width,selection.y,selection.y+selection.height);
-      //console.log(selectedRange);
-      //console.log(selected)
-
-      //console.log(selection,selected);
-      //setSegmentsSelected(selected);
-
-      // const layer = layerRef.current;
-      // const visibleArea = {
-      //   x:-layer.x()/layer.scaleX(),
-      //   y:-layer.y()/layer.scaleY(),
-      //   width:dimensions.width/layer.scaleX(),
-      //   height:dimensions.height/layer.scaleY()
-      // }
-      // setSelection2(clampSelection(selection, visibleArea));
-
       setSelection2(selection);
       updateLayerProps();
-      //console.log("here");
     };
 
     const handleWrapperMouseDown = (e) => {

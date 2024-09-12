@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Allotment } from "allotment";
 import Uploader from "./Uploader";
-import LineSegmentUploader from "./LineSegmentUploader";
+import LineSegmentSettings from "./LineSegmentSettings";
 import LineSegmentsRenderer from "./LineSegmentsRenderer";
 import { Canvas } from "@react-three/fiber";
 
@@ -26,7 +26,7 @@ const LineSegments = ({
         <Uploader {...{ setSegments, setStreamLines }} />
       </Allotment.Pane>
       <Allotment.Pane>
-        <LineSegmentUploader
+        <LineSegmentSettings
           {...{
             radius,
             setRadius,

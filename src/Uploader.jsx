@@ -107,7 +107,6 @@ const Uploader = ({ setSegments, setStreamLines }) => {
       );
 
       linesArray = linesArray.filter((l) => l.length > 0);
-
       setSegments(segments);
       setStreamLines(streamlines);
 

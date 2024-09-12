@@ -117,7 +117,6 @@ const LineSegmentsRenderer = ({
     drawAll,
     segments,
     segmentsSelected,
-    setSelectedSegment,
     intensity,
     opacity,
     showCaps,
