@@ -1472,9 +1472,8 @@ const GraphCommunities = ({
           <Box sx={{ p: 3 }}>
             <Grid2 container spacing={1}>
               <Grid2 container size={12} spacing={2}>
-                <Grid2 item size={4.5}></Grid2>
+                <Grid2 size={4.5}></Grid2>
                 <Grid2
-                  item
                   size={3}
                   sx={{
                     display: "flex",
@@ -1495,7 +1494,7 @@ const GraphCommunities = ({
                     Start
                   </Button>
                 </Grid2>
-                <Grid2 item size={4.5}></Grid2>
+                <Grid2 size={4.5}></Grid2>
               </Grid2>
 
               <Typography sx={{ fontWeight: "bold" }}>
@@ -1503,7 +1502,7 @@ const GraphCommunities = ({
               </Typography>
 
               <Grid2 container size={12} spacing={2}>
-                <Grid2 item size={6}>
+                <Grid2 size={6}>
                   <CustomSelect
                     name={"Algorithm"}
                     onChange={(e) => setAlgorithm(e.target.value)}
@@ -1535,9 +1534,7 @@ const GraphCommunities = ({
                     defaultValue={seed}
                   />
                 </Grid2>
-                <Grid2 item size={6}>
-                  {renderInputs()}
-                </Grid2>
+                <Grid2 size={6}>{renderInputs()}</Grid2>
               </Grid2>
             </Grid2>
           </Box>
@@ -1622,7 +1619,7 @@ const GraphCommunities = ({
             <br />
             <Grid2 container spacing={1}></Grid2>
             <Grid2 container size={12} spacing={2}>
-              <Grid2 item size={6}>
+              <Grid2 size={6}>
                 <CustomSelect
                   name={"Algorithm"}
                   onChange={(e) => setAlgorithm(e.target.value)}
@@ -1648,9 +1645,7 @@ const GraphCommunities = ({
                   defaultValue={seed}
                 />
               </Grid2>
-              <Grid2 item size={6}>
-                {renderInputs()}
-              </Grid2>
+              <Grid2 size={6}>{renderInputs()}</Grid2>
             </Grid2>
 
             <br />

@@ -6,11 +6,14 @@ import NearestNeighborSettings from "./NearestNeighborSettings";
 
 const GraphCommunities1 = ({ setSegmentsSelected, segments, streamLines }) => {
   const [dGraphData, setDGraphData] = useState([]);
-  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [isEmpty, setIsEmpty] = useState(true);
-  const [use3D, setUse3D] = useState(0);
+  const [use3D, setUse3D] = useState(false);
   const [multiSelect, setMultiSelect] = useState(false);
   const [nodeScale, setNodeScale] = useState(1);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedNodes, setSelectedNodes] = useState([]);
+  const [communityAlgorithm, setCommunityAlgorithm] = useState("Louvain");
+  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
 
   return (
     <Allotment vertical={true} defaultSizes={[4, 3, 7]}>
@@ -34,18 +37,28 @@ const GraphCommunities1 = ({ setSegmentsSelected, segments, streamLines }) => {
             setDGraphData,
             isEmpty,
             setIsEmpty,
+            selectedNode,
+            selectedNodes,
+            communityAlgorithm,
+            setCommunityAlgorithm,
+            graphData,
+            setGraphData,
           }}
         />
       </Allotment.Pane>
       <Allotment.Pane>
         <GraphCommunitiesRenderer
           {...{
-            dGraphData,
+            graphData,
             isEmpty,
             use3D,
-            graphData,
             setSegmentsSelected,
             nodeScale,
+            selectedNode,
+            setSelectedNode,
+            selectedNodes,
+            setSelectedNodes,
+            communityAlgorithm,
           }}
         />
       </Allotment.Pane>

@@ -25,9 +25,14 @@ const GraphCommunitiesSettings = ({
   setDGraphData,
   isEmpty,
   setIsEmpty,
+  selectedNode,
+  selectedNodes,
+  communityAlgorithm,
+  setCommunityAlgorithm,
+  graphData,
+  setGraphData,
 }) => {
   const [undoState, setUndoState] = useState(false);
-  const [communityAlgorithm, setCommunityAlgorithm] = useState("Louvain");
   const [seed, setSeed] = useState(1);
   const [inputs, setInputs] = useState({
     resolution: 1,
@@ -42,10 +47,7 @@ const GraphCommunitiesSettings = ({
     nodes: [],
     links: [],
   });
-  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const colorScale = scaleOrdinal(schemeCategory10);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [selectedNodes, setSelectedNodes] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
 
   const saveUndo = () => {
@@ -74,10 +76,7 @@ const GraphCommunitiesSettings = ({
 
   const handleStart = () => {
     // Check if the graph is empty
-    const isEmptyGraph = dGraphData.every((arr) => arr.length === 0);
-    setIsEmpty(isEmptyGraph);
-
-    if (isEmptyGraph) {
+    if (isEmpty) {
       console.log("Graph is empty, nothing to layout.");
       return; // Do not attempt to plot if the graph is empty
     }
@@ -227,8 +226,6 @@ const GraphCommunitiesSettings = ({
     });
     console.log("NUM COMMUNITIES: ", Object.keys(comms).length);
 
-    console.log("comms:", communities);
-
     setOrgCommunities(communities);
 
     ///color all!!
@@ -340,7 +337,7 @@ const GraphCommunitiesSettings = ({
 
     //console.log("nodesWithCommunityMembers: ",nodesWithCommunityMembers)
 
-    setDGraphData({
+    setGraphData({
       //nodes,
       nodes: nodesWithCommunityMembers,
       links: interCommunityLinks, //[], // No inter-community links for this simplified visualization
@@ -356,6 +353,10 @@ const GraphCommunitiesSettings = ({
       [name]: type === "checkbox" ? checked : parseFloat(value),
     });
   };
+
+  useEffect(() => {
+    setIsEmpty(dGraphData.every((arr) => arr.length === 0));
+  }, [dGraphData]);
 
   const renderInputs = () => {
     switch (communityAlgorithm) {
@@ -437,7 +438,7 @@ const GraphCommunitiesSettings = ({
         </Typography>
 
         <Grid2 container size={12} spacing={2}>
-          <Grid2 item size={6}>
+          <Grid2 size={6}>
             <CustomSelect
               name={"Community Algorithm"}
               onChange={(e) => setCommunityAlgorithm(e.target.value)}
@@ -469,15 +470,12 @@ const GraphCommunitiesSettings = ({
               defaultValue={seed}
             />
           </Grid2>
-          <Grid2 item size={6}>
-            {renderInputs()}
-          </Grid2>
+          <Grid2 size={6}>{renderInputs()}</Grid2>
         </Grid2>
 
         <Grid2 container size={12} spacing={2}>
-          <Grid2 item size={4.5}></Grid2>
+          <Grid2 size={4.5}></Grid2>
           <Grid2
-            item
             size={3}
             sx={{
               display: "flex",
@@ -491,14 +489,14 @@ const GraphCommunitiesSettings = ({
               tabIndex={-1}
               startIcon={<PlayArrowIcon />}
               fullWidth
-              disabled={multiSelect}
+              disabled={multiSelect || isEmpty}
               sx={{ flexGrow: 1 }}
               onClick={handleStart}
             >
               Start
             </Button>
           </Grid2>
-          <Grid2 item size={4.5}></Grid2>
+          <Grid2 size={4.5}></Grid2>
         </Grid2>
       </Grid2>
     </Box>

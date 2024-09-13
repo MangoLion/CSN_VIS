@@ -223,7 +223,6 @@ const Uploader = ({ setSegments, setStreamLines }) => {
         <Typography sx={{ fontWeight: "bold" }}>Upload Settings</Typography>
         <Grid2 container size={12} spacing={2}>
           <Grid2
-            item
             size={3}
             sx={{ display: "flex", flexDirection: "column", height: "100%" }}
           >
@@ -246,7 +245,6 @@ const Uploader = ({ setSegments, setStreamLines }) => {
           </Grid2>
 
           <Grid2
-            item
             size={3}
             sx={{ display: "flex", flexDirection: "column", height: "100%" }}
           >
@@ -263,7 +261,6 @@ const Uploader = ({ setSegments, setStreamLines }) => {
           </Grid2>
 
           <Grid2
-            item
             size={6}
             sx={{ display: "flex", flexDirection: "column", height: "100%" }}
           >
@@ -275,14 +272,14 @@ const Uploader = ({ setSegments, setStreamLines }) => {
           </Grid2>
         </Grid2>
         <Grid2 container size={12} spacing={2}>
-          <Grid2 item size={6}>
+          <Grid2 size={6}>
             <CustomNumberInput
               name="Merge X Segments Together"
               onChange={(e) => setSkipSegments(Number(e.target.value))}
               defaultValue={skipSegments}
             />
           </Grid2>
-          <Grid2 item size={6}>
+          <Grid2 size={6}>
             <CustomNumberInput
               name="Skip Every X Lines"
               onChange={(e) => setSkipLines(Number(e.target.value) + 1)}

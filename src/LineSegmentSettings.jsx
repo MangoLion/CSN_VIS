@@ -31,7 +31,7 @@ const LineSegmentSettings = React.memo(
           </Typography>
 
           <Grid2 container size={12} spacing={2}>
-            <Grid2 item size={6}>
+            <Grid2 size={6}>
               <CustomNumberInput
                 name="Intensity"
                 onChange={(e) => setIntensity(Number(e.target.value))}
@@ -55,7 +55,7 @@ const LineSegmentSettings = React.memo(
                 stepValue={0.05}
               />
             </Grid2>
-            <Grid2 item size={6}>
+            <Grid2 size={6}>
               <CustomNumberInput
                 name="Cylinder Height"
                 onChange={(e) => setCylinderHeight(Number(e.target.value))}

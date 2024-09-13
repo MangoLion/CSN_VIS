@@ -113,7 +113,7 @@ const NearestNeighborSettings = ({
           Nearest Neighbor Settings
         </Typography>
         <Grid2 container size={12} spacing={1}>
-          <Grid2 item size={6}>
+          <Grid2 size={6}>
             <CustomSelect
               name={"Algorithm"}
               onChange={(e) => setTreeAlgorithm(e.target.value)}
@@ -144,7 +144,7 @@ const NearestNeighborSettings = ({
               defaultValue={manualStart}
             />
           </Grid2>
-          <Grid2 item size={6}>
+          <Grid2 size={6}>
             <CustomCheckBox
               name={"Exclude"}
               onChange={(e) => setExclude(e.target.checked)}
@@ -167,9 +167,8 @@ const NearestNeighborSettings = ({
           </Grid2>
         </Grid2>
         <Grid2 container size={12} spacing={2}>
-          <Grid2 item size={4.5}></Grid2>
+          <Grid2 size={4.5}></Grid2>
           <Grid2
-            item
             size={3}
             sx={{
               display: "flex",
@@ -189,7 +188,7 @@ const NearestNeighborSettings = ({
               Start
             </Button>
           </Grid2>
-          <Grid2 item size={4.5}></Grid2>
+          <Grid2 size={4.5}></Grid2>
         </Grid2>
       </Grid2>
     </Box>

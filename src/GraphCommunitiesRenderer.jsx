@@ -1,16 +1,22 @@
 import React, { useRef, useState, useEffect } from "react";
 import { ForceGraph2D } from "react-force-graph";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 
 const GraphCommunitiesRenderer = ({
-  dGraphData,
+  graphData,
   isEmpty,
   use3D,
-  graphData,
   setSegmentsSelected,
   nodeScale,
+  selectedNode,
+  setSelectedNode,
+  selectedNodes,
+  setSelectedNodes,
+  communityAlgorithm,
 }) => {
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
   const fgRef = useRef();
 
   useEffect(() => {
@@ -47,7 +53,7 @@ const GraphCommunitiesRenderer = ({
         fgRef.current.postProcessingComposer().addPass(bloomPass);
       }
     }
-  }, [isEmpty, use3D, dGraphData]);
+  }, [isEmpty, use3D, graphData]);
 
   const handleNodeClick = (node, event) => {
     if (event.button === 2) {
@@ -242,11 +248,11 @@ const GraphCommunitiesRenderer = ({
     }
   };
 
-  const linkVisibility = (link) => algorithm !== "PCA";
+  const linkVisibility = (link) => communityAlgorithm !== "PCA";
 
   return (
     <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
-      {!use3D && (
+      {!use3D && !isEmpty && (
         <ForceGraph2D
           width={dimensions.width}
           height={dimensions.height}
