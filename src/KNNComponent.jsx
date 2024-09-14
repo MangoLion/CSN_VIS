@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { findKNearestNeighbors } from "./knnHelper";
+import { findKNearestNeighbors } from "./Nearest Neighbor/knnHelper";
 
 const KNNComponent = ({ segments, k }) => {
   const [knnResults, setKnnResults] = useState([]);

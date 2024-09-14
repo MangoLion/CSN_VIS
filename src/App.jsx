@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import HugeCanvas from "./HugeCanvas";
-import LineSegments from "./LineSegments";
-import GraphCommunities1 from "./GraphCommunities1";
+import LineSegments from "./Line Segments/LineSegments";
+import GraphCommunities from "./Graph Community/GraphCommunities";
 
 import "rc-dock/dist/rc-dock.css";
 import BarChart from "./PlotView";
@@ -10,7 +10,6 @@ import "./styles/App.css";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import Vis from "./components/Vis";
-import GraphCommunities from "./GraphCommunities";
 import { Matrix3 } from "three";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -82,24 +81,8 @@ const App = () => {
             setStreamLines,
           }}
         />
-        {/* 
-        <Allotment.Pane>
-          <GraphCommunities
-            setPixelMapData={setPixelMapData}
-            matRef={matRef}
-            data={dGraphData}
-            setPixelData={setPixelData}
-            pixelData={pixelData}
-            segmentsSelected={segmentsSelected}
-            setSegmentsSelected={setSegmentsSelected}
-            segments={segments}
-            selectedSegment={selectedSegment}
-            selectionMode={selectionMode}
-            setSelectionMode={setSelectionMode}
-          />
-        </Allotment.Pane> */}
 
-        <GraphCommunities1
+        <GraphCommunities
           setSegmentsSelected={setSegmentsSelected}
           segments={segments}
           streamLines={streamLines}

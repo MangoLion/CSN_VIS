@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Allotment } from "allotment";
 import GraphCommunitiesRenderer from "./GraphCommunitiesRenderer";
 import GraphCommunitiesSettings from "./GraphCommunitiesSettings";
-import NearestNeighborSettings from "./NearestNeighborSettings";
+import NearestNeighborSettings from "../Nearest Neighbor/NearestNeighborSettings";
 
-const GraphCommunities1 = ({ setSegmentsSelected, segments, streamLines }) => {
+const GraphCommunities = ({ setSegmentsSelected, segments, streamLines }) => {
   const [dGraphData, setDGraphData] = useState([]);
   const [isEmpty, setIsEmpty] = useState(true);
   const [use3D, setUse3D] = useState(false);
@@ -66,4 +66,4 @@ const GraphCommunities1 = ({ setSegmentsSelected, segments, streamLines }) => {
   );
 };
 
-export default GraphCommunities1;
+export default GraphCommunities;

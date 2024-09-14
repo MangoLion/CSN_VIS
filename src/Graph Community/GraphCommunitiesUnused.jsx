@@ -1,5 +1,4 @@
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
-import "./styles/GraphComm.css";
 
 import React, { useRef, useEffect, useState } from "react";
 import { ForceGraph2D, ForceGraph3D } from "react-force-graph";
@@ -36,7 +35,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 // Use an ordinal scale for colors with a D3 color scheme
 const colorScale = scaleOrdinal(schemeCategory10);
 
-const GraphCommunities = ({
+const GraphCommunitiesUnused = ({
   data,
   segments,
   segmentsSelected,
@@ -1715,4 +1714,4 @@ const GraphCommunities = ({
   );
 };
 
-export default GraphCommunities;
+export default GraphCommunitiesUnused;

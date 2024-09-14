@@ -10,7 +10,7 @@ import {
   CustomNumberInput,
   CustomCheckBox,
   CustomSelect,
-} from "./components/CustomComponents";
+} from "../components/CustomComponents";
 import { Box, Typography, Grid2, Button } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 

@@ -13,31 +13,6 @@ import {
 let tree = null;
 let lineSegments = null;
 
-function rearrangeMatrix2(matrix) {
-  // Validate the input is a square matrix
-  const size = matrix.length;
-  for (const row of matrix) {
-    if (row.length !== size) {
-      throw new Error("The input matrix must be square and symmetric.");
-    }
-  }
-
-  // Compute the sum of each row excluding the diagonal element
-  const rowSums = matrix.map((row, i) => {
-    return row.reduce((sum, value, j) => {
-      return sum + (i !== j && isFinite(value) ? value : 0);
-    }, 0);
-  });
-
-  // Create an array of row indexes
-  const rowIndexes = Array.from({ length: size }, (_, i) => i);
-
-  // Sort the row indexes based on the row sums
-  rowIndexes.sort((a, b) => rowSums[b] - rowSums[a]);
-
-  return rowIndexes;
-}
-
 function rearrangeMatrix(matrix) {
   // Validate the input is a square matrix
   const size = matrix.length;
@@ -63,40 +38,6 @@ function rearrangeMatrix(matrix) {
   return rowIndexes;
 }
 
-function nestedArraysAreEqual(array1, array2) {
-  if (array1.length !== array2.length) {
-    return false;
-  }
-
-  for (let i = 0; i < array1.length; i++) {
-    // Check if elements are arrays
-    if (!Array.isArray(array1[i]) || !Array.isArray(array2[i])) {
-      return false;
-    }
-
-    // Check if nested arrays are equal
-    if (!arraysAreEqual(array1[i], array2[i])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-function arraysAreEqual(array1, array2) {
-  if (array1.length !== array2.length) {
-    return false;
-  }
-
-  for (let i = 0; i < array1.length; i++) {
-    if (array1[i] !== array2[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 self.addEventListener("message", (event) => {
   console.log("worker started");
   let {
@@ -115,6 +56,7 @@ self.addEventListener("message", (event) => {
 
   // Precompute the tree once the segments are uploaded
   if (constructTree) {
+    console.log("constructing tree");
     lineSegments = processSegments(unmodifiedSegments);
     tree = createLineSegmentKDTree(lineSegments);
     return;

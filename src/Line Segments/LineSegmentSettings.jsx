@@ -1,10 +1,9 @@
 import React from "react";
-import "./styles/LineSegmentUploader.css";
 import { Grid2, Box, Typography } from "@mui/material";
 import {
   CustomNumberInput,
   CustomCheckBox,
-} from "./components/CustomComponents";
+} from "../components/CustomComponents";
 
 const LineSegmentSettings = React.memo(
   ({

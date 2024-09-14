@@ -13,10 +13,10 @@ import {
   findKNearestNeighbors,
   processSegments,
   lineSegmentDistance,
-} from "./knnHelper";
+} from "./Nearest Neighbor/knnHelper";
 // Create a new web worker
 import MUworkerT from "./MU.worker.js";
-import AMCSworkerT from "./AMCS.worker.js";
+import AMCSworkerT from "./Nearest Neighbor/NearestNeighbor.worker.js";
 
 import { scaleLinear } from "d3-scale";
 import { interpolateHsl, interpolateRgb } from "d3-interpolate";

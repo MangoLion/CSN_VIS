@@ -3,12 +3,12 @@ import {
   CustomCheckBox,
   CustomNumberInput,
   CustomSelect,
-} from "./components/CustomComponents";
-import { Button, Box, Grid2, Typography } from "@mui/material";
+} from "../components/CustomComponents";
+import { Button, Box, Grid2, Typography, LinearProgress } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
-import AMCSworkerT from "./AMCS.worker.js";
-const AMCSworker = new AMCSworkerT();
+import createNearestNeighborWorker from "./NearestNeighbor.worker.js";
+const NearestNeighborWorker = new createNearestNeighborWorker();
 const NearestNeighborSettings = ({
   setDGraphData,
   unmodifiedSegments,
@@ -35,7 +35,7 @@ const NearestNeighborSettings = ({
       setSegments(unmodifiedSegments);
 
       //When the segments are updated, construct the tree in the background
-      AMCSworker.postMessage({
+      NearestNeighborWorker.postMessage({
         constructTree: true,
         doSort: doSort,
         param: param,
@@ -50,8 +50,8 @@ const NearestNeighborSettings = ({
   }, [unmodifiedSegments]);
 
   const handleStart = async () => {
-    AMCSworker.addEventListener("message", AMCSWorkerFunc, false);
-    AMCSworker.postMessage({
+    NearestNeighborWorker.addEventListener("message", AMCSWorkerFunc, false);
+    NearestNeighborWorker.postMessage({
       constructTree: false,
       doSort: doSort,
       param: param,
@@ -67,7 +67,7 @@ const NearestNeighborSettings = ({
   const AMCSWorkerFunc = (event) => {
     if (event.data.type == "final") {
       setProgress(100);
-      AMCSworker.removeEventListener("message", AMCSWorkerFunc);
+      NearestNeighborWorker.removeEventListener("message", AMCSWorkerFunc);
       setGraph(event.data.tgraph);
       window.tempGraph = event.data.tgraph;
 
@@ -167,7 +167,7 @@ const NearestNeighborSettings = ({
           </Grid2>
         </Grid2>
         <Grid2 container size={12} spacing={2}>
-          <Grid2 size={4.5}></Grid2>
+          <Grid2 size={3}></Grid2>
           <Grid2
             size={3}
             sx={{
@@ -188,7 +188,18 @@ const NearestNeighborSettings = ({
               Start
             </Button>
           </Grid2>
-          <Grid2 size={4.5}></Grid2>
+          <Grid2
+            size={3}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              justifyContent: "center",
+            }}
+          >
+            <LinearProgress variant="determinate" value={progress} />
+          </Grid2>
+          <Grid2 size={3}></Grid2>
         </Grid2>
       </Grid2>
     </Box>
