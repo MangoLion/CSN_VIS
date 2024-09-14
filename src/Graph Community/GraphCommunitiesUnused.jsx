@@ -338,8 +338,6 @@ const GraphCommunitiesUnused = ({
     });
     console.log("NUM COMMUNITIES: ", Object.keys(comms).length);
 
-    console.log("comms:", communities);
-
     setOrgCommunities(communities);
 
     ///color all!!

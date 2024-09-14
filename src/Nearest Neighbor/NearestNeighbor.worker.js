@@ -57,6 +57,7 @@ self.addEventListener("message", (event) => {
   // Precompute the tree once the segments are uploaded
   if (constructTree) {
     console.log("constructing tree");
+    console.log(unmodifiedSegments);
     lineSegments = processSegments(unmodifiedSegments);
     tree = createLineSegmentKDTree(lineSegments);
     return;

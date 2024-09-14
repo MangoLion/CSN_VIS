@@ -16,7 +16,7 @@ const NearestNeighborSettings = ({
 }) => {
   const [treeAlgorithm, setTreeAlgorithm] = useState("KNN");
   const [param, setParam] = useState("1");
-  const [distanceMetric, setDistanceMetric] = useState("euclidean");
+  const [distanceMetric, setDistanceMetric] = useState("shortest");
   const [manualStart, setManualStart] = useState(false);
   const [exclude, setExclude] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -133,7 +133,7 @@ const NearestNeighborSettings = ({
               onChange={(e) => setDistanceMetric(e.target.value)}
               defaultValue={distanceMetric}
               options={[
-                { value: "euclidean", label: "Euclidean" },
+                { value: "shortest", label: "Shortest" },
                 { value: "longest", label: "Longest" },
                 { value: "haustoff", label: "Haustoff" },
               ]}

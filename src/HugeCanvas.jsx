@@ -51,7 +51,6 @@ const HugeCanvas = React.memo(
     setCSNG,
     setDGraph,
     manualStart,
-    setManualProgress,
   }) => {
     const layerRef = useRef();
     const stageRef = useRef();
@@ -115,6 +114,8 @@ const HugeCanvas = React.memo(
     }, [streamLines2]);
 
     useEffect(() => {
+      if (!segments2 || segments2.length == 0) return;
+
       setSegments(segments2);
 
       // Brian: When the segments are updated, construct the tree in the background
@@ -122,10 +123,10 @@ const HugeCanvas = React.memo(
         constructTree: true,
         doSort: doSort,
         param: param,
-        segments2: segments2,
+        unmodifiedSegments: segments2,
         algorithm: algorithm,
         distanceMetric: distanceMetric,
-        streamlines2: streamLines2,
+        unmodifiedStreamLines: streamLines2,
         exclude: exclude,
         sortType: sortType,
       });
@@ -232,10 +233,10 @@ const HugeCanvas = React.memo(
         constructTree: false,
         doSort: doSort,
         param: param,
-        segments2: segments,
+        unmodifiedSegments: segments,
         algorithm: algorithm,
         distanceMetric: distanceMetric,
-        streamlines2: streamLines2,
+        unmodifiedStreamLines: streamLines2,
         exclude: exclude,
         sortType: sortType,
       });
@@ -278,7 +279,6 @@ const HugeCanvas = React.memo(
     const AMCSWorkerFunc = (event) => {
       if (event.data.type == "final") {
         setProgress(100);
-        setManualProgress(100);
         //console.log(event.data);
         AMCSworker.removeEventListener("message", AMCSWorkerFunc);
         setGraph(event.data.tgraph);
@@ -316,7 +316,6 @@ const HugeCanvas = React.memo(
         }
       } else if (event.data.type == "progress") {
         setProgress(event.data.progress);
-        setManualProgress(event.data.progress);
       }
     };
 
@@ -329,10 +328,10 @@ const HugeCanvas = React.memo(
         constructTree: false,
         doSort: doSort,
         param: param2,
-        segments2: segments,
+        unmodifiedSegments: segments,
         algorithm: algorithm2,
         distanceMetric: distanceMetric2,
-        streamlines2: streamLines2,
+        unmodifiedStreamLines: streamLines2,
         exclude: exclude,
         sortType: sortType,
       });
