@@ -33,6 +33,7 @@ const LineSegmentsRenderer = ({
   opacity,
   showCaps,
   cylinderHeight,
+  coloredSegments,
 }) => {
   const { scene } = useThree();
   const { camera, raycaster, gl } = useThree();
@@ -98,7 +99,11 @@ const LineSegmentsRenderer = ({
     if (segmentsSelected.length > 0) {
       render(segmentsSelected);
       render(segments, opacity / 10);
-    } else if (segments.length > 0) render(segments);
+    } else if (coloredSegments.length > 0) {
+      render(coloredSegments);
+    } else if (segments.length > 0) {
+      render(segments);
+    }
 
     // Cleanup function to remove the previous instanced mesh
     return () => {
@@ -121,6 +126,7 @@ const LineSegmentsRenderer = ({
     opacity,
     showCaps,
     cylinderHeight,
+    coloredSegments,
     scene,
   ]);
 

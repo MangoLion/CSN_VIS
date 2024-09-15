@@ -217,11 +217,13 @@ const NearestNeighborSettings = ({
               justifyContent: "center",
             }}
           >
-            <CircularProgress
-              variant="determinate"
-              value={progress}
-              size={20}
-            />
+            {progress != 0 && progress != 100 && (
+              <CircularProgress
+                variant="determinate"
+                value={progress}
+                size={20}
+              />
+            )}
           </Grid2>
         </Grid2>
       </Grid2>

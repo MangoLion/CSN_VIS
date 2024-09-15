@@ -11,6 +11,7 @@ const LineSegments = ({
   segmentsSelected,
   setSelectedSegment,
   setStreamLines,
+  coloredSegments,
 }) => {
   const [radius, setRadius] = useState(0.45);
   const [tubeRes, setTubeRes] = useState(20);
@@ -60,6 +61,7 @@ const LineSegments = ({
               opacity,
               showCaps,
               cylinderHeight,
+              coloredSegments,
             }}
             key="line3D"
           />

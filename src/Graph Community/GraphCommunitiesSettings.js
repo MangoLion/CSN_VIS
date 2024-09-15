@@ -35,6 +35,7 @@ const GraphCommunitiesSettings = ({
   setCommunityAlgorithm,
   graphData,
   setGraphData,
+  setColoredSegments,
 }) => {
   const [undoState, setUndoState] = useState(false);
   const [seed, setSeed] = useState(1);
@@ -112,7 +113,7 @@ const GraphCommunitiesSettings = ({
     setRunning(false);
 
     GraphCommunityWorker.removeEventListener("message", GraphCommunityFunction);
-    setSegmentsSelected(event.data.segments);
+    setColoredSegments(event.data.segments);
     setOrgCommunities(event.data.communities);
     setGraphData({
       //nodes,

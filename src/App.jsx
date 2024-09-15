@@ -14,6 +14,7 @@ import Vis from "./components/Vis";
 const App = () => {
   const [segments, setSegments] = useState([]);
   const [streamLines, setStreamLines] = useState([]);
+  const [coloredSegments, setColoredSegments] = useState([]);
   const [selectedSegment, setSelectedSegment] = useState(-1);
   const [segmentsSelected, setSegmentsSelected] = useState([]);
   const [swapLayout, setSwapLayout] = useState(false);
@@ -65,13 +66,18 @@ const App = () => {
             segmentsSelected,
             setSelectedSegment,
             setStreamLines,
+            coloredSegments,
           }}
         />
 
         <GraphCommunities
-          setSegmentsSelected={setSegmentsSelected}
-          segments={segments}
-          streamLines={streamLines}
+          {...{
+            setSegmentsSelected,
+            segments,
+            streamLines,
+            coloredSegments,
+            setColoredSegments,
+          }}
         />
 
         {/* <Allotment.Pane>

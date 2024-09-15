@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { ForceGraph2D } from "react-force-graph";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
-
 const GraphCommunitiesRenderer = ({
   graphData,
   isEmpty,
@@ -14,7 +13,8 @@ const GraphCommunitiesRenderer = ({
   setSelectedNodes,
   communityAlgorithm,
   multiSelect,
-  segments,
+  coloredSegments,
+  setColoredSegments,
 }) => {
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -71,11 +71,11 @@ const GraphCommunitiesRenderer = ({
       node.color = newColor;
 
       // Update associated segments' colors
-      const updatedSegments = segments.map((seg) =>
+      const updatedSegments = coloredSegments.map((seg) =>
         node.members.includes(seg.globalIdx) ? { ...seg, color: newColor } : seg
       );
 
-      setSegmentsSelected(updatedSegments);
+      setColoredSegments(updatedSegments);
     } else {
       // Left click (existing behavior)
       if (multiSelect) {
@@ -88,7 +88,7 @@ const GraphCommunitiesRenderer = ({
             let selected = [];
             newState.forEach((node) => {
               node.members.forEach((idx) => {
-                let seg = segments[parseInt(idx)];
+                let seg = structuredClone(coloredSegments[parseInt(idx)]);
                 seg.color = node.color;
                 selected.push(seg);
               });
@@ -102,11 +102,11 @@ const GraphCommunitiesRenderer = ({
         setSelectedNodes([]);
         if (selectedNode == node) {
           setSelectedNode(false);
-          setSegmentsSelected(segments);
+          setSegmentsSelected([]);
         } else {
           let selected = [];
           node.members.forEach((idx) => {
-            let seg = segments[parseInt(idx)];
+            let seg = structuredClone(coloredSegments[parseInt(idx)]);
             if (!seg) console.log(`segment idx not found! ${idx}`);
             seg.color = node.color;
             selected.push(seg);
@@ -251,6 +251,15 @@ const GraphCommunitiesRenderer = ({
   };
 
   const linkVisibility = (link) => communityAlgorithm !== "PCA";
+
+  const getRandomColor = () => {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  };
 
   return (
     <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
