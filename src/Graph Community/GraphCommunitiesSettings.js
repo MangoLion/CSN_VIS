@@ -4,7 +4,7 @@ import seedrandom from "seedrandom";
 import Graph from "graphology";
 import louvain from "graphology-communities-louvain";
 import { scaleOrdinal } from "d3-scale";
-import { schemeCategory10 } from "d3-scale-chromatic"; // Or any other D3 color scheme
+import { schemeCategory10 } from "d3-scale-chromatic";
 
 import {
   CustomNumberInput,
@@ -14,6 +14,8 @@ import {
 import { Box, Typography, Grid2, Button } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
+import createGraphCommunityWorker from "./GraphCommunity.worker";
+const GraphCommunityWorker = createGraphCommunityWorker();
 const GraphCommunitiesSettings = ({
   segments,
   setSegmentsSelected,
@@ -74,276 +76,50 @@ const GraphCommunitiesSettings = ({
     setUndoState(JSON.stringify(undo));
   };
 
-  const handleStart = () => {
+  useEffect(() => {
+    GraphCommunityWorker.postMessage({
+      preCompute: true,
+      dGraphData: dGraphData,
+      segments: segments,
+      inputs: inputs,
+      communityAlgorithm: communityAlgorithm,
+    });
+  }, [dGraphData]);
+
+  const handleStart = async () => {
     // Check if the graph is empty
-    if (isEmpty) {
-      console.log("Graph is empty, nothing to layout.");
-      return; // Do not attempt to plot if the graph is empty
-    }
+    if (isEmpty) return; // Do not attempt to plot if the graph is empty
 
-    const graph = new Graph(); // Create a graph
-    const communityGraph = new Graph(); // This will store the community graph
-    const communitySizes = {}; // To store the size of each community
-
-    const imapNodes = [];
-    const imapEdges = [];
-
-    let startTime = performance.now();
-    //console.log(segments);
-    // Add nodes first
-    dGraphData.forEach((_, nodeIndex) => {
-      if (!graph.hasNode(nodeIndex)) {
-        graph.addNode(nodeIndex);
-      }
-      imapNodes.push(nodeIndex);
+    GraphCommunityWorker.addEventListener(
+      "message",
+      GraphCommunityFunction,
+      false
+    );
+    GraphCommunityWorker.postMessage({
+      preCompute: false,
+      dGraphData: dGraphData,
+      segments: segments,
+      inputs: inputs,
+      communityAlgorithm: communityAlgorithm,
     });
+  };
 
-    // Then add edges
-    dGraphData.forEach((edges, source) => {
-      edges.forEach((target) => {
-        imapEdges.push({
-          source,
-          target,
-          value: 1,
-        });
-        // Ensure both source and target nodes exist
-        if (!graph.hasNode(target)) {
-          graph.addNode(target);
-        }
-        if (!graph.hasEdge(source, target)) {
-          graph.addEdge(source, target);
-        }
+  const GraphCommunityFunction = (event) => {
+    if (event.data.type == "final") {
+      GraphCommunityWorker.removeEventListener(
+        "message",
+        GraphCommunityFunction
+      );
+      setSegmentsSelected(event.data.segments);
+      setOrgCommunities(event.data.communities);
+      setGraphData({
+        //nodes,
+        nodes: event.data.nodesWithCommunityMembers,
+        links: event.data.interCommunityLinks, //[], // No inter-community links for this simplified visualization
       });
-    });
 
-    let endTime = performance.now();
-
-    console.log(`Graph1 build time: ${endTime - startTime}ms`);
-
-    startTime = performance.now();
-
-    // Detect communities
-    let communities;
-    switch (communityAlgorithm) {
-      case "Louvain":
-        communities = louvain(graph, {
-          resolution: inputs.resolution,
-          randomWalk: inputs.randomWalk,
-        });
-        break;
-      case "Louvain-SL":
-        // Step 1: Build streamline graph
-        const streamlineGraph = new Graph();
-        const streamlineMap = new Map(); // Map streamline index to array of segment indices
-
-        // First, map segments to streamlines
-        segments.forEach((segment, segmentIndex) => {
-          const streamlineIndex = segment.lineIDx;
-          if (!streamlineMap.has(streamlineIndex)) {
-            streamlineMap.set(streamlineIndex, []);
-          }
-          streamlineMap.get(streamlineIndex).push(segmentIndex);
-        });
-
-        // Add all nodes to streamlineGraph first
-        streamlineMap.forEach((_, streamlineIndex) => {
-          streamlineGraph.addNode(streamlineIndex);
-        });
-
-        // Now add edges to streamlineGraph
-        streamlineMap.forEach((segmentIndices, streamlineIndex) => {
-          segmentIndices.forEach((segmentIndex) => {
-            dGraphData[segmentIndex].forEach((neighborIndex) => {
-              const neighborStreamlineIndex = segments[neighborIndex].lineIDx;
-              if (streamlineIndex !== neighborStreamlineIndex) {
-                if (
-                  !streamlineGraph.hasEdge(
-                    streamlineIndex,
-                    neighborStreamlineIndex
-                  )
-                ) {
-                  streamlineGraph.addEdge(
-                    streamlineIndex,
-                    neighborStreamlineIndex
-                  );
-                }
-              }
-            });
-          });
-        });
-
-        // Step 2: Perform Louvain community detection on streamlineGraph
-        const streamlineCommunities = louvain(streamlineGraph, {
-          resolution: inputs.resolution,
-          randomWalk: inputs.randomWalk,
-        });
-
-        // Step 3: Map communities back to individual segments
-        communities = {};
-        streamlineMap.forEach((segmentIndices, streamlineIndex) => {
-          const communityId = streamlineCommunities[streamlineIndex];
-          segmentIndices.forEach((segmentIndex) => {
-            communities[segmentIndex] = communityId;
-          });
-        });
-        break;
-      case "PCA":
-        communities = pcaKmeansStreamlineClustering(
-          segments,
-          inputs.dims,
-          inputs.kmean
-        );
-        break;
-      case "Infomap":
-        communities = infomap.jInfomap(imapNodes, imapEdges, inputs.min);
-        break;
-      case "Hamming Distance":
-        communities = hamming.jHamming(nodes, links, inputs.min);
-        break;
-      case "Label Propagation":
-        communities = llp.jLayeredLabelPropagation(
-          imapNodes,
-          imapEdges,
-          inputs.gamma,
-          inputs.max
-        );
-        break;
-      case "Blank":
-        communities = Array.from({ length: segments.length }, (_, i) => [
-          i,
-          0,
-        ]).reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
-        break;
+      saveUndo();
     }
-
-    endTime = performance.now();
-
-    console.log(`Comm detect time:${endTime - startTime}ms`);
-
-    const comms = {};
-    Object.keys(communities).forEach((k) => {
-      comms[communities[k]] = 1;
-    });
-    console.log("NUM COMMUNITIES: ", Object.keys(comms).length);
-
-    setOrgCommunities(communities);
-
-    ///color all!!
-    Object.entries(communities).forEach(([nodeId, communityIndex]) => {
-      const color = colorScale(communityIndex.toString());
-      //console.log(`Node ${nodeId}: Community ${communityIndex} Color: ${color}`);
-      if (!segments[parseInt(nodeId)]) console.log(nodeId);
-      else segments[parseInt(nodeId)].color = color;
-      //setSegmentsSelected(segments)
-    });
-    //CHECKKKKK!!!
-    setSegmentsSelected(segments);
-
-    // Process communities, creating nodes for each community and counting sizes
-    Object.entries(communities).forEach(([node, community]) => {
-      if (!segments[parseInt(node)]) return;
-      if (!communityGraph.hasNode(community)) {
-        communityGraph.addNode(community, { size: 1 });
-      } else {
-        communityGraph.updateNodeAttribute(
-          community,
-          "size",
-          (size) => size + 1
-        );
-      }
-    });
-
-    // Now, let's prepare dGraphData for visualization
-    const nodes = communityGraph.nodes().map((node) => ({
-      id: node,
-      size: communityGraph.getNodeAttribute(node, "size") / 2,
-    }));
-
-    // After computing community sizes but before setting the graphData:
-    const scaleFactor = 0.02; // Adjust this scaling factor as needed
-    const scaledNodes = nodes.map((node) => ({
-      ...node,
-      size: node.size * scaleFactor,
-    }));
-
-    console.log("NODE SIZE: ", nodes[0].size * scaleFactor);
-
-    // Assign a color to each community node
-    const nodesWithColors = scaledNodes.map((node) => ({
-      ...node,
-      color: colorScale(node.id.toString()), // Convert node id to string for the scale function
-    }));
-
-    // No edges between communities are added for now,
-    // as we don't have the information about inter-community connections here.
-    // You might need additional logic to determine and add these connections if needed.
-
-    // Detected communities: communities (a mapping of node -> community)
-
-    console.log("CHECKPOINT1");
-
-    // Use a set to store unique inter-community links in the format "smaller_larger" to ensure uniqueness
-    const interCommunityLinksSet = new Set();
-
-    dGraphData.forEach((edges, source) => {
-      edges.forEach((target) => {
-        const sourceCommunity = communities[source];
-        const targetCommunity = communities[target];
-
-        // Check if communities are different, now including community 0
-        if (sourceCommunity !== targetCommunity) {
-          // Ensure a consistent order for the pair to avoid duplicate entries in set
-          const sortedPair = [sourceCommunity, targetCommunity]
-            .sort()
-            .join("_");
-          interCommunityLinksSet.add(sortedPair);
-        }
-      });
-    });
-
-    // Convert the set back to an array of objects for further processing or output
-    let interCommunityLinks = Array.from(interCommunityLinksSet).map((pair) => {
-      const [source, target] = pair.split("_");
-      return { source, target };
-    });
-    console.log("CHECKPOINT2");
-    // Deduplicate the links
-    const linkPairs = new Set();
-    interCommunityLinks = interCommunityLinks.filter((link) => {
-      const sortedPair = [link.source, link.target].sort().join("_");
-      if (linkPairs.has(sortedPair)) {
-        return false;
-      } else {
-        linkPairs.add(sortedPair);
-        return true;
-      }
-    });
-    console.log("CHECKPOINT3");
-    const communityMembers = {};
-    Object.entries(communities).forEach(([originalNode, communityId]) => {
-      if (!segments[parseInt(originalNode)]) return;
-
-      if (!communityMembers[communityId]) {
-        communityMembers[communityId] = [];
-      }
-      communityMembers[communityId].push(parseInt(originalNode, 10));
-    });
-
-    const nodesWithCommunityMembers = nodesWithColors.map((node) => ({
-      ...node,
-      members: communityMembers[node.id] || [],
-      groupID: [],
-    }));
-
-    //console.log("nodesWithCommunityMembers: ",nodesWithCommunityMembers)
-
-    setGraphData({
-      //nodes,
-      nodes: nodesWithCommunityMembers,
-      links: interCommunityLinks, //[], // No inter-community links for this simplified visualization
-    });
-
-    saveUndo();
   };
 
   const handleInputChange = (e) => {

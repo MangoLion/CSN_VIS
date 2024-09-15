@@ -63,6 +63,7 @@ self.addEventListener("message", (event) => {
   }
 
   // If the tree or lineSegments aren't precomputed for some reason, compute them
+  // In theory these lines should never run since there would be preprocessing on the same cpu thread
   if (!lineSegments) lineSegments = processSegments(unmodifiedSegments);
   if (!tree) createLineSegmentKDTree(lineSegments);
 
@@ -143,45 +144,11 @@ self.addEventListener("message", (event) => {
     }
 
     if (!doSort) {
-      //console.log(distances)
-      //minDist = distances.reduce((min,num)=>Math.min(min,num),minDist);
-      //maxDist = distances.reduce((max,num)=>Math.max(max,num),maxDist);
       tgraph.push(neighbors);
-      //dgraph.push(distances);
     } else {
       sum = 0;
       sumSquared = 0;
     }
-    /*
-        const lIdx = segments[i].lineIDx;
-        neighbors.forEach((n,idx) => {
-          //segments[n].color = 'blue';
-          //console.log(sIdx, segments[n].globalIdx, matrix)
-          matrix[lIdx][segments[n].lineIDx]+=1;
-
-          //console.log(sIDx,segments[n].globalIdx, matrix[sIdx][segments[n].globalIdx])
-          if (doSort){
-            //streamlines[segments[i].lineIDx][2] += 1;
-            
-            sum += distance3D(segments[i].midPoint, segments[n].midPoint);
-            
-            //const idx = segments[n].globalIdx;
-            //sum += idx;
-            //sumSquared += idx*idx;
-          }else
-            pixels.push([i,n,distances[idx]]);
-          //pixels.push([n,i]);
-        });
-
-        
-        
-        if (doSort){
-          const mean = sum/neighbors.length;
-          //streamlines[segments[i].lineIDx][2] += sumSquared / neighbors.length - mean * mean;
-
-          streamlines[segments[i].lineIDx][2] += sum / neighbors.length;
-        }
-        */
 
     const progress = Math.floor((i / lineSegments.length) * 100);
     if (progress % 10 === 0 && progress !== lastProgress) {

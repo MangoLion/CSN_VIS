@@ -1,9 +1,12 @@
 const path = require("path");
-const webpack = require('webpack');
+const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
+  stats: {
+    children: true,
+  },
   entry: "./src/index.js",
   output: {
     filename: "main.js",
@@ -32,17 +35,14 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: [
-          'style-loader',
-          'css-loader'
-        ]
+        use: ["style-loader", "css-loader"],
       },
       {
         test: /\.worker\.js$/,
         use: {
-          loader: 'worker-loader',
+          loader: "worker-loader",
           options: {
-            filename: '[name].[contenthash].worker.js',
+            filename: "[name].[contenthash].worker.js",
           },
         },
       },

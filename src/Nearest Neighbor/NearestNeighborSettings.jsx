@@ -9,6 +9,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import createNearestNeighborWorker from "./NearestNeighbor.worker.js";
 const NearestNeighborWorker = new createNearestNeighborWorker();
+
 const NearestNeighborSettings = ({
   setDGraphData,
   unmodifiedSegments,
