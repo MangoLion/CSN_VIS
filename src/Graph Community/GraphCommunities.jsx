@@ -15,8 +15,24 @@ const GraphCommunities = ({ setSegmentsSelected, segments, streamLines }) => {
   const [communityAlgorithm, setCommunityAlgorithm] = useState("Louvain");
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
 
+  useEffect(() => {
+    setDGraphData([]);
+    setSegmentsSelected([]);
+    setIsEmpty(true);
+    setSelectedNode(null);
+    setSelectedNodes([]);
+    setGraphData({ nodes: [], links: [] });
+  }, [segments]);
+
+  useEffect(() => {
+    setSelectedNode(null);
+    setSegmentsSelected([]);
+    setSelectedNodes([]);
+    setGraphData({ nodes: [], links: [] });
+  }, [dGraphData]);
+
   return (
-    <Allotment vertical={true} defaultSizes={[25, 23, 50]}>
+    <Allotment vertical={true} defaultSizes={[255, 215, 524]}>
       <Allotment.Pane>
         <NearestNeighborSettings
           setDGraphData={setDGraphData}

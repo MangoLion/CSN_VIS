@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
 
 import seedrandom from "seedrandom";
-import Graph from "graphology";
-import louvain from "graphology-communities-louvain";
-import { scaleOrdinal } from "d3-scale";
-import { schemeCategory10 } from "d3-scale-chromatic";
 
 import {
   CustomNumberInput,
   CustomCheckBox,
   CustomSelect,
 } from "../components/CustomComponents";
-import { Box, Typography, Grid2, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Grid2,
+  Button,
+  CircularProgress,
+} from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import createGraphCommunityWorker from "./GraphCommunity.worker";
@@ -49,8 +51,8 @@ const GraphCommunitiesSettings = ({
     nodes: [],
     links: [],
   });
-  const colorScale = scaleOrdinal(schemeCategory10);
   const [allGroups, setAllGroups] = useState([]);
+  const [running, setRunning] = useState(false);
 
   const saveUndo = () => {
     const nlinks = graphData.links.map((obj) => ({
@@ -102,24 +104,23 @@ const GraphCommunitiesSettings = ({
       inputs: inputs,
       communityAlgorithm: communityAlgorithm,
     });
+
+    setRunning(true);
   };
 
   const GraphCommunityFunction = (event) => {
-    if (event.data.type == "final") {
-      GraphCommunityWorker.removeEventListener(
-        "message",
-        GraphCommunityFunction
-      );
-      setSegmentsSelected(event.data.segments);
-      setOrgCommunities(event.data.communities);
-      setGraphData({
-        //nodes,
-        nodes: event.data.nodesWithCommunityMembers,
-        links: event.data.interCommunityLinks, //[], // No inter-community links for this simplified visualization
-      });
+    setRunning(false);
 
-      saveUndo();
-    }
+    GraphCommunityWorker.removeEventListener("message", GraphCommunityFunction);
+    setSegmentsSelected(event.data.segments);
+    setOrgCommunities(event.data.communities);
+    setGraphData({
+      //nodes,
+      nodes: event.data.nodesWithCommunityMembers,
+      links: event.data.interCommunityLinks, //[], // No inter-community links for this simplified visualization
+    });
+
+    saveUndo();
   };
 
   const handleInputChange = (e) => {
@@ -272,7 +273,17 @@ const GraphCommunitiesSettings = ({
               Start
             </Button>
           </Grid2>
-          <Grid2 size={4.5}></Grid2>
+          <Grid2
+            size={4.5}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              justifyContent: "center",
+            }}
+          >
+            {running && <CircularProgress size={20} />}
+          </Grid2>
         </Grid2>
       </Grid2>
     </Box>

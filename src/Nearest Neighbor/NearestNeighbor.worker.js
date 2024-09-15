@@ -274,11 +274,6 @@ self.addEventListener("message", (event) => {
   console.log(`Neighbor search took ${endTime - startTime} ms.`);
 
   console.log("GRAPH SIZE: ", graphSize);
-
-  console.log(minDist);
-  console.log(maxDist);
-  //console.log(streamlines.length, streamlines2.length);
-  console.log("ended");
   const msg = {
     type: "final",
     tgraph: tgraph,

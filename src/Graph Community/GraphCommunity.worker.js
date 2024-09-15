@@ -270,7 +270,6 @@ self.addEventListener("message", (event) => {
   endTime = performance.now();
 
   self.postMessage({
-    type: "final",
     nodesWithCommunityMembers: nodesWithCommunityMembers,
     interCommunityLinks: interCommunityLinks,
     segments: segments,

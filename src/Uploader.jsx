@@ -24,6 +24,8 @@ const Uploader = ({ setSegments, setStreamLines }) => {
   const [file, setFile] = useState(null);
   const [skipLines, setSkipLines] = useState(0);
   const [skipSegments, setSkipSegments] = useState(0);
+  const [numSegments, setNumSegments] = useState(0);
+  const [numLines, setNumLines] = useState(0);
 
   const handleFileUpload = (event) => {
     setFile(event.target.files[0]);
@@ -109,6 +111,9 @@ const Uploader = ({ setSegments, setStreamLines }) => {
       linesArray = linesArray.filter((l) => l.length > 0);
       setSegments(segments);
       setStreamLines(streamlines);
+
+      setNumSegments(segments.length);
+      setNumLines(linesArray.length);
 
       const tock = performance.now();
       console.log(`Upload took ${(tock - tick).toFixed(2)} ms`);
@@ -220,7 +225,12 @@ const Uploader = ({ setSegments, setStreamLines }) => {
   return (
     <Box sx={{ p: 3 }}>
       <Grid2 container spacing={1}>
-        <Typography sx={{ fontWeight: "bold" }}>Upload Settings</Typography>
+        <Typography sx={{ fontWeight: "bold", width: "100%" }}>
+          Upload Settings
+        </Typography>
+        <Typography sx={{ fontWeight: "bold", width: "100%" }}>
+          Segments: {numSegments} Streamlines: {numLines}
+        </Typography>
         <Grid2 container size={12} spacing={2}>
           <Grid2
             size={3}
@@ -255,6 +265,7 @@ const Uploader = ({ setSegments, setStreamLines }) => {
               fullWidth
               startIcon={<MemoryIcon />}
               sx={{ flexGrow: 1 }}
+              disabled={!file}
             >
               Process
             </Button>

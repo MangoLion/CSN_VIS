@@ -4,7 +4,13 @@ import {
   CustomNumberInput,
   CustomSelect,
 } from "../components/CustomComponents";
-import { Button, Box, Grid2, Typography, LinearProgress } from "@mui/material";
+import {
+  Button,
+  Box,
+  Grid2,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import createNearestNeighborWorker from "./NearestNeighbor.worker.js";
@@ -30,6 +36,7 @@ const NearestNeighborSettings = ({
   const [pixelData, setPixelData] = useState([]);
   const [currentPixels, setCurrentPixels] = useState([]);
   const [slRange, setSlRange] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(true);
 
   useEffect(() => {
     if (unmodifiedSegments && unmodifiedSegments.length > 0) {
@@ -49,6 +56,17 @@ const NearestNeighborSettings = ({
       });
     }
   }, [unmodifiedSegments]);
+
+  useEffect(() => {
+    setIsEmpty(
+      !(
+        unmodifiedStreamLines &&
+        unmodifiedStreamLines.length > 0 &&
+        unmodifiedSegments &&
+        unmodifiedSegments.length > 0
+      )
+    );
+  }, [unmodifiedSegments, unmodifiedStreamLines]);
 
   const handleStart = async () => {
     NearestNeighborWorker.addEventListener("message", AMCSWorkerFunc, false);
@@ -168,7 +186,7 @@ const NearestNeighborSettings = ({
           </Grid2>
         </Grid2>
         <Grid2 container size={12} spacing={2}>
-          <Grid2 size={3}></Grid2>
+          <Grid2 size={4.5}></Grid2>
           <Grid2
             size={3}
             sx={{
@@ -185,12 +203,13 @@ const NearestNeighborSettings = ({
               fullWidth
               sx={{ flexGrow: 1 }}
               onClick={handleStart}
+              disabled={isEmpty}
             >
               Start
             </Button>
           </Grid2>
           <Grid2
-            size={3}
+            size={4.5}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -198,9 +217,12 @@ const NearestNeighborSettings = ({
               justifyContent: "center",
             }}
           >
-            <LinearProgress variant="determinate" value={progress} />
+            <CircularProgress
+              variant="determinate"
+              value={progress}
+              size={20}
+            />
           </Grid2>
-          <Grid2 size={3}></Grid2>
         </Grid2>
       </Grid2>
     </Box>

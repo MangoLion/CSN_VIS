@@ -16,7 +16,6 @@ const App = () => {
   const [streamLines, setStreamLines] = useState([]);
   const [selectedSegment, setSelectedSegment] = useState(-1);
   const [segmentsSelected, setSegmentsSelected] = useState([]);
-  const [dGraphData, setDGraphData] = useState([]);
   const [swapLayout, setSwapLayout] = useState(false);
   const [layerProps, setLayerProps] = useState({
     x: 0,
@@ -24,8 +23,6 @@ const App = () => {
     scaleX: 1,
     scaleY: 1,
   });
-
-  const [pixelData, setPixelData] = useState(false);
 
   const [canvasData, setCanvasData] = useState({});
   const [settings, setSettings] = useState({});
@@ -35,9 +32,7 @@ const App = () => {
     end: null,
   });
 
-  const [graphData, setGraphData] = useState(null);
   const [CSNG, setCSNG] = useState(false);
-  const [dGraph, setDGraph] = useState(false);
   const [pixelMapData, setPixelMapData] = useState(false);
 
   const [sphereRadius, setSphereRadius] = useState(1); // Default radius
@@ -49,8 +44,6 @@ const App = () => {
   const [objFile, setObjFile] = useState(false);
 
   const matRef = React.createRef();
-
-  const [manualStart, setManualStart] = useState(false);
 
   //const amcsRef = useRef();
 
