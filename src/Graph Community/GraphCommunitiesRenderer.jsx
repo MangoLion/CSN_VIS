@@ -13,6 +13,8 @@ const GraphCommunitiesRenderer = ({
   selectedNodes,
   setSelectedNodes,
   communityAlgorithm,
+  multiSelect,
+  segments,
 }) => {
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });

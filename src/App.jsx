@@ -10,9 +10,6 @@ import "./styles/App.css";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import Vis from "./components/Vis";
-import { Matrix3 } from "three";
-
-import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 const App = () => {
   const [segments, setSegments] = useState([]);
@@ -54,10 +51,6 @@ const App = () => {
   const matRef = React.createRef();
 
   const [manualStart, setManualStart] = useState(false);
-
-  useEffect(() => {
-    console.log(matRef.current);
-  }, [matRef.current]);
 
   //const amcsRef = useRef();
 

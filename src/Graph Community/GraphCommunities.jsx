@@ -16,7 +16,7 @@ const GraphCommunities = ({ setSegmentsSelected, segments, streamLines }) => {
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
 
   return (
-    <Allotment vertical={true} defaultSizes={[4, 3, 7]}>
+    <Allotment vertical={true} defaultSizes={[25, 23, 50]}>
       <Allotment.Pane>
         <NearestNeighborSettings
           setDGraphData={setDGraphData}
@@ -59,6 +59,8 @@ const GraphCommunities = ({ setSegmentsSelected, segments, streamLines }) => {
             selectedNodes,
             setSelectedNodes,
             communityAlgorithm,
+            multiSelect,
+            segments,
           }}
         />
       </Allotment.Pane>
