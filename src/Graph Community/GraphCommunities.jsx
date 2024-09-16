@@ -45,7 +45,7 @@ const GraphCommunities = ({
   }, [graphData]);
 
   return (
-    <Allotment vertical={true} defaultSizes={[255, 215, 524]}>
+    <Allotment vertical={true} defaultSizes={[245, 215, 524]}>
       <Allotment.Pane>
         <NearestNeighborSettings
           setDGraphData={setDGraphData}

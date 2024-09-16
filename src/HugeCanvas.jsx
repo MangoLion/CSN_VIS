@@ -29,8 +29,8 @@ import {
 } from "./components/CustomComponents";
 
 const MUworker = new MUworkerT();
-let AMCSworker = new AMCSworkerT();
-let AMCSworker2 = new AMCSworkerT();
+// let AMCSworker = new AMCSworkerT();
+// let AMCSworker2 = new AMCSworkerT();
 
 const HugeCanvas = React.memo(
   ({

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Allotment } from "allotment";
-import Uploader from "../Uploader";
+import Uploader from "../Uploader/Uploader";
 import LineSegmentSettings from "./LineSegmentSettings";
 import LineSegmentsRenderer from "./LineSegmentsRenderer";
 import { Canvas } from "@react-three/fiber";
