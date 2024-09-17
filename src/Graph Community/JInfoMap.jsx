@@ -303,7 +303,11 @@ const jInfomap = (nds, edgs, __MIN) => {
 
       let shuffledNodes = shuffle(graph.nodes);
 
+      console.log(shuffledNodes);
+
       shuffledNodes.forEach(function (node) {
+        console.log("while");
+
         let com_node = status.nodes_to_com[node]; // Returning community of the input node.
         let neigh_communities = __neighcom(node, graph, status); // Returning an array of the communities in the neighborhood of input node.
 
@@ -398,10 +402,11 @@ const jInfomap = (nds, edgs, __MIN) => {
   function generate_dendogram(original_graph) {
     let status = {};
 
-    init_status(original_graph, status);
     let mdl; // Modularity before 1 level partition.
     let status_list = []; // Set of partitions at different hierarchical levels: dendogram.
+    init_status(original_graph, status);
     __one_level(original_graph, status); // Computes 1 level of the communities dendogram. Current status to determine when to stop.
+
     let new_mdl = __mdl(status); // Modularity after 1 level partition.
     let partition = __renumber(status.nodes_to_com); // Decreasing number of communities due to __one_level.
     status_list.push(partition);

@@ -41,7 +41,7 @@ export const CustomNumberInput = ({
         <TextField
           className={classes.smallInput}
           type="number"
-          value={defaultValue}
+          defaultValue={structuredClone(defaultValue)}
           onChange={onChange}
           fullWidth
           slotProps={{ htmlInput: { step: stepValue } }}
@@ -51,7 +51,12 @@ export const CustomNumberInput = ({
   );
 };
 
-export const CustomCheckBox = ({ name, onChange, defaultValue }) => {
+export const CustomCheckBox = ({
+  name,
+  onChange,
+  defaultValue,
+  isDynamic = true,
+}) => {
   const classes = useStyles();
   return (
     <Box display="flex" alignItems="center" gap={2} sx={{ height: "30px" }}>
@@ -62,7 +67,11 @@ export const CustomCheckBox = ({ name, onChange, defaultValue }) => {
         className={classes.labelContainer}
         sx={{ display: "flex", justifyContent: "center" }}
       >
-        <Checkbox onChange={onChange} checked={defaultValue} />
+        {isDynamic ? (
+          <Checkbox onChange={onChange} checked={defaultValue} />
+        ) : (
+          <Checkbox onChange={onChange} defaultChecked={defaultValue} />
+        )}
       </Box>
     </Box>
   );

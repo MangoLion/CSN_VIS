@@ -66,7 +66,6 @@ self.addEventListener("message", (event) => {
   if (!lineSegments) lineSegments = processSegments(unmodifiedSegments);
   if (!tree) createLineSegmentKDTree(lineSegments);
 
-  console.log("ex: ", exclude);
   let streamlines = unmodifiedStreamLines;
   let segments = unmodifiedSegments;
   if (doSort)
@@ -102,19 +101,6 @@ self.addEventListener("message", (event) => {
     let funRes = fun(tree, segment, lineSegments, KR, distanceMetric);
     let neighbors = funRes[0];
 
-    // const probability = 0.01;
-    // if (Math.random() < probability) {
-    // let funRes2 = fun(tree2, segment, lineSegments, KR, distanceMetric);
-    // let neighbors2 = funRes2[0];
-
-    /*if (!arraysAreEqual(neighbors,neighbors2)){
-            console.log("CONSISTENCY CHECK FAILED!!!");
-            //console.log(neighbors, neighbors2)
-          }else
-            console.log("passed")*/
-    // }
-
-    //let distances = funRes[1];
     if (exclude > 0 && treeAlgorithm == "KNN") {
       let excluded = 0;
       const sIdx = segments[i].globalIdx;
@@ -125,11 +111,8 @@ self.addEventListener("message", (event) => {
         )
           excluded += 1;
       });
-      //console.log(excluded);
-
       funRes = fun(tree, segment, lineSegments, KR + excluded, distanceMetric);
       let neighbors = funRes[0];
-      //distances = funRes[1];
     }
 
     if (exclude > 0) {
@@ -151,17 +134,13 @@ self.addEventListener("message", (event) => {
 
     const progress = Math.floor((i / lineSegments.length) * 100);
     if (progress % 10 === 0 && progress !== lastProgress) {
-      //setProgress(progress);
       lastProgress = progress;
       self.postMessage({
         type: "progress",
         progress: progress,
       });
-      //console.log(progress);
     }
   }
-
-  //console.log(matrix);
 
   if (doSort) {
     const indexes = rearrangeMatrix(matrix);
@@ -176,14 +155,6 @@ self.addEventListener("message", (event) => {
     lastProgress = 0;
     pixels = [];
     const segments2 = [];
-    //console.log(JSON.parse(JSON.stringify(arr[0])), JSON.parse(JSON.stringify(arr))[0]);
-    //swap all here
-    //console.log("be4:", streamlines);
-
-    //streamlines = streamlines.sort((a, b) =>{ return  b[2] - a[2]});
-    //streamlines = streamlines.sort((a, b) =>{ return  a[2] - b[2]});
-
-    //console.log("after:",streamlines);
     let lIdx = 0;
     streamlines = streamlines.map((sl) => {
       const startIdx = segments2.length;

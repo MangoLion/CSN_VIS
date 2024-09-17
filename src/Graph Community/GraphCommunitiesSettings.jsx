@@ -88,6 +88,7 @@ const GraphCommunitiesSettings = ({
       segments: segments,
       inputs: inputs,
       communityAlgorithm: communityAlgorithm,
+      seed: seed,
     });
   }, [dGraphData]);
 
@@ -106,6 +107,7 @@ const GraphCommunitiesSettings = ({
       segments: segments,
       inputs: inputs,
       communityAlgorithm: communityAlgorithm,
+      seed: seed,
     });
 
     setRunning(true);
@@ -148,11 +150,13 @@ const GraphCommunitiesSettings = ({
               name={"Resolution"}
               onChange={handleInputChange}
               defaultValue={inputs.resolution}
+              isDynamic={false}
             />
             <CustomCheckBox
               name={"Random Walk"}
               onChange={handleInputChange}
               defaultValue={inputs.randomWalk}
+              isDynamic={false}
             />
           </>
         );

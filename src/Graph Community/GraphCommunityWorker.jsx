@@ -5,6 +5,8 @@ import { schemeCategory10 } from "d3-scale-chromatic";
 import jLayeredLabelPropagation from "./JLayeredLabelPropogation";
 import jHamming from "./JHamming";
 import jInfomap from "./JInfoMap";
+import { PCA } from "ml-pca";
+import { kmeans } from "ml-kmeans";
 
 const colorScale = scaleOrdinal(schemeCategory10);
 
@@ -49,7 +51,7 @@ const computeGraph = (dGraphData) => {
   console.log(`Precompute Time: ${endTime - startTime}ms`);
 };
 
-const pcaKmeansStreamlineClustering = (segments, pcaDims, k) => {
+const pcaKmeansStreamlineClustering = (segments, pcaDims, k, seed) => {
   const streamlineIndices = {};
   segments.forEach((segment, idx) => {
     if (!streamlineIndices[segment.lineIDx]) {
@@ -97,7 +99,7 @@ const pcaKmeansStreamlineClustering = (segments, pcaDims, k) => {
     Array.from(row)
   );
 
-  let ans = kmeans.kmeans(reducedDataArray, k, { seed: seed });
+  let ans = kmeans(reducedDataArray, k, { seed: seed });
   const communities = {};
   ans.clusters.forEach((cluster, streamlineIndex) => {
     const [startIdx, endIdx] = streamlines[streamlineIndex];
@@ -109,8 +111,26 @@ const pcaKmeansStreamlineClustering = (segments, pcaDims, k) => {
   return fillHolesInCommunities(communities);
 };
 
+const fillHolesInCommunities = (communities) => {
+  const sortedKeys = Object.keys(communities)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const newCommunities = {};
+  let gapCount = 0;
+
+  for (let i = 0; i < sortedKeys.length; i++) {
+    // Check if there is a hole
+    if (i > 0 && sortedKeys[i] !== sortedKeys[i - 1] + 1) {
+      gapCount += sortedKeys[i] - sortedKeys[i - 1] - 1;
+    }
+    newCommunities[sortedKeys[i] - gapCount] = communities[sortedKeys[i]];
+  }
+
+  return newCommunities;
+};
+
 self.addEventListener("message", (event) => {
-  let { preCompute, dGraphData, segments, inputs, communityAlgorithm } =
+  let { preCompute, dGraphData, segments, inputs, communityAlgorithm, seed } =
     event.data;
 
   let startTime = 0;
@@ -195,7 +215,8 @@ self.addEventListener("message", (event) => {
       communities = pcaKmeansStreamlineClustering(
         segments,
         inputs.dims,
-        inputs.kmean
+        inputs.kmean,
+        seed
       );
       break;
     case "Infomap":
