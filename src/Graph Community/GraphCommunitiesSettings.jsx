@@ -16,8 +16,10 @@ import {
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
-import createGraphCommunityWorker from "./GraphCommunity.worker";
-const GraphCommunityWorker = createGraphCommunityWorker();
+const GraphCommunityWorker = new Worker(
+  new URL("./GraphCommunityWorker.jsx", import.meta.url),
+  { type: "module" }
+);
 const GraphCommunitiesSettings = ({
   segments,
   setSegmentsSelected,

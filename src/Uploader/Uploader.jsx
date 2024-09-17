@@ -4,8 +4,10 @@ import { styled } from "@mui/material/styles";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import MemoryIcon from "@mui/icons-material/Memory";
 import { CustomNumberInput } from "../components/CustomComponents";
-import createUploadWorker from "./Uploader.worker";
-const UploaderWorker = createUploadWorker();
+const UploaderWorker = new Worker(
+  new URL("./UploaderWorker.jsx", import.meta.url),
+  { type: "module" }
+);
 
 const VisuallyHiddenInput = styled("input")({
   accept: ".txt",

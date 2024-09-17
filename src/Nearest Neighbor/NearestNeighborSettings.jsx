@@ -13,8 +13,10 @@ import {
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
-import createNearestNeighborWorker from "./NearestNeighbor.worker.js";
-const NearestNeighborWorker = new createNearestNeighborWorker();
+const NearestNeighborWorker = new Worker(
+  new URL("./NearestNeighborWorker.jsx", import.meta.url),
+  { type: "module" }
+);
 
 const NearestNeighborSettings = ({
   setDGraphData,

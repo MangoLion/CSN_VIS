@@ -3,7 +3,6 @@ import { Stage, Layer, Rect, Image } from "react-konva";
 import Konva from "konva";
 import useImage from "use-image";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { PanAndZoom } from "react-konva-utils";
 import KNNComponent from "./KNNComponent";
 import {
   findRBN,
@@ -13,22 +12,23 @@ import {
   findKNearestNeighbors,
   processSegments,
   lineSegmentDistance,
-} from "./Nearest Neighbor/knnHelper";
+} from "./Nearest Neighbor/knnHelper.jsx";
 // Create a new web worker
-import MUworkerT from "./MU.worker.js";
-import AMCSworkerT from "./Nearest Neighbor/NearestNeighbor.worker.js";
+// import MUworkerT from "./MU.worker.jsx";
 
 import { scaleLinear } from "d3-scale";
 import { interpolateHsl, interpolateRgb } from "d3-interpolate";
 import { rgb } from "d3-color";
-import OpacityTable from "./OpacityTable.js";
+import OpacityTable from "./OpacityTable.jsx";
 
 import {
   CustomNumberInput,
   CustomCheckBox,
 } from "./components/CustomComponents";
 
-const MUworker = new MUworkerT();
+const MUworker = new Worker(new URL("./MUWorker.jsx", import.meta.url), {
+  type: "module",
+});
 // let AMCSworker = new AMCSworkerT();
 // let AMCSworker2 = new AMCSworkerT();
 

@@ -1,5 +1,4 @@
-const kdtree = require("static-kdtree");
-const tf = require("@tensorflow/tfjs");
+import createKDTree from "static-kdtree";
 
 export function lineSegmentDistance(line1, line2, type) {
   let fun;
@@ -271,7 +270,7 @@ export function createLineSegmentKDTree(lineSegments) {
     points.push(segment[1]); // End point
   }
   //console.log("kdtreepts: ", points);
-  const tree = kdtree(points);
+  const tree = createKDTree(points);
   tree.orgPts = points;
   return tree;
 }

@@ -1,5 +1,5 @@
-const gpu = new GPU();
 import { GPU } from "gpu.js";
+const gpu = new GPU();
 
 const computePairwiseDistances = (segments, streamlines) => {
   const points = segments.map((segment) => segment.midPoint);
