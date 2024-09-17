@@ -39,7 +39,6 @@ function rearrangeMatrix(matrix) {
 }
 
 self.addEventListener("message", (event) => {
-  console.log("worker started");
   let {
     constructTree,
     doSort,

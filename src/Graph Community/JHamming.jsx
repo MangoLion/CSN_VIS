@@ -5,7 +5,7 @@
 // This time, instead of maximizing network's modularity, the goal is to find the minimum description length of the network. To calculate
 // this quantity, map equation was used.
 
-jHamming = function (profile, nlv, cyto) {
+const jHamming = (profile, nlv, cyto) => {
   let distance_matrix = [],
     edges = [],
     nodes = [],
@@ -78,6 +78,4 @@ jHamming = function (profile, nlv, cyto) {
   return result;
 };
 
-module.exports = {
-  jHamming: jHamming,
-};
+export default jHamming;
