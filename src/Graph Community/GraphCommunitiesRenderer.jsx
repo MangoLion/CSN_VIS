@@ -15,6 +15,7 @@ const GraphCommunitiesRenderer = ({
   multiSelect,
   coloredSegments,
   setColoredSegments,
+  allGroups,
 }) => {
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -56,6 +57,22 @@ const GraphCommunitiesRenderer = ({
       }
     }
   }, [isEmpty, use3D, graphData]);
+
+  useEffect(() => {
+    let { nodes, links } = graphData;
+    const nid = orgCommunities[selectedSegment];
+    const snode = nodes.filter((n) => {
+      return n.id == nid;
+    });
+
+    if (snode.length == 0) {
+      console.log("Not found!", nid);
+    }
+
+    setMultiSelect(false);
+    setSelectedNode(snode[0]);
+    setSelectedNodes([]);
+  }, [selectedSegment]);
 
   const handleNodeClick = (node, event) => {
     if (event.button === 2) {

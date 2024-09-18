@@ -38,6 +38,7 @@ const GraphCommunitiesSettings = ({
   graphData,
   setGraphData,
   setColoredSegments,
+  setAllGroups,
 }) => {
   const [undoState, setUndoState] = useState(false);
   const [seed, setSeed] = useState(1);
@@ -54,7 +55,6 @@ const GraphCommunitiesSettings = ({
     nodes: [],
     links: [],
   });
-  const [allGroups, setAllGroups] = useState([]);
   const [running, setRunning] = useState(false);
 
   const saveUndo = () => {
@@ -79,6 +79,19 @@ const GraphCommunitiesSettings = ({
     };
 
     setUndoState(JSON.stringify(undo));
+  };
+
+  const handleUndo = (data = false) => {
+    if (!undoState) return;
+    if (!data) data = undoState;
+    else {
+      setUndoState(data);
+    }
+    const undo = JSON.parse(data);
+    //console.log(undo.graphData);
+    setGraphData(undo.graphData);
+    setOrgCommunities(undo.orgCommunities);
+    setAllGroups(undo.allGroups);
   };
 
   useEffect(() => {
@@ -273,7 +286,7 @@ const GraphCommunitiesSettings = ({
               tabIndex={-1}
               startIcon={<PlayArrowIcon />}
               fullWidth
-              disabled={multiSelect || isEmpty}
+              disabled={isEmpty}
               sx={{ flexGrow: 1 }}
               onClick={handleStart}
             >

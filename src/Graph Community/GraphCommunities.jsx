@@ -20,6 +20,7 @@ const GraphCommunities = ({
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [communityAlgorithm, setCommunityAlgorithm] = useState("Louvain");
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+  const [allGroups, setAllGroups] = useState([]);
 
   useEffect(() => {
     setDGraphData([]);
@@ -73,6 +74,7 @@ const GraphCommunities = ({
             graphData,
             setGraphData,
             setColoredSegments,
+            setAllGroups,
           }}
         />
       </Allotment.Pane>
@@ -92,6 +94,7 @@ const GraphCommunities = ({
             multiSelect,
             coloredSegments,
             setColoredSegments,
+            allGroups,
           }}
         />
       </Allotment.Pane>
