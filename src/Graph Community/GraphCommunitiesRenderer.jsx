@@ -7,18 +7,19 @@ const GraphCommunitiesRenderer = ({
   use3D,
   setSegmentsSelected,
   nodeScale,
-  selectedNode,
-  setSelectedNode,
   selectedNodes,
   setSelectedNodes,
   communityAlgorithm,
   multiSelect,
+  setMultiSelect,
   coloredSegments,
   setColoredSegments,
   allGroups,
+  selectedSegment,
 }) => {
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [orgCommunities, setOrgCommunities] = useState([]);
 
   const fgRef = useRef();
 
@@ -70,8 +71,7 @@ const GraphCommunitiesRenderer = ({
     }
 
     setMultiSelect(false);
-    setSelectedNode(snode[0]);
-    setSelectedNodes([]);
+    setSelectedNodes([snode[0]]);
   }, [selectedSegment]);
 
   const handleNodeClick = (node, event) => {
@@ -116,9 +116,8 @@ const GraphCommunitiesRenderer = ({
           return prevSelectedNodes;
         });
       } else {
-        setSelectedNodes([]);
-        if (selectedNode == node) {
-          setSelectedNode(false);
+        if (selectedNodes[0] == node) {
+          setSelectedNodes([]);
           setSegmentsSelected([]);
         } else {
           let selected = [];
@@ -129,7 +128,7 @@ const GraphCommunitiesRenderer = ({
             selected.push(seg);
           });
           setSegmentsSelected(selected);
-          setSelectedNode(node);
+          setSelectedNodes([node]);
         }
       }
     }
@@ -174,14 +173,10 @@ const GraphCommunitiesRenderer = ({
     }
     const hexColor = node.color;
     let alpha = 0.4; // 50% transparency
-    if (selectedNode) {
+    if (!selectedNodes || selectedNodes.length === 0) alpha = 1;
+    selectedNodes.forEach((selectedNode) => {
       if (selectedNode.id == node.id) alpha = 1;
-    } else if (selectedNodes.length > 0) {
-      if (selectedNodes.map((node) => node.id).includes(node.id)) alpha = 1;
-    } else {
-      //nothing is selected
-      alpha = 1;
-    }
+    });
 
     // Parse the hex color into RGB components
     const r = parseInt(hexColor.slice(1, 3), 16);

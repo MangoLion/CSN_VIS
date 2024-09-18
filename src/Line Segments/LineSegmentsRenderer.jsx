@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect } from "react";
+import React, { useCallback, useRef, useEffect, useState } from "react";
 import { extend, useThree, useFrame } from "@react-three/fiber";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2";
 extend({ LineSegments2 });
@@ -28,7 +28,7 @@ const LineSegmentsRenderer = ({
   drawAll,
   segments,
   segmentsSelected,
-  setSelectedSegment,
+  setSegmentsSelected,
   intensity,
   opacity,
   showCaps,
@@ -38,60 +38,115 @@ const LineSegmentsRenderer = ({
   const { scene } = useThree();
   const { camera, raycaster, gl } = useThree();
   const meshesRef = useRef([]);
+  const [prevMousePos, setPrevMousePos] = useState(new THREE.Vector2(0, 0));
 
-  const handleClick = useCallback(
+  useEffect(() => {
+    console.log("colored segments: ", coloredSegments);
+  }, [coloredSegments]);
+
+  const handleMouseUp = useCallback(
     (event) => {
-      if (segmentsSelected.length > 0) return;
       event.preventDefault();
       event.stopPropagation();
       if (event.button !== 2) return;
+      if (coloredSegments && coloredSegments.length > 0) return;
 
       const rect = gl.domElement.getBoundingClientRect();
 
-      const mouse = new THREE.Vector2(
+      const currMousePos = new THREE.Vector2(
         ((event.clientX - rect.left) / rect.width) * 2 - 1,
         -((event.clientY - rect.top) / rect.height) * 2 + 1
       );
 
-      raycaster.setFromCamera(mouse, camera);
+      if (currMousePos.distanceTo(prevMousePos) > 0.01) return;
+
+      raycaster.setFromCamera(currMousePos, camera);
       const intersects = raycaster.intersectObjects(meshesRef.current, true);
 
       if (intersects.length > 0) {
         const intersection = intersects[0];
         const intersectionPoint = intersection.point;
 
-        let closestSegmentIndex = -1;
         let minDistance = Infinity;
+        let closestSegment = null;
 
-        let idx = 0;
-        segments.forEach((segment) => {
-          const startPoint = new THREE.Vector3(...segment.startPoint);
-          const endPoint = new THREE.Vector3(...segment.endPoint);
+        if (segments && segments.length > 0) {
+          segments.forEach((segment) => {
+            const startPoint = new THREE.Vector3(...segment.startPoint);
+            const endPoint = new THREE.Vector3(...segment.endPoint);
 
-          const centerPoint = new THREE.Vector3()
-            .addVectors(startPoint, endPoint)
-            .multiplyScalar(0.5);
+            const centerPoint = new THREE.Vector3()
+              .addVectors(startPoint, endPoint)
+              .multiplyScalar(0.5);
 
-          const distance = centerPoint.distanceTo(intersectionPoint);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestSegmentIndex = idx;
-          }
-          idx++;
-        });
+            const distance = centerPoint.distanceTo(intersectionPoint);
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestSegment = segment;
+            }
+          });
+        }
 
-        setSelectedSegment(closestSegmentIndex);
+        if (
+          segmentsSelected.length > 0 &&
+          closestSegment.lineIDx === segmentsSelected[0].lineIDx
+        )
+          setSegmentsSelected([]);
+        else {
+          const newSegmentsSelected = [];
+          segments.forEach((segment) => {
+            if (segment.lineIDx === closestSegment.lineIDx) {
+              newSegmentsSelected.push(segment);
+            }
+          });
+          setSegmentsSelected(newSegmentsSelected);
+        }
       }
     },
-    [camera, raycaster, gl.domElement, setSelectedSegment, segments]
+    [
+      camera,
+      raycaster,
+      gl.domElement,
+      segmentsSelected,
+      setSegmentsSelected,
+      segments,
+      coloredSegments,
+      prevMousePos,
+    ]
+  );
+
+  const handleMouseDown = useCallback(
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.button !== 2) return;
+      const rect = gl.domElement.getBoundingClientRect();
+      setPrevMousePos(
+        new THREE.Vector2(
+          ((event.clientX - rect.left) / rect.width) * 2 - 1,
+          -((event.clientY - rect.top) / rect.height) * 2 + 1
+        )
+      );
+    },
+    [
+      camera,
+      raycaster,
+      gl.domElement,
+      segmentsSelected,
+      setSegmentsSelected,
+      segments,
+      coloredSegments,
+    ]
   );
 
   useEffect(() => {
-    gl.domElement.addEventListener("contextmenu", handleClick);
+    gl.domElement.addEventListener("mousedown", handleMouseDown);
+    gl.domElement.addEventListener("contextmenu", handleMouseUp);
     return () => {
-      gl.domElement.removeEventListener("contextmenu", handleClick);
+      gl.domElement.removeEventListener("mousedown", handleMouseDown);
+      gl.domElement.removeEventListener("contextmenu", handleMouseUp);
     };
-  }, [gl.domElement, handleClick]);
+  }, [gl.domElement, handleMouseUp]);
 
   useEffect(() => {
     if (!drawAll) return;

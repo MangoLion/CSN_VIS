@@ -247,13 +247,12 @@ self.addEventListener("message", (event) => {
 
   startTime = performance.now();
 
-  ///color all!!
   Object.entries(communities).forEach(([nodeId, communityIndex]) => {
     const color = colorScale(communityIndex.toString());
-    //console.log(`Node ${nodeId}: Community ${communityIndex} Color: ${color}`);
-    if (!segments[parseInt(nodeId)]) console.log(nodeId);
-    else segments[parseInt(nodeId)].color = color;
-    //setSegmentsSelected(segments)
+    if (segments[parseInt(nodeId)]) {
+      segments[parseInt(nodeId)].color = color;
+      segments[parseInt(nodeId)].communityIndex = communityIndex;
+    }
   });
   //CHECKKKKK!!!
 

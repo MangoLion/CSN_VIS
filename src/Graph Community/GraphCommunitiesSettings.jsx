@@ -31,13 +31,13 @@ const GraphCommunitiesSettings = ({
   setDGraphData,
   isEmpty,
   setIsEmpty,
-  selectedNode,
   selectedNodes,
   communityAlgorithm,
   setCommunityAlgorithm,
   graphData,
   setGraphData,
   setColoredSegments,
+  allGroups,
   setAllGroups,
 }) => {
   const [undoState, setUndoState] = useState(false);
@@ -72,7 +72,6 @@ const GraphCommunitiesSettings = ({
       graphData: sGraphData,
       orgCommunities,
       isEmpty,
-      selectedNode,
       selectedNodes,
       multiSelect,
       allGroups,

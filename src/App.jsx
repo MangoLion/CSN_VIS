@@ -15,7 +15,6 @@ const App = () => {
   const [segments, setSegments] = useState([]);
   const [streamLines, setStreamLines] = useState([]);
   const [coloredSegments, setColoredSegments] = useState([]);
-  const [selectedSegment, setSelectedSegment] = useState(-1);
   const [segmentsSelected, setSegmentsSelected] = useState([]);
   const [swapLayout, setSwapLayout] = useState(false);
   const [layerProps, setLayerProps] = useState({
@@ -64,7 +63,7 @@ const App = () => {
             segments,
             setSegments,
             segmentsSelected,
-            setSelectedSegment,
+            setSegmentsSelected,
             setStreamLines,
             coloredSegments,
           }}
@@ -77,6 +76,7 @@ const App = () => {
             streamLines,
             coloredSegments,
             setColoredSegments,
+            segmentsSelected,
           }}
         />
 

@@ -9,7 +9,7 @@ const LineSegments = ({
   segments,
   setSegments,
   segmentsSelected,
-  setSelectedSegment,
+  setSegmentsSelected,
   setStreamLines,
   coloredSegments,
 }) => {
@@ -56,7 +56,7 @@ const LineSegments = ({
               drawAll,
               segments,
               segmentsSelected,
-              setSelectedSegment,
+              setSegmentsSelected,
               intensity,
               opacity,
               showCaps,

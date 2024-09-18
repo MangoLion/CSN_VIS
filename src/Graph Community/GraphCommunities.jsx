@@ -10,13 +10,13 @@ const GraphCommunities = ({
   streamLines,
   coloredSegments,
   setColoredSegments,
+  selectedSegments,
 }) => {
   const [dGraphData, setDGraphData] = useState([]);
   const [isEmpty, setIsEmpty] = useState(true);
   const [use3D, setUse3D] = useState(false);
   const [multiSelect, setMultiSelect] = useState(false);
   const [nodeScale, setNodeScale] = useState(1);
-  const [selectedNode, setSelectedNode] = useState(null);
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [communityAlgorithm, setCommunityAlgorithm] = useState("Louvain");
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
@@ -26,14 +26,12 @@ const GraphCommunities = ({
     setDGraphData([]);
     setSegmentsSelected([]);
     setIsEmpty(true);
-    setSelectedNode(null);
     setSelectedNodes([]);
     setGraphData({ nodes: [], links: [] });
     setColoredSegments([]);
   }, [segments]);
 
   useEffect(() => {
-    setSelectedNode(null);
     setSegmentsSelected([]);
     setSelectedNodes([]);
     setGraphData({ nodes: [], links: [] });
@@ -41,7 +39,6 @@ const GraphCommunities = ({
   }, [dGraphData]);
 
   useEffect(() => {
-    setSelectedNode(null);
     setSelectedNodes([]);
   }, [graphData]);
 
@@ -67,13 +64,13 @@ const GraphCommunities = ({
             setDGraphData,
             isEmpty,
             setIsEmpty,
-            selectedNode,
             selectedNodes,
             communityAlgorithm,
             setCommunityAlgorithm,
             graphData,
             setGraphData,
             setColoredSegments,
+            allGroups,
             setAllGroups,
           }}
         />
@@ -86,15 +83,15 @@ const GraphCommunities = ({
             use3D,
             setSegmentsSelected,
             nodeScale,
-            selectedNode,
-            setSelectedNode,
             selectedNodes,
             setSelectedNodes,
             communityAlgorithm,
             multiSelect,
+            setMultiSelect,
             coloredSegments,
             setColoredSegments,
             allGroups,
+            selectedSegments,
           }}
         />
       </Allotment.Pane>
