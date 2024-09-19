@@ -39,8 +39,9 @@ const GraphCommunitiesSettings = ({
   setColoredSegments,
   allGroups,
   setAllGroups,
+  setUndoState,
+  setOrgCommunities,
 }) => {
-  const [undoState, setUndoState] = useState(false);
   const [seed, setSeed] = useState(1);
   const [inputs, setInputs] = useState({
     resolution: 1,
@@ -51,47 +52,7 @@ const GraphCommunitiesSettings = ({
     dims: 5,
     kmean: 8,
   });
-  const [orgCommunities, setOrgCommunities] = useState({
-    nodes: [],
-    links: [],
-  });
   const [running, setRunning] = useState(false);
-
-  const saveUndo = () => {
-    const nlinks = graphData.links.map((obj) => ({
-      source: obj.source.id,
-      target: obj.target.id,
-    }));
-
-    const sGraphData = {
-      nodes: graphData.nodes,
-      links: nlinks,
-    };
-
-    const undo = {
-      graphData: sGraphData,
-      orgCommunities,
-      isEmpty,
-      selectedNodes,
-      multiSelect,
-      allGroups,
-    };
-
-    setUndoState(JSON.stringify(undo));
-  };
-
-  const handleUndo = (data = false) => {
-    if (!undoState) return;
-    if (!data) data = undoState;
-    else {
-      setUndoState(data);
-    }
-    const undo = JSON.parse(data);
-    //console.log(undo.graphData);
-    setGraphData(undo.graphData);
-    setOrgCommunities(undo.orgCommunities);
-    setAllGroups(undo.allGroups);
-  };
 
   useEffect(() => {
     GraphCommunityWorker.postMessage({
@@ -137,7 +98,7 @@ const GraphCommunitiesSettings = ({
       links: event.data.interCommunityLinks, //[], // No inter-community links for this simplified visualization
     });
 
-    saveUndo();
+    setUndoState(null);
   };
 
   const handleInputChange = (e) => {

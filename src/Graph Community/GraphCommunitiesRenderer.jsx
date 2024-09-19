@@ -1,8 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
 import { ForceGraph2D } from "react-force-graph";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import { Grid2, Box, Button, Typography } from "@mui/material";
+import UndoIcon from "@mui/icons-material/Undo";
 const GraphCommunitiesRenderer = ({
   graphData,
+  setGraphData,
   isEmpty,
   use3D,
   setSegmentsSelected,
@@ -14,12 +17,16 @@ const GraphCommunitiesRenderer = ({
   setMultiSelect,
   coloredSegments,
   setColoredSegments,
-  allGroups,
   selectedSegment,
+  undoState,
+  setUndoState,
+  orgCommunities,
+  setOrgCommunities,
+  allGroups,
+  setAllGroups,
 }) => {
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [orgCommunities, setOrgCommunities] = useState([]);
 
   const fgRef = useRef();
 
@@ -59,20 +66,58 @@ const GraphCommunitiesRenderer = ({
     }
   }, [isEmpty, use3D, graphData]);
 
-  useEffect(() => {
-    let { nodes, links } = graphData;
-    const nid = orgCommunities[selectedSegment];
-    const snode = nodes.filter((n) => {
-      return n.id == nid;
-    });
+  // useEffect(() => {
+  //   let { nodes, links } = graphData;
+  //   const nid = orgCommunities[selectedSegment];
+  //   const snode = nodes.filter((n) => {
+  //     return n.id == nid;
+  //   });
 
-    if (snode.length == 0) {
-      console.log("Not found!", nid);
-    }
+  //   if (snode.length == 0) {
+  //     console.log("Not found!", nid);
+  //   }
 
-    setMultiSelect(false);
-    setSelectedNodes([snode[0]]);
-  }, [selectedSegment]);
+  //   setMultiSelect(false);
+  //   setSelectedNodes([snode[0]]);
+  // }, [selectedSegment]);
+
+  const saveUndo = () => {
+    const nlinks = graphData.links.map((obj) => ({
+      source: obj.source.id,
+      target: obj.target.id,
+    }));
+
+    const sGraphData = {
+      nodes: graphData.nodes,
+      links: nlinks,
+    };
+
+    const undo = {
+      graphData: sGraphData,
+      orgCommunities,
+      isEmpty,
+      selectedNode,
+      selectedNodes,
+      multiSelect,
+      allGroups,
+    };
+
+    setUndoState(JSON.stringify(undo));
+  };
+
+  const handleUndo = (data = false) => {
+    if (!undoState) return;
+    if (!data) data = undoState;
+    else setUndoState(data);
+
+    const undo = JSON.parse(data);
+    //console.log(undo.graphData);
+    setGraphData(undo.graphData);
+    setOrgCommunities(undo.orgCommunities);
+    setSelectedNodes(undo.selectedNodes);
+    setMultiSelect(undo.multiSelect);
+    setAllGroups(undo.allGroups);
+  };
 
   const handleNodeClick = (node, event) => {
     if (event.button === 2) {
@@ -274,49 +319,75 @@ const GraphCommunitiesRenderer = ({
   };
 
   return (
-    <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
-      {!use3D && !isEmpty && (
-        <ForceGraph2D
-          width={dimensions.width}
-          height={dimensions.height}
-          linkVisibility={linkVisibility}
-          graphData={graphData}
-          nodeLabel="id"
-          ref={fgRef}
-          onNodeClick={handleNodeClick}
-          onNodeRightClick={handleNodeClick} // Add this line
-          nodeCanvasObject={handleNodeCanvasObject}
-          linkDirectionalArrowLength={2.5}
-          linkDirectionalArrowRelPos={0.6}
-          linkDirectionalArrowColor={"black"}
-          linkCurvature={0.25}
-          linkOpacity={1}
-          linkColor={"black"}
-          linkWidth={4}
-          d3Force="charge" // Modify the charge force
-          d3ReheatSimulation={true}
-          //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
-          //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
-          d3ForceConfig={{
-            charge: {
-              strength: -220,
-              distanceMax: 300, // Optional: Increase to allow repulsion over larger distances
-              //distanceMin: 1    // Optional: Decrease to enhance repulsion for closely positioned nodes
-            },
-            link: {
-              // Adjust the strength of the link force based on groupID
-              strength: (link) => {
-                const sourceNode = graphData.nodes[link.source];
-                const targetNode = graphData.nodes[link.target];
-                alert("HERE");
-                return sourceNode.groupID === targetNode.groupID ? 1 : 4; // Modify as needed
+    <>
+      <Box
+        sx={{
+          p: 3,
+          width: "100%",
+          position: "absolute",
+          zIndex: 10,
+        }}
+      >
+        {graphData.nodes.length > 0 && (
+          <>
+            <Button
+              component="label"
+              variant="contained"
+              tabIndex={-1}
+              startIcon={<UndoIcon />}
+              onClick={handleUndo}
+              disabled={!undoState}
+            >
+              Undo
+            </Button>
+          </>
+        )}
+      </Box>
+
+      <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
+        {!use3D && !isEmpty && (
+          <ForceGraph2D
+            width={dimensions.width}
+            height={dimensions.height}
+            linkVisibility={linkVisibility}
+            graphData={graphData}
+            nodeLabel="id"
+            ref={fgRef}
+            onNodeClick={handleNodeClick}
+            onNodeRightClick={handleNodeClick} // Add this line
+            nodeCanvasObject={handleNodeCanvasObject}
+            linkDirectionalArrowLength={2.5}
+            linkDirectionalArrowRelPos={0.6}
+            linkDirectionalArrowColor={"black"}
+            linkCurvature={0.25}
+            linkOpacity={1}
+            linkColor={"black"}
+            linkWidth={4}
+            d3Force="charge" // Modify the charge force
+            d3ReheatSimulation={true}
+            //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
+            //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
+            d3ForceConfig={{
+              charge: {
+                strength: -220,
+                distanceMax: 300, // Optional: Increase to allow repulsion over larger distances
+                //distanceMin: 1    // Optional: Decrease to enhance repulsion for closely positioned nodes
               },
-              // You can also configure other link force parameters here
-            },
-          }}
-        />
-      )}
-    </div>
+              link: {
+                // Adjust the strength of the link force based on groupID
+                strength: (link) => {
+                  const sourceNode = graphData.nodes[link.source];
+                  const targetNode = graphData.nodes[link.target];
+                  alert("HERE");
+                  return sourceNode.groupID === targetNode.groupID ? 1 : 4; // Modify as needed
+                },
+                // You can also configure other link force parameters here
+              },
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 };
 

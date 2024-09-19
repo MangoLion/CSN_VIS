@@ -40,10 +40,6 @@ const LineSegmentsRenderer = ({
   const meshesRef = useRef([]);
   const [prevMousePos, setPrevMousePos] = useState(new THREE.Vector2(0, 0));
 
-  useEffect(() => {
-    console.log("colored segments: ", coloredSegments);
-  }, [coloredSegments]);
-
   const handleMouseUp = useCallback(
     (event) => {
       event.preventDefault();

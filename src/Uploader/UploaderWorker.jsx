@@ -4,23 +4,23 @@ const gpu = new GPU();
 const computePairwiseDistances = (segments, streamlines) => {
   const points = segments.map((segment) => segment.midPoint);
   const kernelBody = `
-  let totalDistance = 0.0;
-  let count = 0.0;
-  const x = this.thread.x;
-  const y = this.thread.y;
+let totalDistance = 0.0;
+let count = 0.0;
+const x = this.thread.x;
+const y = this.thread.y;
 
-  for (let i = streamlines[x][0]; i < streamlines[x][1]; i++) {
-    for (let j = streamlines[y][0]; j < streamlines[y][1]; j++) {
-      totalDistance += Math.sqrt(
-        Math.pow(points[i][0] - points[j][0], 2) +
-        Math.pow(points[i][1] - points[j][1], 2) +
-        Math.pow(points[i][2] - points[j][2], 2)
-      );
-      count += 1.0;
-    }
+for (let i = streamlines[x][0]; i < streamlines[x][1]; i++) {
+  for (let j = streamlines[y][0]; j < streamlines[y][1]; j++) {
+    totalDistance += Math.sqrt(
+      Math.pow(points[i][0] - points[j][0], 2) +
+      Math.pow(points[i][1] - points[j][1], 2) +
+      Math.pow(points[i][2] - points[j][2], 2)
+    );
+    count += 1.0;
   }
+}
 
-  return count > 0.0 ? totalDistance / count : 0.0;`;
+return count > 0.0 ? totalDistance / count : 0.0;`;
 
   const kernelFunction = new Function("points", "streamlines", kernelBody);
 
