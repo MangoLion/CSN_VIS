@@ -2,10 +2,10 @@ import React, { useRef, useState, useEffect } from "react";
 import { ForceGraph2D } from "react-force-graph";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import { Grid2, Box, Button, Typography } from "@mui/material";
-import UndoIcon from "@mui/icons-material/Undo";
+import convexHull from "convex-hull";
+
 const GraphCommunitiesRenderer = ({
   graphData,
-  setGraphData,
   isEmpty,
   use3D,
   setSegmentsSelected,
@@ -14,16 +14,9 @@ const GraphCommunitiesRenderer = ({
   setSelectedNodes,
   communityAlgorithm,
   multiSelect,
-  setMultiSelect,
   coloredSegments,
   setColoredSegments,
-  selectedSegment,
-  undoState,
-  setUndoState,
-  orgCommunities,
-  setOrgCommunities,
   allGroups,
-  setAllGroups,
 }) => {
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -65,59 +58,6 @@ const GraphCommunitiesRenderer = ({
       }
     }
   }, [isEmpty, use3D, graphData]);
-
-  // useEffect(() => {
-  //   let { nodes, links } = graphData;
-  //   const nid = orgCommunities[selectedSegment];
-  //   const snode = nodes.filter((n) => {
-  //     return n.id == nid;
-  //   });
-
-  //   if (snode.length == 0) {
-  //     console.log("Not found!", nid);
-  //   }
-
-  //   setMultiSelect(false);
-  //   setSelectedNodes([snode[0]]);
-  // }, [selectedSegment]);
-
-  const saveUndo = () => {
-    const nlinks = graphData.links.map((obj) => ({
-      source: obj.source.id,
-      target: obj.target.id,
-    }));
-
-    const sGraphData = {
-      nodes: graphData.nodes,
-      links: nlinks,
-    };
-
-    const undo = {
-      graphData: sGraphData,
-      orgCommunities,
-      isEmpty,
-      selectedNode,
-      selectedNodes,
-      multiSelect,
-      allGroups,
-    };
-
-    setUndoState(JSON.stringify(undo));
-  };
-
-  const handleUndo = (data = false) => {
-    if (!undoState) return;
-    if (!data) data = undoState;
-    else setUndoState(data);
-
-    const undo = JSON.parse(data);
-    //console.log(undo.graphData);
-    setGraphData(undo.graphData);
-    setOrgCommunities(undo.orgCommunities);
-    setSelectedNodes(undo.selectedNodes);
-    setMultiSelect(undo.multiSelect);
-    setAllGroups(undo.allGroups);
-  };
 
   const handleNodeClick = (node, event) => {
     if (event.button === 2) {
@@ -177,6 +117,107 @@ const GraphCommunitiesRenderer = ({
         }
       }
     }
+  };
+
+  const calculateCentroid = (pts) => {
+    //console.log(pts)
+    let firstPoint = pts[0],
+      lastPoint = pts[pts.length - 1];
+    if (firstPoint[0] !== lastPoint[0] || firstPoint[1] !== lastPoint[1])
+      pts.push(firstPoint);
+    let twiceArea = 0,
+      x = 0,
+      y = 0,
+      nPts = pts.length,
+      p1,
+      p2,
+      f;
+
+    for (let i = 0, j = nPts - 1; i < nPts; j = i++) {
+      p1 = pts[i];
+      p2 = pts[j];
+      f = p1[0] * p2[1] - p2[0] * p1[1];
+      twiceArea += f;
+      x += (p1[0] + p2[0]) * f;
+      y += (p1[1] + p2[1]) * f;
+    }
+    f = twiceArea * 3;
+    return [x / f, y / f];
+  };
+
+  const drawHullOnCanvas = (points, ctx, color, stretchFactor = 1.5) => {
+    points = JSON.parse(JSON.stringify(points)); //deepcopy
+    if (points.length < 3 || !points[0]) return;
+    let hullIndices = convexHull(points);
+
+    let hull = hullIndices.map((edge) => {
+      // edge is a pair of indices, like [0, 1]
+      return points[edge[0]]; //[points[edge[0]], points[edge[1]]];
+    });
+
+    //console.log(hull)
+
+    // Compute the centroid of the convex hull
+    //const centroid = d3.polygonCentroid(hull);
+    const centroid = calculateCentroid(hull);
+    //console.log(centroid)
+    //console.log(centroid)
+
+    // Create a new hull array with points moved away from the centroid
+    const expandedHull = hull.map((point) => {
+      const vector = [point[0] - centroid[0], point[1] - centroid[1]];
+      //console.log(`${point} ${vector} ${centroid}`)
+      return [
+        centroid[0] + vector[0] * stretchFactor,
+        centroid[1] + vector[1] * stretchFactor,
+      ];
+    });
+
+    hull = expandedHull;
+    // Add first point at the end to close the loop for Bezier curves
+    hull.push(hull[0]);
+
+    ctx.beginPath();
+    for (let i = 0; i < hull.length; i++) {
+      const startPt = hull[i];
+      const endPt = hull[(i + 1) % hull.length];
+      const midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2];
+
+      if (i === 0) {
+        // Move to the first midpoint
+        ctx.moveTo(midPt[0], midPt[1]);
+      } else {
+        // Draw quadratic Bezier curve from previous midpoint
+        const prevMidPt = [
+          (hull[i - 1][0] + startPt[0]) / 2,
+          (hull[i - 1][1] + startPt[1]) / 2,
+        ];
+        ctx.quadraticCurveTo(startPt[0], startPt[1], midPt[0], midPt[1]);
+      }
+    }
+
+    // Close the path for the last curve
+    const lastMidPt = [
+      (hull[hull.length - 1][0] + hull[0][0]) / 2,
+      (hull[hull.length - 1][1] + hull[0][1]) / 2,
+    ];
+    ctx.quadraticCurveTo(hull[0][0], hull[0][1], lastMidPt[0], lastMidPt[1]);
+
+    ctx.closePath();
+
+    // Set the style for the dashed line
+    ctx.setLineDash([5, 5]); // Sets up the dash pattern, adjust the numbers for different patterns
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.7)"; // Color for the dashed line
+    ctx.lineWidth = 1; // Width of the dashed line
+    ctx.stroke(); // Apply the line style to the hull
+
+    ctx.fillStyle = color; //'rgba(150, 150, 250, 0.1)'; // Fill color
+    ctx.fill();
+
+    // Reset the dashed line to default for any subsequent drawing
+    ctx.setLineDash([]);
+
+    return centroid;
   };
 
   const handleNodeCanvasObject = (node, ctx, globalScale) => {
@@ -319,75 +360,49 @@ const GraphCommunitiesRenderer = ({
   };
 
   return (
-    <>
-      <Box
-        sx={{
-          p: 3,
-          width: "100%",
-          position: "absolute",
-          zIndex: 10,
-        }}
-      >
-        {graphData.nodes.length > 0 && (
-          <>
-            <Button
-              component="label"
-              variant="contained"
-              tabIndex={-1}
-              startIcon={<UndoIcon />}
-              onClick={handleUndo}
-              disabled={!undoState}
-            >
-              Undo
-            </Button>
-          </>
-        )}
-      </Box>
-
-      <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
-        {!use3D && !isEmpty && (
-          <ForceGraph2D
-            width={dimensions.width}
-            height={dimensions.height}
-            linkVisibility={linkVisibility}
-            graphData={graphData}
-            nodeLabel="id"
-            ref={fgRef}
-            onNodeClick={handleNodeClick}
-            onNodeRightClick={handleNodeClick} // Add this line
-            nodeCanvasObject={handleNodeCanvasObject}
-            linkDirectionalArrowLength={2.5}
-            linkDirectionalArrowRelPos={0.6}
-            linkDirectionalArrowColor={"black"}
-            linkCurvature={0.25}
-            linkOpacity={1}
-            linkColor={"black"}
-            linkWidth={4}
-            d3Force="charge" // Modify the charge force
-            d3ReheatSimulation={true}
-            //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
-            //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
-            d3ForceConfig={{
-              charge: {
-                strength: -220,
-                distanceMax: 300, // Optional: Increase to allow repulsion over larger distances
-                //distanceMin: 1    // Optional: Decrease to enhance repulsion for closely positioned nodes
+    <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
+      {!use3D && !isEmpty && (
+        <ForceGraph2D
+          width={dimensions.width}
+          height={dimensions.height}
+          linkVisibility={linkVisibility}
+          graphData={graphData}
+          nodeLabel="id"
+          ref={fgRef}
+          onNodeClick={handleNodeClick}
+          onNodeRightClick={handleNodeClick} // Add this line
+          nodeCanvasObject={handleNodeCanvasObject}
+          linkDirectionalArrowLength={2.5}
+          linkDirectionalArrowRelPos={0.6}
+          linkDirectionalArrowColor={"black"}
+          linkCurvature={0.25}
+          linkOpacity={1}
+          linkColor={"black"}
+          linkWidth={4}
+          d3Force="charge" // Modify the charge force
+          d3ReheatSimulation={true}
+          //d3AlphaDecay={0.0228} // Can tweak this for simulation cooling rate
+          //d3VelocityDecay={0.4} // Can tweak this to adjust node movement inertia
+          d3ForceConfig={{
+            charge: {
+              strength: -220,
+              distanceMax: 300, // Optional: Increase to allow repulsion over larger distances
+              //distanceMin: 1    // Optional: Decrease to enhance repulsion for closely positioned nodes
+            },
+            link: {
+              // Adjust the strength of the link force based on groupID
+              strength: (link) => {
+                const sourceNode = graphData.nodes[link.source];
+                const targetNode = graphData.nodes[link.target];
+                alert("HERE");
+                return sourceNode.groupID === targetNode.groupID ? 1 : 4; // Modify as needed
               },
-              link: {
-                // Adjust the strength of the link force based on groupID
-                strength: (link) => {
-                  const sourceNode = graphData.nodes[link.source];
-                  const targetNode = graphData.nodes[link.target];
-                  alert("HERE");
-                  return sourceNode.groupID === targetNode.groupID ? 1 : 4; // Modify as needed
-                },
-                // You can also configure other link force parameters here
-              },
-            }}
-          />
-        )}
-      </div>
-    </>
+              // You can also configure other link force parameters here
+            },
+          }}
+        />
+      )}
+    </div>
   );
 };
 

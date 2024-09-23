@@ -21,11 +21,6 @@ const GraphCommunities = ({
   const [communityAlgorithm, setCommunityAlgorithm] = useState("Louvain");
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [allGroups, setAllGroups] = useState([]);
-  const [undoState, setUndoState] = useState(false);
-  const [orgCommunities, setOrgCommunities] = useState({
-    nodes: [],
-    links: [],
-  });
 
   useEffect(() => {
     setDGraphData([]);
@@ -48,7 +43,7 @@ const GraphCommunities = ({
   }, [graphData]);
 
   return (
-    <Allotment vertical={true} defaultSizes={[245, 215, 524]}>
+    <Allotment vertical={true} defaultSizes={[245, 259, 480]}>
       <Allotment.Pane>
         <NearestNeighborSettings
           setDGraphData={setDGraphData}
@@ -77,8 +72,7 @@ const GraphCommunities = ({
             setColoredSegments,
             allGroups,
             setAllGroups,
-            setUndoState,
-            setOrgCommunities,
+            selectedSegments,
           }}
         />
       </Allotment.Pane>
@@ -86,7 +80,6 @@ const GraphCommunities = ({
         <GraphCommunitiesRenderer
           {...{
             graphData,
-            setGraphData,
             isEmpty,
             use3D,
             setSegmentsSelected,
@@ -95,15 +88,9 @@ const GraphCommunities = ({
             setSelectedNodes,
             communityAlgorithm,
             multiSelect,
-            setMultiSelect,
             coloredSegments,
             setColoredSegments,
-            undoState,
-            setUndoState,
-            orgCommunities,
-            setOrgCommunities,
             allGroups,
-            setAllGroups,
           }}
         />
       </Allotment.Pane>

@@ -7,6 +7,7 @@ import jHamming from "./JHamming";
 import jInfomap from "./JInfoMap";
 import { PCA } from "ml-pca";
 import { kmeans } from "ml-kmeans";
+import chroma from "chroma-js";
 
 const colorScale = scaleOrdinal(schemeCategory10);
 
@@ -15,11 +16,11 @@ let imapEdges = [];
 let graph = new Graph();
 
 const computeGraph = (dGraphData) => {
+  if (!dGraphData || dGraphData.length === 0) return;
+
   imapNodes = [];
   imapEdges = [];
   graph = new Graph();
-
-  if (!dGraphData || dGraphData.length === 0) return;
 
   let startTime = performance.now();
   dGraphData.forEach((_, nodeIndex) => {
@@ -129,17 +130,14 @@ const fillHolesInCommunities = (communities) => {
   return newCommunities;
 };
 
-self.addEventListener("message", (event) => {
-  let { preCompute, dGraphData, segments, inputs, communityAlgorithm, seed } =
+const createGraph = (event) => {
+  let { functionType, dGraphData, segments, inputs, communityAlgorithm, seed } =
     event.data;
 
   let startTime = 0;
   let endTime = 0;
 
-  if (preCompute) {
-    computeGraph(dGraphData);
-    return;
-  } else if (imapNodes.length === 0 || imapEdges.length === 0) {
+  if (imapNodes.length === 0 || imapEdges.length === 0) {
     console.error("Precompute not done");
     computeGraph(dGraphData);
   }
@@ -349,10 +347,341 @@ self.addEventListener("message", (event) => {
 
   endTime = performance.now();
 
-  self.postMessage({
+  return {
     nodesWithCommunityMembers: nodesWithCommunityMembers,
     interCommunityLinks: interCommunityLinks,
     segments: segments,
     communities: communities,
+  };
+};
+
+const handleSplitCommunity = (event) => {
+  const {
+    communityAlgorithm,
+    dGraphData,
+    graphData,
+    splitInto,
+    selectedSegments,
+    orgCommunities,
+    selectedNodes,
+    inputs,
+  } = event.data;
+  const communityIndex = selectedNodes[0].id;
+  const X = 3;
+  const orgSize = selectedNodes[0].size;
+
+  let { nodes, links } = graphData;
+
+  // Find an unused community index (node ID)
+  const allCommunityIndexes = nodes.map((node) => node.id);
+  const maxCommunityIndex =
+    allCommunityIndexes.length > 0
+      ? Math.max(...allCommunityIndexes) + 1
+      : 0 + 1;
+
+  //conver the links back
+  links = links.map((obj) => ({
+    source: obj.source.id,
+    target: obj.target.id,
+  }));
+
+  // Find the community node to split
+  let communityNode = nodes.find((node) => node.id === communityIndex);
+
+  if (nodes.length == 1) {
+    communityNode = nodes[0];
+  } else if (!communityNode) {
+    console.error("Community to split not found");
+    return;
+  }
+
+  const totalMembers = communityNode.members.length;
+  const membersPerNewCommunity = Math.ceil(totalMembers / X);
+
+  nodes = nodes.filter((node) => node.id !== communityIndex);
+
+  let newLinks = links.filter(
+    (link) => link.source !== communityIndex && link.target !== communityIndex
+  ); // Exclude original community's links
+  console.log(`${newLinks.length} ${links.length}`);
+  console.log(newLinks);
+
+  let fnodes, fdata, interCommunityLinks;
+  const graph = new Graph(); // Create a graph
+  const communityGraph = new Graph(); // This will store the community graph
+
+  const indicesToFilter = communityNode.members;
+
+  const imapNodes = [];
+  const imapEdges = [];
+
+  let newOrgCommunities;
+
+  if (splitInto) {
+    fnodes = splitInto.nodes;
+    fdata = splitInto;
+    interCommunityLinks = fdata.links;
+    //alert("ARASD")
+  } else {
+    //alert("HERE")
+
+    fdata = indicesToFilter.map((index) => dGraphData[index]);
+    // Add nodes first
+    fdata.forEach((_, nodeIndex) => {
+      if (!graph.hasNode(indicesToFilter[nodeIndex])) {
+        //console.log(nodeIndex)
+        graph.addNode(indicesToFilter[nodeIndex]);
+      }
+      imapNodes.push(indicesToFilter[nodeIndex]);
+    });
+
+    // Then add edges
+    fdata.forEach((edges, source) => {
+      const src = source;
+      edges.forEach((target) => {
+        //if (!indicesToFilter[source])
+        //console.log(`${source} ${indicesToFilter[source]}`)
+        source = indicesToFilter[src];
+        target = target;
+        //WARNING
+        if ((source === 0 && target) || (source && target)) {
+          imapEdges.push({
+            source,
+            target,
+            value: 1,
+          });
+          //console.log(`FOUND SRC TGT: ${source}, ${target}`)
+          // Ensure both source and target nodes exist
+          if (!graph.hasNode(target)) {
+            //graph.addNode(target);
+            //console.log(`WARNING! ${target}`)
+          } else if (!graph.hasEdge(source, target)) {
+            graph.addEdge(source, target);
+            //console.log(`ADDED! ${[source,target]}`)
+          }
+        } else {
+          //console.log(`UNDEFINED SRC TGT: ${source}, ${target}`)
+        }
+      });
+    });
+    //console.log(graph)
+
+    // Detect communities
+    //const communities = louvain(graph);
+    let communities;
+    switch (communityAlgorithm) {
+      case "Louvain":
+        communities = louvain(graph, {
+          resolution: inputs.resolution,
+          randomWalk: inputs.randomWalk,
+        });
+        break;
+      case "Infomap":
+        communities = infomap.jInfomap(imapNodes, imapEdges, inputs.min);
+        break;
+      case "Hamming Distance":
+        communities = hamming.jHamming(nodes, links, inputs.min);
+        break;
+      case "Label Propagation":
+        communities = llp.jLayeredLabelPropagation(
+          imapNodes,
+          imapEdges,
+          inputs.gamma,
+          inputs.max
+        );
+        break;
+
+      case "Selected":
+        communities = Array.from({ length: imapNodes.length }, (_, i) => [
+          i,
+          0,
+        ]).reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+        console.log("selectedSegments:", selectedSegments);
+        selectedSegments.forEach((seg) => {
+          if (communities[seg.globalIdx] !== undefined) {
+            communities[seg.globalIdx] = 1;
+          }
+        });
+        break;
+    }
+
+    console.log("comm: ", communities);
+
+    // Process communities, creating nodes for each community and counting sizes
+    Object.entries(communities).forEach(([node, community]) => {
+      if (!communityGraph.hasNode(community)) {
+        communityGraph.addNode(community, { size: 1 });
+      } else {
+        communityGraph.updateNodeAttribute(
+          community,
+          "size",
+          (size) => size + 1
+        );
+      }
+    });
+
+    //let groupColor = d3.rgb(colorScale(maxCommunityIndex.toString())); // Convert to RGB
+    let groupColor = chroma(colorScale(maxCommunityIndex.toString())).rgb(); // Convert to RGB
+    let groupColorWithOpacity = `rgba(${groupColor[0]}, ${groupColor[1]}, ${groupColor[2]}, 0.1)`;
+
+    // Now, let's prepare data for visualization
+    console.log("creating fnodes");
+    fnodes = communityGraph.nodes().map((node) => ({
+      id: node.toString(),
+      size:
+        (communityGraph.getNodeAttribute(node, "size") / totalMembers) *
+        orgSize,
+      color: colorScale(node.toString()),
+      groupID:
+        communityAlgorithm !== "Selected"
+          ? [...communityNode.groupID, maxCommunityIndex]
+          : [...communityNode.groupID],
+      groupColor: groupColorWithOpacity, //colorScale(maxCommunityIndex.toString()),
+      groupSize: communityGraph.nodes().length,
+    }));
+
+    interCommunityLinks = [];
+
+    if (communityAlgorithm !== "Selected")
+      fdata.forEach((edges, source) => {
+        source = indicesToFilter[source];
+        edges.forEach((target) => {
+          const sourceCommunity = communities[source] + maxCommunityIndex;
+          const targetCommunity = communities[target] + maxCommunityIndex;
+
+          if (
+            targetCommunity &&
+            sourceCommunity != communityIndex &&
+            targetCommunity != communityIndex
+          ) {
+            if (sourceCommunity !== targetCommunity) {
+              const linkExists = interCommunityLinks.some(
+                (link) =>
+                  (link.source === sourceCommunity &&
+                    link.target === targetCommunity) ||
+                  (link.source === targetCommunity &&
+                    link.target === sourceCommunity)
+              );
+
+              if (!sourceCommunity || !targetCommunity)
+                console.log([sourceCommunity, targetCommunity, source, target]);
+              if (!linkExists && sourceCommunity != 0) {
+                interCommunityLinks.push({
+                  source: sourceCommunity.toString(),
+                  target: targetCommunity.toString(),
+                });
+                //console.log([sourceCommunity,targetCommunity,sourceCommunity.toString(), targetCommunity.toString()])
+              }
+            }
+          }
+        });
+      });
+
+    if (communityAlgorithm !== "Selected")
+      dGraphData.forEach((edges, source) => {
+        edges.forEach((target) => {
+          const sourceCommunity = orgCommunities[source];
+          let targetCommunity = orgCommunities[target];
+          if (
+            sourceCommunity == communityIndex ||
+            targetCommunity != communityIndex ||
+            communities[target] + maxCommunityIndex == communityIndex
+          )
+            return;
+
+          targetCommunity = communities[target] + maxCommunityIndex;
+
+          if (sourceCommunity !== targetCommunity) {
+            const linkExists = interCommunityLinks.some(
+              (link) =>
+                (link.source === sourceCommunity &&
+                  link.target === targetCommunity) ||
+                (link.source === targetCommunity &&
+                  link.target === sourceCommunity)
+            );
+
+            if (!linkExists && sourceCommunity != 0) {
+              interCommunityLinks.push({
+                source: sourceCommunity.toString(),
+                target: targetCommunity.toString(),
+              });
+            }
+          }
+        });
+      });
+
+    const linkPairs = new Set();
+    interCommunityLinks = interCommunityLinks.filter((link) => {
+      const sortedPair = [link.source, link.target].sort().join("_");
+      if (linkPairs.has(sortedPair)) {
+        return false;
+      } else {
+        linkPairs.add(sortedPair);
+        return true;
+      }
+    });
+
+    let adjustedComm = Object.keys(communities).reduce((newObj, key) => {
+      let adjustedKey = parseInt(key) + maxCommunityIndex;
+      let adjustedValue = communities[key] + maxCommunityIndex;
+      newObj[key] = adjustedValue;
+      return newObj;
+    }, {});
+
+    newOrgCommunities = { ...orgCommunities, ...adjustedComm };
+
+    const communityMembers = {};
+    Object.entries(communities).forEach(([originalNode, communityId]) => {
+      if (!communityMembers[communityId]) {
+        communityMembers[communityId] = [];
+      }
+      communityMembers[communityId].push(parseInt(originalNode, 10));
+    });
+    fnodes = fnodes.map((node) => ({
+      ...node,
+      id: (parseInt(node.id) + maxCommunityIndex).toString(),
+      members: communityMembers[node.id] || [],
+    }));
+  }
+
+  let seenIds = new Set();
+  let duplicates = [];
+  fnodes.forEach((node) => {
+    if (seenIds.has(node.id)) {
+      duplicates.push(node); // This node is a duplicate
+    } else {
+      seenIds.add(node.id);
+    }
   });
+
+  if (duplicates.length > 0) {
+    console.log("Duplicate nodes found:", duplicates);
+  } else {
+    console.log("No duplicate nodes found.");
+  }
+
+  fnodes = nodes.concat(fnodes);
+  newLinks = newLinks.concat(interCommunityLinks);
+
+  return {
+    newGraphData: {
+      nodes: fnodes,
+      links: newLinks,
+    },
+    newOrgCommunities: newOrgCommunities,
+    newGroups: fnodes,
+  };
+};
+
+self.addEventListener("message", (event) => {
+  console.log(event.data.functionType);
+  if (event.data.functionType === "preCompute")
+    computeGraph(event.data.dGraphData);
+  else if (event.data.functionType === "createGraph") {
+    const res = createGraph(event);
+    self.postMessage(res);
+  } else if (event.data.functionType == "splitCommunity") {
+    const res = handleSplitCommunity(event);
+    self.postMessage(res);
+  }
 });
