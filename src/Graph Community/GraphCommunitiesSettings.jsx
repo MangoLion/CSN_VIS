@@ -37,8 +37,6 @@ const GraphCommunitiesSettings = ({
   setCommunityAlgorithm,
   graphData,
   setGraphData,
-  coloredSegments,
-  setColoredSegments,
   allGroups,
   setAllGroups,
   selectedSegments,
@@ -91,7 +89,6 @@ const GraphCommunitiesSettings = ({
     setRunning(false);
 
     GraphCommunityWorker.removeEventListener("message", createGraphCallback);
-    setColoredSegments(event.data.segments);
     setOrgCommunities(event.data.communities);
     setGraphData({
       //nodes,
@@ -116,12 +113,11 @@ const GraphCommunitiesSettings = ({
     else setUndoState(data);
 
     const undo = JSON.parse(data);
-    //console.log(undo.graphData);
     setGraphData(undo.graphData);
     setOrgCommunities(undo.orgCommunities);
-    setSelectedNodes([]);
     setMultiSelect(undo.multiSelect);
     setAllGroups(undo.allGroups);
+    setUndoState(undo.prevUndo);
   };
 
   const saveUndo = () => {
@@ -136,6 +132,7 @@ const GraphCommunitiesSettings = ({
     };
 
     const undo = {
+      prevUndo: undoState,
       graphData: sGraphData,
       orgCommunities,
       isEmpty,
@@ -163,20 +160,16 @@ const GraphCommunitiesSettings = ({
       orgCommunities: orgCommunities,
       selectedNodes: selectedNodes,
       inputs: inputs,
-      coloredSegments: coloredSegments,
     });
   };
 
   const splitCommunityCallback = (event) => {
     GraphCommunityWorker.removeEventListener("message", splitCommunityCallback);
-    const { newGroups, newOrgCommunities, newGraphData, newColoredSegments } =
-      event.data;
+    const { newGroups, newOrgCommunities, newGraphData } = event.data;
     saveUndo();
     updateGroups(newGroups);
     setOrgCommunities(newOrgCommunities);
     setGraphData(newGraphData);
-    setColoredSegments(newColoredSegments);
-    console.log(newColoredSegments);
   };
 
   const updateGroups = (nodes) => {

@@ -14,6 +14,7 @@ const GraphCommunitiesRenderer = ({
   setSelectedNodes,
   communityAlgorithm,
   multiSelect,
+  segments,
   coloredSegments,
   setColoredSegments,
   allGroups,
@@ -43,7 +44,6 @@ const GraphCommunitiesRenderer = ({
           link.source.groupID.length > 0 &&
           link.source.groupID[0] == link.target.groupID[0]
         ) {
-          console.log(link);
           return -15;
         }
 
@@ -58,6 +58,16 @@ const GraphCommunitiesRenderer = ({
       }
     }
   }, [isEmpty, use3D, graphData]);
+
+  useEffect(() => {
+    const newColoredSegments = structuredClone(segments);
+    graphData.nodes.forEach((node) => {
+      node.members.forEach((idx) => {
+        newColoredSegments[idx].color = node.color;
+      });
+    });
+    setColoredSegments(newColoredSegments);
+  }, [graphData]);
 
   const handleNodeClick = (node, event) => {
     if (event.button === 2) {

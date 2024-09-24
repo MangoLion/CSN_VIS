@@ -615,7 +615,6 @@ const GraphCommunitiesUnused = ({
       }
     });
 
-    computeSizes(nodes);
     //console.log(groups)
     console.log("GROUPS: ", groups);
     setAllGroups(groups);

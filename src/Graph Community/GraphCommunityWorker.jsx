@@ -365,7 +365,6 @@ const handleSplitCommunity = (event) => {
     orgCommunities,
     selectedNodes,
     inputs,
-    coloredSegments,
   } = event.data;
   const communityIndex = selectedNodes[0].id;
   const X = 3;
@@ -650,15 +649,6 @@ const handleSplitCommunity = (event) => {
   fnodes = nodes.concat(fnodes);
   newLinks = newLinks.concat(interCommunityLinks);
 
-  const newColoredSegments = structuredClone(coloredSegments);
-
-  Object.entries(fnodes).forEach(([nodeId, communityIndex]) => {
-    if (newColoredSegments[parseInt(nodeId)]) {
-      newColoredSegments[parseInt(nodeId)].color =
-        fnodes[communityIndex].groupColor;
-    }
-  });
-
   return {
     newGraphData: {
       nodes: fnodes,
@@ -666,7 +656,6 @@ const handleSplitCommunity = (event) => {
     },
     newOrgCommunities: newOrgCommunities,
     newGroups: fnodes,
-    newColoredSegments: newColoredSegments,
   };
 };
 
