@@ -39,8 +39,9 @@ const GraphCommunities = ({
   }, [dGraphData]);
 
   useEffect(() => {
+    setSegmentsSelected([]);
     setSelectedNodes([]);
-  }, [graphData]);
+  }, [graphData, allGroups]);
 
   return (
     <Allotment vertical={true} defaultSizes={[245, 259, 480]}>
@@ -69,6 +70,7 @@ const GraphCommunities = ({
             setCommunityAlgorithm,
             graphData,
             setGraphData,
+            coloredSegments,
             setColoredSegments,
             allGroups,
             setAllGroups,

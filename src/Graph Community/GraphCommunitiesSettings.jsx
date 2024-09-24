@@ -37,6 +37,7 @@ const GraphCommunitiesSettings = ({
   setCommunityAlgorithm,
   graphData,
   setGraphData,
+  coloredSegments,
   setColoredSegments,
   allGroups,
   setAllGroups,
@@ -71,7 +72,7 @@ const GraphCommunitiesSettings = ({
 
     GraphCommunityWorker.addEventListener(
       "message",
-      GraphCommunityFunction,
+      createGraphCallback,
       false
     );
     GraphCommunityWorker.postMessage({
@@ -86,10 +87,10 @@ const GraphCommunitiesSettings = ({
     setRunning(true);
   };
 
-  const GraphCommunityFunction = (event) => {
+  const createGraphCallback = (event) => {
     setRunning(false);
 
-    GraphCommunityWorker.removeEventListener("message", GraphCommunityFunction);
+    GraphCommunityWorker.removeEventListener("message", createGraphCallback);
     setColoredSegments(event.data.segments);
     setOrgCommunities(event.data.communities);
     setGraphData({
@@ -118,7 +119,7 @@ const GraphCommunitiesSettings = ({
     //console.log(undo.graphData);
     setGraphData(undo.graphData);
     setOrgCommunities(undo.orgCommunities);
-    setSelectedNodes(undo.selectedNodes);
+    setSelectedNodes([]);
     setMultiSelect(undo.multiSelect);
     setAllGroups(undo.allGroups);
   };
@@ -162,16 +163,20 @@ const GraphCommunitiesSettings = ({
       orgCommunities: orgCommunities,
       selectedNodes: selectedNodes,
       inputs: inputs,
+      coloredSegments: coloredSegments,
     });
   };
 
   const splitCommunityCallback = (event) => {
     GraphCommunityWorker.removeEventListener("message", splitCommunityCallback);
-    const { newGroups, newOrgCommunities, newGraphData } = event.data;
+    const { newGroups, newOrgCommunities, newGraphData, newColoredSegments } =
+      event.data;
     saveUndo();
     updateGroups(newGroups);
     setOrgCommunities(newOrgCommunities);
     setGraphData(newGraphData);
+    setColoredSegments(newColoredSegments);
+    console.log(newColoredSegments);
   };
 
   const updateGroups = (nodes) => {
@@ -393,7 +398,7 @@ const GraphCommunitiesSettings = ({
             variant="contained"
             tabIndex={-1}
             startIcon={<UndoIcon />}
-            onClick={handleUndo}
+            onClick={() => handleUndo()}
             disabled={!undoState}
           >
             Undo

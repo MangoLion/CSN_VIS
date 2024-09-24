@@ -76,7 +76,7 @@ const App = () => {
             streamLines,
             coloredSegments,
             setColoredSegments,
-            segmentsSelected,
+            selectedSegments: segmentsSelected,
           }}
         />
 

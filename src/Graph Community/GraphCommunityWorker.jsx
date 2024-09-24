@@ -365,6 +365,7 @@ const handleSplitCommunity = (event) => {
     orgCommunities,
     selectedNodes,
     inputs,
+    coloredSegments,
   } = event.data;
   const communityIndex = selectedNodes[0].id;
   const X = 3;
@@ -477,13 +478,13 @@ const handleSplitCommunity = (event) => {
         });
         break;
       case "Infomap":
-        communities = infomap.jInfomap(imapNodes, imapEdges, inputs.min);
+        communities = jInfomap(imapNodes, imapEdges, inputs.min);
         break;
       case "Hamming Distance":
-        communities = hamming.jHamming(nodes, links, inputs.min);
+        communities = jHamming(nodes, links, inputs.min);
         break;
       case "Label Propagation":
-        communities = llp.jLayeredLabelPropagation(
+        communities = jLayeredLabelPropagation(
           imapNodes,
           imapEdges,
           inputs.gamma,
@@ -539,6 +540,8 @@ const handleSplitCommunity = (event) => {
       groupColor: groupColorWithOpacity, //colorScale(maxCommunityIndex.toString()),
       groupSize: communityGraph.nodes().length,
     }));
+    console.log(fnodes[0]);
+    console.log(selectedSegments[0]);
 
     interCommunityLinks = [];
 
@@ -644,24 +647,17 @@ const handleSplitCommunity = (event) => {
     }));
   }
 
-  let seenIds = new Set();
-  let duplicates = [];
-  fnodes.forEach((node) => {
-    if (seenIds.has(node.id)) {
-      duplicates.push(node); // This node is a duplicate
-    } else {
-      seenIds.add(node.id);
-    }
-  });
-
-  if (duplicates.length > 0) {
-    console.log("Duplicate nodes found:", duplicates);
-  } else {
-    console.log("No duplicate nodes found.");
-  }
-
   fnodes = nodes.concat(fnodes);
   newLinks = newLinks.concat(interCommunityLinks);
+
+  const newColoredSegments = structuredClone(coloredSegments);
+
+  Object.entries(fnodes).forEach(([nodeId, communityIndex]) => {
+    if (newColoredSegments[parseInt(nodeId)]) {
+      newColoredSegments[parseInt(nodeId)].color =
+        fnodes[communityIndex].groupColor;
+    }
+  });
 
   return {
     newGraphData: {
@@ -670,11 +666,11 @@ const handleSplitCommunity = (event) => {
     },
     newOrgCommunities: newOrgCommunities,
     newGroups: fnodes,
+    newColoredSegments: newColoredSegments,
   };
 };
 
 self.addEventListener("message", (event) => {
-  console.log(event.data.functionType);
   if (event.data.functionType === "preCompute")
     computeGraph(event.data.dGraphData);
   else if (event.data.functionType === "createGraph") {

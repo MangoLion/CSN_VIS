@@ -90,9 +90,7 @@ const GraphCommunitiesRenderer = ({
             let selected = [];
             newState.forEach((node) => {
               node.members.forEach((idx) => {
-                let seg = structuredClone(coloredSegments[parseInt(idx)]);
-                seg.color = node.color;
-                selected.push(seg);
+                selected.push(coloredSegments[parseInt(idx)]);
               });
             });
             setSegmentsSelected(selected);
