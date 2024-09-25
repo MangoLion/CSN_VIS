@@ -4,17 +4,24 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { Grid2, Box, Button, Typography } from "@mui/material";
 import convexHull from "convex-hull";
 import { UniversalDataContext } from "../context/UniversalDataContext";
-const GraphCommunitiesRenderer = ({
-  graphData,
-  isEmpty,
-  use3D,
-  nodeScale,
-  communityAlgorithm,
-  multiSelect,
-  allGroups,
-  selectedNodes,
-  setSelectedNodes,
-}) => {
+import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
+const GraphCommunitiesRenderer = () => {
+  const {
+    dGraphData,
+    setDGraphData,
+    graphData,
+    setGraphData,
+    isEmpty,
+    setIsEmpty,
+    use3D,
+    nodeScale,
+    communityAlgorithm,
+    multiSelect,
+    allGroups,
+    selectedNodes,
+    setSelectedNodes,
+  } = useContext(GraphCommunitiesDataContext);
+
   const { segments, setColoredSegments, coloredSegments, setSelectedSegments } =
     useContext(UniversalDataContext);
   const windowRef = useRef(null); // Ref to the parent box
@@ -66,6 +73,27 @@ const GraphCommunitiesRenderer = ({
     });
     setColoredSegments(newColoredSegments);
   }, [graphData]);
+
+  useEffect(() => {
+    setDGraphData([]);
+    setSelectedSegments([]);
+    setIsEmpty(true);
+    setSelectedNodes([]);
+    setGraphData({ nodes: [], links: [] });
+    setColoredSegments([]);
+  }, [segments]);
+
+  useEffect(() => {
+    setSelectedSegments([]);
+    setSelectedNodes([]);
+    setGraphData({ nodes: [], links: [] });
+    setColoredSegments([]);
+  }, [dGraphData]);
+
+  useEffect(() => {
+    setSelectedSegments([]);
+    setSelectedNodes([]);
+  }, [graphData, allGroups]);
 
   const handleNodeClick = (node, event) => {
     if (event.button === 2) {

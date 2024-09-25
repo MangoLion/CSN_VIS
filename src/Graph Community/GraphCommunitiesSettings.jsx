@@ -18,27 +18,29 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import UndoIcon from "@mui/icons-material/Undo";
 import CallSplitIcon from "@mui/icons-material/CallSplit";
 import { UniversalDataContext } from "../context/UniversalDataContext";
+import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
 const GraphCommunityWorker = new Worker(
   new URL("./GraphCommunityWorker.jsx", import.meta.url),
   { type: "module" }
 );
-const GraphCommunitiesSettings = ({
-  multiSelect,
-  setMultiSelect,
-  nodeScale,
-  setNodeScale,
-  dGraphData,
-  setDGraphData,
-  isEmpty,
-  setIsEmpty,
-  selectedNodes,
-  communityAlgorithm,
-  setCommunityAlgorithm,
-  graphData,
-  setGraphData,
-  allGroups,
-  setAllGroups,
-}) => {
+const GraphCommunitiesSettings = () => {
+  const {
+    multiSelect,
+    setMultiSelect,
+    nodeScale,
+    setNodeScale,
+    dGraphData,
+    setDGraphData,
+    isEmpty,
+    setIsEmpty,
+    selectedNodes,
+    communityAlgorithm,
+    setCommunityAlgorithm,
+    graphData,
+    setGraphData,
+    allGroups,
+    setAllGroups,
+  } = useContext(GraphCommunitiesDataContext);
   const { segments, selectedSegments } = useContext(UniversalDataContext);
   const [seed, setSeed] = useState(1);
   const [inputs, setInputs] = useState({

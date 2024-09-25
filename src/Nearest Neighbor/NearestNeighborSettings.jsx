@@ -13,15 +13,18 @@ import {
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { UniversalDataContext } from "../context/UniversalDataContext";
+import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
 
 const NearestNeighborWorker = new Worker(
   new URL("./NearestNeighborWorker.jsx", import.meta.url),
   { type: "module" }
 );
 
-const NearestNeighborSettings = ({ setDGraphData }) => {
+const NearestNeighborSettings = () => {
   const { segments: unmodifiedSegments, streamLines: unmodifiedStreamLines } =
     useContext(UniversalDataContext);
+  const { setDGraphData } = useContext(GraphCommunitiesDataContext);
+
   const [treeAlgorithm, setTreeAlgorithm] = useState("KNN");
   const [param, setParam] = useState("1");
   const [distanceMetric, setDistanceMetric] = useState("shortest");
