@@ -1,11 +1,17 @@
-import React, { useCallback, useRef, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useRef,
+  useEffect,
+  useState,
+  useContext,
+} from "react";
 import { extend, useThree, useFrame } from "@react-three/fiber";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2";
 extend({ LineSegments2 });
 import * as THREE from "three";
 import { TrackballControls } from "@react-three/drei";
-
 extend({ TrackballControls });
+import { UniversalDataContext } from "../context/UniversalDataContext";
 
 const DirectionalLightWithCamera = ({ intensity }) => {
   const directionalLightRef = useRef();
@@ -26,15 +32,13 @@ const LineSegmentsRenderer = ({
   radius,
   tubeRes,
   drawAll,
-  segments,
-  segmentsSelected,
-  setSegmentsSelected,
   intensity,
   opacity,
   showCaps,
   cylinderHeight,
-  coloredSegments,
 }) => {
+  const { segments, selectedSegments, setSelectedSegments, coloredSegments } =
+    useContext(UniversalDataContext);
   const { scene } = useThree();
   const { camera, raycaster, gl } = useThree();
   const meshesRef = useRef([]);
@@ -84,18 +88,18 @@ const LineSegmentsRenderer = ({
         }
 
         if (
-          segmentsSelected.length > 0 &&
-          closestSegment.lineIDx === segmentsSelected[0].lineIDx
+          selectedSegments.length > 0 &&
+          closestSegment.lineIDx === selectedSegments[0].lineIDx
         )
-          setSegmentsSelected([]);
+          setSelectedSegments([]);
         else {
-          const newSegmentsSelected = [];
+          const newSelectedSegments = [];
           segments.forEach((segment) => {
             if (segment.lineIDx === closestSegment.lineIDx) {
-              newSegmentsSelected.push(segment);
+              newSelectedSegments.push(segment);
             }
           });
-          setSegmentsSelected(newSegmentsSelected);
+          setSelectedSegments(newSelectedSegments);
         }
       }
     },
@@ -103,8 +107,8 @@ const LineSegmentsRenderer = ({
       camera,
       raycaster,
       gl.domElement,
-      segmentsSelected,
-      setSegmentsSelected,
+      selectedSegments,
+      setSelectedSegments,
       segments,
       coloredSegments,
       prevMousePos,
@@ -128,8 +132,8 @@ const LineSegmentsRenderer = ({
       camera,
       raycaster,
       gl.domElement,
-      segmentsSelected,
-      setSegmentsSelected,
+      selectedSegments,
+      setSelectedSegments,
       segments,
       coloredSegments,
     ]
@@ -147,8 +151,8 @@ const LineSegmentsRenderer = ({
   useEffect(() => {
     if (!drawAll) return;
 
-    if (segmentsSelected.length > 0) {
-      render(segmentsSelected);
+    if (selectedSegments.length > 0) {
+      render(selectedSegments);
       render(segments, opacity / 10);
     } else if (coloredSegments.length > 0) {
       render(coloredSegments);
@@ -172,7 +176,7 @@ const LineSegmentsRenderer = ({
     tubeRes,
     drawAll,
     segments,
-    segmentsSelected,
+    selectedSegments,
     intensity,
     opacity,
     showCaps,

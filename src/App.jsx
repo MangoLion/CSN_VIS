@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import HugeCanvas from "./HugeCanvas";
 import LineSegments from "./Line Segments/LineSegments";
 import GraphCommunities from "./Graph Community/GraphCommunities";
-
 import "rc-dock/dist/rc-dock.css";
 import BarChart from "./PlotView";
 
@@ -10,12 +9,9 @@ import "./styles/App.css";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import Vis from "./components/Vis";
+import { Button } from "@mui/material";
 
 const App = () => {
-  const [segments, setSegments] = useState([]);
-  const [streamLines, setStreamLines] = useState([]);
-  const [coloredSegments, setColoredSegments] = useState([]);
-  const [segmentsSelected, setSegmentsSelected] = useState([]);
   const [swapLayout, setSwapLayout] = useState(false);
   const [layerProps, setLayerProps] = useState({
     x: 0,
@@ -58,56 +54,8 @@ const App = () => {
   return (
     <div className="App">
       <Allotment key="main">
-        <LineSegments
-          {...{
-            segments,
-            setSegments,
-            segmentsSelected,
-            setSegmentsSelected,
-            setStreamLines,
-            coloredSegments,
-          }}
-        />
-
-        <GraphCommunities
-          {...{
-            setSegmentsSelected,
-            segments,
-            streamLines,
-            coloredSegments,
-            setColoredSegments,
-            selectedSegments: segmentsSelected,
-          }}
-        />
-
-        {/* <Allotment.Pane>
-          <div style2={{ display: "none", maxWidth: "0px" }}>
-            <HugeCanvas
-              {...{
-                selectedSegment,
-                layerProps,
-                handleLayerChange,
-                setSegmentsSelected,
-                setGraphData,
-                setDGraphData,
-                pixelData,
-                setPixelData,
-                pixelMapData,
-                canvasData,
-                setCanvasData,
-                setCSNG,
-                manualStart,
-                setDGraph,
-              }}
-              onLayerChange={handleLayerChange}
-              ref={matRef}
-              streamLines2={streamLines}
-              segments2={segments}
-              key="canvas1"
-              cid={1}
-            />
-          </div>
-        </Allotment.Pane> */}
+        <LineSegments />
+        <GraphCommunities />
       </Allotment>
     </div>
   );

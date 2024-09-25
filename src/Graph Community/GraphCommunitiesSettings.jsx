@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 
 import seedrandom from "seedrandom";
 
@@ -17,13 +17,12 @@ import {
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import UndoIcon from "@mui/icons-material/Undo";
 import CallSplitIcon from "@mui/icons-material/CallSplit";
+import { UniversalDataContext } from "../context/UniversalDataContext";
 const GraphCommunityWorker = new Worker(
   new URL("./GraphCommunityWorker.jsx", import.meta.url),
   { type: "module" }
 );
 const GraphCommunitiesSettings = ({
-  segments,
-  setSegmentsSelected,
   multiSelect,
   setMultiSelect,
   nodeScale,
@@ -39,8 +38,8 @@ const GraphCommunitiesSettings = ({
   setGraphData,
   allGroups,
   setAllGroups,
-  selectedSegments,
 }) => {
+  const { segments, selectedSegments } = useContext(UniversalDataContext);
   const [seed, setSeed] = useState(1);
   const [inputs, setInputs] = useState({
     resolution: 1,

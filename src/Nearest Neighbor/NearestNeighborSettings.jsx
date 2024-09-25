@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   CustomCheckBox,
   CustomNumberInput,
@@ -12,17 +12,16 @@ import {
   CircularProgress,
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { UniversalDataContext } from "../context/UniversalDataContext";
 
 const NearestNeighborWorker = new Worker(
   new URL("./NearestNeighborWorker.jsx", import.meta.url),
   { type: "module" }
 );
 
-const NearestNeighborSettings = ({
-  setDGraphData,
-  unmodifiedSegments,
-  unmodifiedStreamLines,
-}) => {
+const NearestNeighborSettings = ({ setDGraphData }) => {
+  const { segments: unmodifiedSegments, streamLines: unmodifiedStreamLines } =
+    useContext(UniversalDataContext);
   const [treeAlgorithm, setTreeAlgorithm] = useState("KNN");
   const [param, setParam] = useState("1");
   const [distanceMetric, setDistanceMetric] = useState("shortest");

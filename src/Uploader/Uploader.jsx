@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Grid2, Box, Button, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import MemoryIcon from "@mui/icons-material/Memory";
 import { CustomNumberInput } from "../components/CustomComponents";
+import { UniversalDataContext } from "../context/UniversalDataContext";
 const UploaderWorker = new Worker(
   new URL("./UploaderWorker.jsx", import.meta.url),
   { type: "module" }
@@ -22,7 +23,8 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 
-const Uploader = ({ setSegments, setStreamLines }) => {
+const Uploader = ({}) => {
+  const { setStreamLines, setSegments } = useContext(UniversalDataContext);
   const [file, setFile] = useState(null);
   const [skipLines, setSkipLines] = useState(0);
   const [skipSegments, setSkipSegments] = useState(0);

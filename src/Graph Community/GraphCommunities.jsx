@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Allotment } from "allotment";
 import GraphCommunitiesRenderer from "./GraphCommunitiesRenderer";
 import GraphCommunitiesSettings from "./GraphCommunitiesSettings";
 import NearestNeighborSettings from "../Nearest Neighbor/NearestNeighborSettings";
+import { UniversalDataContext } from "../context/UniversalDataContext";
 
-const GraphCommunities = ({
-  setSegmentsSelected,
-  segments,
-  streamLines,
-  coloredSegments,
-  setColoredSegments,
-  selectedSegments,
-}) => {
+const GraphCommunities = () => {
+  const { segments, setSelectedSegments, setColoredSegments } =
+    useContext(UniversalDataContext);
+
   const [dGraphData, setDGraphData] = useState([]);
   const [isEmpty, setIsEmpty] = useState(true);
   const [use3D, setUse3D] = useState(false);
@@ -24,7 +21,7 @@ const GraphCommunities = ({
 
   useEffect(() => {
     setDGraphData([]);
-    setSegmentsSelected([]);
+    setSelectedSegments([]);
     setIsEmpty(true);
     setSelectedNodes([]);
     setGraphData({ nodes: [], links: [] });
@@ -32,31 +29,25 @@ const GraphCommunities = ({
   }, [segments]);
 
   useEffect(() => {
-    setSegmentsSelected([]);
+    setSelectedSegments([]);
     setSelectedNodes([]);
     setGraphData({ nodes: [], links: [] });
     setColoredSegments([]);
   }, [dGraphData]);
 
   useEffect(() => {
-    setSegmentsSelected([]);
+    setSelectedSegments([]);
     setSelectedNodes([]);
   }, [graphData, allGroups]);
 
   return (
     <Allotment vertical={true} defaultSizes={[245, 259, 480]}>
       <Allotment.Pane>
-        <NearestNeighborSettings
-          setDGraphData={setDGraphData}
-          unmodifiedSegments={segments}
-          unmodifiedStreamLines={streamLines}
-        />
+        <NearestNeighborSettings setDGraphData={setDGraphData} />
       </Allotment.Pane>
       <Allotment.Pane>
         <GraphCommunitiesSettings
           {...{
-            segments,
-            setSegmentsSelected,
             multiSelect,
             setMultiSelect,
             nodeScale,
@@ -72,7 +63,6 @@ const GraphCommunities = ({
             setGraphData,
             allGroups,
             setAllGroups,
-            selectedSegments,
           }}
         />
       </Allotment.Pane>
@@ -82,16 +72,12 @@ const GraphCommunities = ({
             graphData,
             isEmpty,
             use3D,
-            setSegmentsSelected,
             nodeScale,
-            selectedNodes,
-            setSelectedNodes,
             communityAlgorithm,
             multiSelect,
-            segments,
-            coloredSegments,
-            setColoredSegments,
             allGroups,
+            selectedNodes,
+            setSelectedNodes,
           }}
         />
       </Allotment.Pane>

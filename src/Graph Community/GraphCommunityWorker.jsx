@@ -505,8 +505,6 @@ const handleSplitCommunity = (event) => {
         break;
     }
 
-    console.log("comm: ", communities);
-
     // Process communities, creating nodes for each community and counting sizes
     Object.entries(communities).forEach(([node, community]) => {
       if (!communityGraph.hasNode(community)) {

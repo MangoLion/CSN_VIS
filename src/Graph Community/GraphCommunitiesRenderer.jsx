@@ -1,24 +1,22 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
 import { ForceGraph2D } from "react-force-graph";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import { Grid2, Box, Button, Typography } from "@mui/material";
 import convexHull from "convex-hull";
-
+import { UniversalDataContext } from "../context/UniversalDataContext";
 const GraphCommunitiesRenderer = ({
   graphData,
   isEmpty,
   use3D,
-  setSegmentsSelected,
   nodeScale,
-  selectedNodes,
-  setSelectedNodes,
   communityAlgorithm,
   multiSelect,
-  segments,
-  coloredSegments,
-  setColoredSegments,
   allGroups,
+  selectedNodes,
+  setSelectedNodes,
 }) => {
+  const { segments, setColoredSegments, coloredSegments, setSelectedSegments } =
+    useContext(UniversalDataContext);
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -103,7 +101,7 @@ const GraphCommunitiesRenderer = ({
                 selected.push(coloredSegments[parseInt(idx)]);
               });
             });
-            setSegmentsSelected(selected);
+            setSelectedSegments(selected);
             return newState;
           }
           return prevSelectedNodes;
@@ -111,7 +109,7 @@ const GraphCommunitiesRenderer = ({
       } else {
         if (selectedNodes[0] == node) {
           setSelectedNodes([]);
-          setSegmentsSelected([]);
+          setSelectedSegments([]);
         } else {
           let selected = [];
           node.members.forEach((idx) => {
@@ -120,7 +118,7 @@ const GraphCommunitiesRenderer = ({
             seg.color = node.color;
             selected.push(seg);
           });
-          setSegmentsSelected(selected);
+          setSelectedSegments(selected);
           setSelectedNodes([node]);
         }
       }

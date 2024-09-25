@@ -5,14 +5,7 @@ import LineSegmentSettings from "./LineSegmentSettings";
 import LineSegmentsRenderer from "./LineSegmentsRenderer";
 import { Canvas } from "@react-three/fiber";
 
-const LineSegments = ({
-  segments,
-  setSegments,
-  segmentsSelected,
-  setSegmentsSelected,
-  setStreamLines,
-  coloredSegments,
-}) => {
+const LineSegments = () => {
   const [radius, setRadius] = useState(0.45);
   const [tubeRes, setTubeRes] = useState(20);
   const [showCaps, setShowCaps] = useState(true);
@@ -24,7 +17,7 @@ const LineSegments = ({
   return (
     <Allotment vertical={true} defaultSizes={[187, 200, 607.1]}>
       <Allotment.Pane>
-        <Uploader {...{ setSegments, setStreamLines }} />
+        <Uploader />
       </Allotment.Pane>
       <Allotment.Pane>
         <LineSegmentSettings
@@ -54,14 +47,10 @@ const LineSegments = ({
               radius,
               tubeRes,
               drawAll,
-              segments,
-              segmentsSelected,
-              setSegmentsSelected,
               intensity,
               opacity,
               showCaps,
               cylinderHeight,
-              coloredSegments,
             }}
             key="line3D"
           />
