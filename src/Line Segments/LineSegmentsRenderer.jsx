@@ -11,7 +11,9 @@ extend({ LineSegments2 });
 import * as THREE from "three";
 import { TrackballControls } from "@react-three/drei";
 extend({ TrackballControls });
+
 import { UniversalDataContext } from "../context/UniversalDataContext";
+import { LineSegmentsDataContext } from "../context/LineSegmentsDataContext";
 
 const DirectionalLightWithCamera = ({ intensity }) => {
   const directionalLightRef = useRef();
@@ -28,17 +30,18 @@ const DirectionalLightWithCamera = ({ intensity }) => {
   return <directionalLight ref={directionalLightRef} intensity={intensity} />;
 };
 
-const LineSegmentsRenderer = ({
-  radius,
-  tubeRes,
-  drawAll,
-  intensity,
-  opacity,
-  showCaps,
-  cylinderHeight,
-}) => {
+const LineSegmentsRenderer = () => {
   const { segments, selectedSegments, setSelectedSegments, coloredSegments } =
     useContext(UniversalDataContext);
+  const {
+    radius,
+    tubeRes,
+    drawAll,
+    intensity,
+    opacity,
+    showCaps,
+    cylinderHeight,
+  } = useContext(LineSegmentsDataContext);
   const { scene } = useThree();
   const { camera, raycaster, gl } = useThree();
   const meshesRef = useRef([]);

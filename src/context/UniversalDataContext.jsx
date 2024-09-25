@@ -2,7 +2,6 @@ import React, { createContext, useState } from "react";
 export const UniversalDataContext = createContext();
 
 export const UniversalDataProvider = ({ children }) => {
-  // Universal Variables
   const [segments, setSegments] = useState([]);
   const [streamLines, setStreamLines] = useState([]);
   const [coloredSegments, setColoredSegments] = useState([]);
