@@ -10,6 +10,7 @@ import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2";
 extend({ LineSegments2 });
 import * as THREE from "three";
 import { TrackballControls } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
 extend({ TrackballControls });
 
 import { UniversalDataContext } from "../context/UniversalDataContext";
@@ -31,6 +32,14 @@ const DirectionalLightWithCamera = ({ intensity }) => {
 };
 
 const LineSegmentsRenderer = () => {
+  return (
+    <Canvas style={{ width: "100%", height: "100%" }}>
+      <LineSegmentsCanvas />
+    </Canvas>
+  );
+};
+
+const LineSegmentsCanvas = () => {
   const { segments, selectedSegments, setSelectedSegments, coloredSegments } =
     useContext(UniversalDataContext);
   const {

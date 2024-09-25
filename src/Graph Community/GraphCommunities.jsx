@@ -8,7 +8,7 @@ const GraphCommunities = () => {
   return (
     <Allotment vertical={true} defaultSizes={[245, 259, 480]}>
       <Allotment.Pane>
-        <NearestNeighborSettings setDGraphData={setDGraphData} />
+        <NearestNeighborSettings />
       </Allotment.Pane>
       <Allotment.Pane>
         <GraphCommunitiesSettings />

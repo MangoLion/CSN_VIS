@@ -3,7 +3,6 @@ import { Allotment } from "allotment";
 import Uploader from "../Uploader/Uploader";
 import LineSegmentSettings from "./LineSegmentSettings";
 import LineSegmentsRenderer from "./LineSegmentsRenderer";
-import { Canvas } from "@react-three/fiber";
 
 const LineSegments = () => {
   return (
@@ -15,9 +14,7 @@ const LineSegments = () => {
         <LineSegmentSettings key="uploader" />
       </Allotment.Pane>
       <Allotment.Pane>
-        <Canvas style={{ width: "100%", height: "100%" }}>
-          <LineSegmentsRenderer key="line3D" />
-        </Canvas>
+        <LineSegmentsRenderer key="line3D" />
       </Allotment.Pane>
     </Allotment>
   );

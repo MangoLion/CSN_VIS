@@ -1,17 +1,24 @@
 import React, { useState, useRef, useEffect } from "react";
-import HugeCanvas from "./HugeCanvas";
-import LineSegments from "./Line Segments/LineSegments";
-import GraphCommunities from "./Graph Community/GraphCommunities";
 import "rc-dock/dist/rc-dock.css";
 import BarChart from "./PlotView";
 
 import "./styles/App.css";
-import { Allotment } from "allotment";
 import "allotment/dist/style.css";
-import Vis from "./components/Vis";
-import { Button } from "@mui/material";
+
+import { Box, Drawer, IconButton } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+
+import Uploader from "./Uploader/Uploader";
+import LineSegmentSettings from "./Line Segments/LineSegmentSettings";
+import NearestNeighborSettings from "./Nearest Neighbor/NearestNeighborSettings";
+
+import LineSegmentsRenderer from "./Line Segments/LineSegmentsRenderer";
+import GraphCommunitiesSettings from "./Graph Community/GraphCommunitiesSettings";
+import GraphCommunitiesRenderer from "./Graph Community/GraphCommunitiesRenderer";
 
 const App = () => {
+  const [open, setOpen] = useState(false);
+
   const [swapLayout, setSwapLayout] = useState(false);
   const [layerProps, setLayerProps] = useState({
     x: 0,
@@ -53,10 +60,19 @@ const App = () => {
 
   return (
     <div className="App">
-      <Allotment key="main">
-        <LineSegments />
-        <GraphCommunities />
-      </Allotment>
+      <IconButton onClick={() => setOpen(true)}>
+        <MenuIcon />
+      </IconButton>
+      <Drawer open={open} onClose={() => setOpen(false)}>
+        <Box sx={{ width: "800px" }}>
+          <Uploader />
+          <LineSegmentSettings />
+          <NearestNeighborSettings />
+          <GraphCommunitiesSettings />
+        </Box>
+      </Drawer>
+      <LineSegmentsRenderer />
+      <GraphCommunitiesRenderer />
     </div>
   );
 };
