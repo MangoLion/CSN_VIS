@@ -73,7 +73,7 @@ const NearestNeighborSettings = () => {
   }, [unmodifiedSegments, unmodifiedStreamLines]);
 
   const handleStart = async () => {
-    NearestNeighborWorker.addEventListener("message", AMCSWorkerFunc, false);
+    NearestNeighborWorker.addEventListener("message", knnCallback, false);
     NearestNeighborWorker.postMessage({
       constructTree: false,
       doSort: doSort,
@@ -87,10 +87,10 @@ const NearestNeighborSettings = () => {
     });
   };
 
-  const AMCSWorkerFunc = (event) => {
+  const knnCallback = (event) => {
     if (event.data.type == "final") {
       setProgress(100);
-      NearestNeighborWorker.removeEventListener("message", AMCSWorkerFunc);
+      NearestNeighborWorker.removeEventListener("message", knnCallback);
       setGraph(event.data.tgraph);
       window.tempGraph = event.data.tgraph;
 
@@ -100,6 +100,7 @@ const NearestNeighborSettings = () => {
       });
 
       setMinMax([event.data.minDist, event.data.maxDist]);
+      console.log(event.data.tgraph);
       setDGraphData(event.data.tgraph);
       updateSlRange(event.data.pixels);
       setCurrentPixels(event.data.pixels);

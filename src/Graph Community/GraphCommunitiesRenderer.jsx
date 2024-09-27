@@ -93,6 +93,7 @@ const GraphCommunitiesRenderer = () => {
   useEffect(() => {
     setSelectedSegments([]);
     setSelectedNodes([]);
+    console.log(graphData);
   }, [graphData, allGroups]);
 
   const handleNodeClick = (node, event) => {
@@ -395,6 +396,31 @@ const GraphCommunitiesRenderer = () => {
 
   return (
     <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
+      <Typography
+        sx={{
+          position: "absolute",
+          fontWeight: "bold",
+          zIndex: 10,
+          top: 10,
+          left: 10,
+        }}
+      >
+        Graph Communities
+      </Typography>
+      <Typography
+        sx={{
+          position: "absolute",
+          zIndex: 10,
+          top: 40,
+          left: 10,
+          fontWeight: "bold",
+          fontSize: 12,
+        }}
+      >
+        {graphData &&
+          graphData.nodes.length === 0 &&
+          "Run a Community Algorithm to Render Communities"}
+      </Typography>
       {!use3D && !isEmpty && (
         <ForceGraph2D
           width={dimensions.width}
