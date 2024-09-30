@@ -54,9 +54,13 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   justifyContent: "flex-end",
 }));
 
-export default function PersistentDrawerLeft({ drawerContent, mainContent }) {
+export default function PersistentDrawerLeft({
+  drawerContent,
+  mainContent,
+  headerContent,
+}) {
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(true);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -68,11 +72,9 @@ export default function PersistentDrawerLeft({ drawerContent, mainContent }) {
 
   return (
     <Box sx={{ display: "flex", width: "100%" }}>
-      {" "}
-      {/* Ensures the Box takes the full width */}
       <CssBaseline />
       <AppBar position="fixed" open={open}>
-        <Toolbar>
+        <Toolbar sx={{ backgroundColor: "lightGray" }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -83,11 +85,9 @@ export default function PersistentDrawerLeft({ drawerContent, mainContent }) {
               ...(open && { display: "none" }),
             }}
           >
-            <SettingsIcon />
+            <SettingsIcon sx={{ color: "black" }} />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Curve Segment Neighborhood-Based Vector Field Exploration
-          </Typography>
+          {headerContent}
         </Toolbar>
       </AppBar>
       <Drawer

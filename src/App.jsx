@@ -6,7 +6,16 @@ import "allotment/dist/style.css";
 
 import { Allotment } from "allotment";
 
-import { Box, Divider, Drawer, IconButton, Typography } from "@mui/material";
+import {
+  Box,
+  Divider,
+  Drawer,
+  IconButton,
+  Typography,
+  Tab,
+  Tabs,
+} from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
 import PersistentDrawerLeft from "./PersistentDrawer";
 
 import Uploader from "./Uploader/Uploader";
@@ -22,6 +31,8 @@ import { GraphCommunitiesDataContext } from "./context/GraphCommunitiesDataConte
 const App = () => {
   const { segments } = useContext(UniversalDataContext);
   const { dGraphData } = useContext(GraphCommunitiesDataContext);
+
+  const [selectedWindow, setSelectedWindow] = useState("0");
 
   useEffect(() => {
     console.log("dGraphData, " + dGraphData);
@@ -61,6 +72,27 @@ const App = () => {
               </Allotment.Pane>
             </Allotment>
           </Box>
+        }
+        headerContent={
+          <>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ color: "black" }}
+            >
+              Curve Segment Neighborhood-Based Vector Field Exploration
+            </Typography>
+            <Tabs
+              value={selectedWindow}
+              onChange={(e, v) => setSelectedWindow(v)}
+              sx={{ marginLeft: "50px" }}
+            >
+              <Tab label="Line Segments" value="0" />
+              <Tab label="Graph Communities" value="1" />
+              <Tab label="Both Graphs" value="2" />
+            </Tabs>
+          </>
         }
       />
     </div>

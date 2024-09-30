@@ -21,8 +21,7 @@ const NearestNeighborWorker = new Worker(
 );
 
 const NearestNeighborSettings = () => {
-  const { segments: unmodifiedSegments, streamLines: unmodifiedStreamLines } =
-    useContext(UniversalDataContext);
+  const { segments, streamLines } = useContext(UniversalDataContext);
   const { setDGraphData } = useContext(GraphCommunitiesDataContext);
 
   const [treeAlgorithm, setTreeAlgorithm] = useState("KNN");
@@ -31,46 +30,24 @@ const NearestNeighborSettings = () => {
   const [manualStart, setManualStart] = useState(false);
   const [exclude, setExclude] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [segments, setSegments] = useState([]);
-  const [streamLines, setStreamLines] = useState([]);
   const [doSort, setDoSort] = useState(false);
   const [sortType, setSortType] = useState(1);
-  const [graph, setGraph] = useState([]);
-  const [minMax, setMinMax] = useState([0, 1]);
-  const [pixelData, setPixelData] = useState([]);
-  const [currentPixels, setCurrentPixels] = useState([]);
-  const [slRange, setSlRange] = useState(false);
-  const [isEmpty, setIsEmpty] = useState(true);
 
   useEffect(() => {
-    if (unmodifiedSegments && unmodifiedSegments.length > 0) {
-      setSegments(unmodifiedSegments);
-
-      //When the segments are updated, construct the tree in the background
+    if (segments && segments.length > 0) {
       NearestNeighborWorker.postMessage({
         constructTree: true,
         doSort: doSort,
         param: param,
-        unmodifiedSegments: unmodifiedSegments,
+        unmodifiedSegments: segments,
         treeAlgorithm: treeAlgorithm,
         distanceMetric: distanceMetric,
-        unmodifiedStreamLines: unmodifiedStreamLines,
+        unmodifiedStreamLines: streamLines,
         exclude: exclude,
         sortType: sortType,
       });
     }
-  }, [unmodifiedSegments]);
-
-  useEffect(() => {
-    setIsEmpty(
-      !(
-        unmodifiedStreamLines &&
-        unmodifiedStreamLines.length > 0 &&
-        unmodifiedSegments &&
-        unmodifiedSegments.length > 0
-      )
-    );
-  }, [unmodifiedSegments, unmodifiedStreamLines]);
+  }, [segments]);
 
   const handleStart = async () => {
     NearestNeighborWorker.addEventListener("message", knnCallback, false);
@@ -78,10 +55,10 @@ const NearestNeighborSettings = () => {
       constructTree: false,
       doSort: doSort,
       param: param,
-      unmodifiedSegments: unmodifiedSegments,
+      unmodifiedSegments: segments,
       treeAlgorithm: treeAlgorithm,
       distanceMetric: distanceMetric,
-      unmodifiedStreamLines: unmodifiedStreamLines,
+      unmodifiedStreamLines: streamLines,
       exclude: exclude,
       sortType: sortType,
     });
@@ -91,43 +68,10 @@ const NearestNeighborSettings = () => {
     if (event.data.type == "final") {
       setProgress(100);
       NearestNeighborWorker.removeEventListener("message", knnCallback);
-      setGraph(event.data.tgraph);
-      window.tempGraph = event.data.tgraph;
-
-      let graphSize = 0;
-      event.data.tgraph.forEach((edges) => {
-        graphSize += edges.length;
-      });
-
-      setMinMax([event.data.minDist, event.data.maxDist]);
-      console.log(event.data.tgraph);
       setDGraphData(event.data.tgraph);
-      updateSlRange(event.data.pixels);
-      setCurrentPixels(event.data.pixels);
-      setPixelData(event.data.pixels);
-      if (doSort) {
-        setSegments(event.data.segments);
-        setStreamLines(event.data.streamlines);
-      }
     } else if (event.data.type == "progress") {
       setProgress(event.data.progress);
     }
-  };
-
-  const updateSlRange = (pixels) => {
-    const slR = {};
-    pixels.forEach((px) => {
-      const idx1 = segments[px[0]].lineIDx;
-      const idx2 = segments[px[1]].lineIDx;
-      let key = `${idx1},${idx2}`;
-      if (!slR[key]) {
-        slR[key] = [px[2], px[2]];
-      } else {
-        slR[key][0] = Math.min(px[2], slR[key][0]);
-        slR[key][1] = Math.max(px[2], slR[key][1]);
-      }
-    });
-    setSlRange(slR);
   };
 
   return (
@@ -208,7 +152,6 @@ const NearestNeighborSettings = () => {
               fullWidth
               sx={{ flexGrow: 1 }}
               onClick={handleStart}
-              disabled={isEmpty}
             >
               Start
             </Button>
