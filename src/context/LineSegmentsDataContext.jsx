@@ -5,7 +5,7 @@ export const LineSegmentsDataProvider = ({ children }) => {
   const [radius, setRadius] = useState(0.45);
   const [tubeRes, setTubeRes] = useState(20);
   const [showCaps, setShowCaps] = useState(true);
-  const [opacity, setOpacity] = useState(0.4);
+  const [opacity, setOpacity] = useState(1);
   const [cylinderHeight, setCylinderHeight] = useState(1.0);
   const [drawAll, setDrawAll] = useState(true);
   const [intensity, setIntensity] = useState(2);

@@ -51,80 +51,50 @@ const Uploader = ({}) => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid2 container spacing={1}>
-        <Typography sx={{ fontWeight: "bold", width: "100%" }}>
-          Upload Settings
-        </Typography>
+      <Grid2 container spacing={2}>
         <Typography sx={{ fontWeight: "bold", width: "100%" }}>
           Segments: {numSegments} Streamlines: {numLines}
         </Typography>
-        <Grid2 container size={12} spacing={2}>
-          <Grid2
-            size={3}
-            sx={{ display: "flex", flexDirection: "column", height: "100%" }}
-          >
-            <Button
-              component="label"
-              role={undefined}
-              variant="contained"
-              tabIndex={-1}
-              startIcon={<CloudUploadIcon />}
-              fullWidth
-              sx={{ flexGrow: 1 }}
-            >
-              Upload
-              <VisuallyHiddenInput
-                type="file"
-                accept=".txt"
-                onChange={handleFileUpload}
-              />
-            </Button>
-          </Grid2>
-
-          <Grid2
-            size={3}
-            sx={{ display: "flex", flexDirection: "column", height: "100%" }}
-          >
-            <Button
-              component="label"
-              onClick={handleUpload}
-              variant="contained"
-              fullWidth
-              startIcon={<MemoryIcon />}
-              sx={{ flexGrow: 1 }}
-              disabled={!file}
-            >
-              Process
-            </Button>
-          </Grid2>
-
-          <Grid2
-            size={6}
-            sx={{ display: "flex", flexDirection: "column", height: "100%" }}
-          >
-            <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
-              <Typography noWrap>
-                {file ? file.name : "No file chosen"}
-              </Typography>
-            </Box>
-          </Grid2>
-        </Grid2>
-        <Grid2 container size={12} spacing={2}>
-          <Grid2 size={6}>
-            <CustomNumberInput
-              name="Merge X Segments Together"
-              onChange={(e) => setSkipSegments(Number(e.target.value))}
-              defaultValue={skipSegments}
-            />
-          </Grid2>
-          <Grid2 size={6}>
-            <CustomNumberInput
-              name="Skip Every X Lines"
-              onChange={(e) => setSkipLines(Number(e.target.value) + 1)}
-              defaultValue={skipLines}
-            />
-          </Grid2>
-        </Grid2>
+        <Button
+          component="label"
+          role={undefined}
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<CloudUploadIcon />}
+          fullWidth
+          sx={{ flexGrow: 1 }}
+        >
+          Upload
+          <VisuallyHiddenInput
+            type="file"
+            accept=".txt"
+            onChange={handleFileUpload}
+          />
+        </Button>
+        <Button
+          component="label"
+          onClick={handleUpload}
+          variant="contained"
+          fullWidth
+          startIcon={<MemoryIcon />}
+          sx={{ flexGrow: 1 }}
+          disabled={!file}
+        >
+          Process
+        </Button>
+        <Typography noWrap textAlign="center" sx={{ width: "100%" }}>
+          {file ? file.name : "No file chosen"}
+        </Typography>
+        <CustomNumberInput
+          name="Merge X Segments Together"
+          onChange={(e) => setSkipSegments(Number(e.target.value))}
+          defaultValue={skipSegments}
+        />
+        <CustomNumberInput
+          name="Skip Every X Lines"
+          onChange={(e) => setSkipLines(Number(e.target.value) + 1)}
+          defaultValue={skipLines}
+        />
       </Grid2>
     </Box>
   );

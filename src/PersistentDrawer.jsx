@@ -12,7 +12,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import SettingsIcon from "@mui/icons-material/Settings";
 
-const drawerWidth = 800;
+const drawerWidth = 550;
 
 const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })(
   ({ theme, open }) => ({
@@ -74,7 +74,7 @@ export default function PersistentDrawerLeft({
     <Box sx={{ display: "flex", width: "100%" }}>
       <CssBaseline />
       <AppBar position="fixed" open={open}>
-        <Toolbar sx={{ backgroundColor: "lightGray" }}>
+        <Toolbar>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -85,7 +85,7 @@ export default function PersistentDrawerLeft({
               ...(open && { display: "none" }),
             }}
           >
-            <SettingsIcon sx={{ color: "black" }} />
+            <SettingsIcon />
           </IconButton>
           {headerContent}
         </Toolbar>

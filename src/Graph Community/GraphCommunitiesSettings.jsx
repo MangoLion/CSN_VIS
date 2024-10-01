@@ -309,105 +309,71 @@ const GraphCommunitiesSettings = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid2 container spacing={1}>
-        <Typography sx={{ fontWeight: "bold" }}>
-          Graph Community Settings
-        </Typography>
-
-        <Grid2 container size={12} spacing={2}>
-          <Grid2 size={6}>
-            <CustomSelect
-              name={"Community Algorithm"}
-              onChange={(e) => setCommunityAlgorithm(e.target.value)}
-              defaultValue={communityAlgorithm}
-              options={[
-                { value: "Louvain", label: "Louvain" },
-                { value: "Louvain-SL", label: "Louvain-SL" },
-                { value: "PCA", label: "PCA K-Means" },
-                { value: "Infomap", label: "Infomap" },
-                {
-                  value: "Label Propagation",
-                  label: "Label Propagation",
-                },
-                { value: "Hamming Distance", label: "Hamming Distance" },
-                { value: "Blank", label: "Blank" },
-              ]}
-            />
-            <CustomNumberInput
-              name={"Node Scale"}
-              onChange={(e) => setNodeScale(Number(e.target.value))}
-              defaultValue={nodeScale}
-            />
-            <CustomNumberInput
-              name={"Seed"}
-              onChange={(e) => {
-                setSeed(Number(e.target.value));
-                seedrandom(seed, { global: true });
-              }}
-              defaultValue={seed}
-            />
-          </Grid2>
-          <Grid2 size={6}>{renderInputs()}</Grid2>
-        </Grid2>
-
-        <Grid2 container size={12} spacing={2}>
-          <Grid2 size={4.5}></Grid2>
-          <Grid2
-            size={3}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
-            }}
-          >
-            <Button
-              component="label"
-              variant="contained"
-              tabIndex={-1}
-              startIcon={<PlayArrowIcon />}
-              fullWidth
-              disabled={isEmpty}
-              sx={{ flexGrow: 1 }}
-              onClick={handleStart}
-            >
-              Start
-            </Button>
-          </Grid2>
-          <Grid2
-            size={4.5}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
-              justifyContent: "center",
-            }}
-          >
-            {running && <CircularProgress size={20} />}
-          </Grid2>
-        </Grid2>
-
-        <Grid2 container spacing={1}>
-          <Button
-            component="label"
-            variant="contained"
-            tabIndex={-1}
-            startIcon={<UndoIcon />}
-            onClick={() => handleUndo()}
-            disabled={!undoState}
-          >
-            Undo
-          </Button>
-          <Button
-            component="label"
-            variant="contained"
-            tabIndex={-1}
-            startIcon={<CallSplitIcon />}
-            onClick={() => handleSplitCommunity()}
-            disabled={selectedNodes.length !== 1}
-          >
-            Split
-          </Button>
-        </Grid2>
+      <Grid2 container spacing={2}>
+        <CustomSelect
+          name={"Community Algorithm"}
+          onChange={(e) => setCommunityAlgorithm(e.target.value)}
+          defaultValue={communityAlgorithm}
+          options={[
+            { value: "Louvain", label: "Louvain" },
+            { value: "Louvain-SL", label: "Louvain-SL" },
+            { value: "PCA", label: "PCA K-Means" },
+            { value: "Infomap", label: "Infomap" },
+            {
+              value: "Label Propagation",
+              label: "Label Propagation",
+            },
+            { value: "Hamming Distance", label: "Hamming Distance" },
+            { value: "Blank", label: "Blank" },
+          ]}
+        />
+        <CustomNumberInput
+          name={"Node Scale"}
+          onChange={(e) => setNodeScale(Number(e.target.value))}
+          defaultValue={nodeScale}
+        />
+        <CustomNumberInput
+          name={"Seed"}
+          onChange={(e) => {
+            setSeed(Number(e.target.value));
+            seedrandom(seed, { global: true });
+          }}
+          defaultValue={seed}
+        />
+        {renderInputs()}
+        <Button
+          component="label"
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<PlayArrowIcon />}
+          fullWidth
+          disabled={isEmpty}
+          sx={{ flexGrow: 1 }}
+          onClick={handleStart}
+        >
+          Start
+        </Button>
+        {running && <CircularProgress size={20} />}
+        {/* <Button
+          component="label"
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<UndoIcon />}
+          onClick={() => handleUndo()}
+          disabled={!undoState}
+        >
+          Undo
+        </Button>
+        <Button
+          component="label"
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<CallSplitIcon />}
+          onClick={() => handleSplitCommunity()}
+          disabled={selectedNodes.length !== 1}
+        >
+          Split
+        </Button> */}
       </Grid2>
     </Box>
   );

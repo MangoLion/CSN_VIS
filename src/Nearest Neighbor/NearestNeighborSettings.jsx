@@ -76,104 +76,69 @@ const NearestNeighborSettings = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid2 container spacing={1}>
-        <Typography sx={{ fontWeight: "bold" }}>
-          Nearest Neighbor Settings
-        </Typography>
-        <Grid2 container size={12} spacing={1}>
-          <Grid2 size={6}>
-            <CustomSelect
-              name={"Algorithm"}
-              onChange={(e) => setTreeAlgorithm(e.target.value)}
-              defaultValue={treeAlgorithm}
-              options={[
-                { value: "KNN", label: "KNN" },
-                { value: "RBN", label: "RBN" },
-              ]}
-            />
-            <CustomNumberInput
-              name={treeAlgorithm === "KNN" ? "K" : "R"}
-              onChange={(e) => setParam(e.target.value)}
-              defaultValue={param}
-            />
-            <CustomSelect
-              name={"Distance"}
-              onChange={(e) => setDistanceMetric(e.target.value)}
-              defaultValue={distanceMetric}
-              options={[
-                { value: "shortest", label: "Shortest" },
-                { value: "longest", label: "Longest" },
-                { value: "haustoff", label: "Haustoff" },
-              ]}
-            />
-            <CustomCheckBox
-              name={"Manual Start"}
-              onChange={(e) => setManualStart(e.target.checked)}
-              defaultValue={manualStart}
-            />
-          </Grid2>
-          <Grid2 size={6}>
-            <CustomCheckBox
-              name={"Exclude"}
-              onChange={(e) => setExclude(e.target.checked)}
-              defaultValue={exclude}
-            />
-            <CustomCheckBox
-              name={"Do Sort"}
-              onChange={(e) => setDoSort(e.target.checked)}
-              defaultValue={doSort}
-            />
-            <CustomSelect
-              name={"Sort Type"}
-              onChange={(e) => setSortType(e.target.value)}
-              defaultValue={sortType}
-              options={[
-                { value: 1, label: "Row Sum" },
-                { value: 2, label: "Average Distance" },
-              ]}
-            />
-          </Grid2>
-        </Grid2>
-        <Grid2 container size={12} spacing={2}>
-          <Grid2 size={4.5}></Grid2>
-          <Grid2
-            size={3}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
-            }}
-          >
-            <Button
-              component="label"
-              variant="contained"
-              tabIndex={-1}
-              startIcon={<PlayArrowIcon />}
-              fullWidth
-              sx={{ flexGrow: 1 }}
-              onClick={handleStart}
-            >
-              Start
-            </Button>
-          </Grid2>
-          <Grid2
-            size={4.5}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
-              justifyContent: "center",
-            }}
-          >
-            {progress != 0 && progress != 100 && (
-              <CircularProgress
-                variant="determinate"
-                value={progress}
-                size={20}
-              />
-            )}
-          </Grid2>
-        </Grid2>
+      <Grid2 container spacing={2}>
+        <CustomSelect
+          name={"Algorithm"}
+          onChange={(e) => setTreeAlgorithm(e.target.value)}
+          defaultValue={treeAlgorithm}
+          options={[
+            { value: "KNN", label: "KNN" },
+            { value: "RBN", label: "RBN" },
+          ]}
+        />
+        <CustomNumberInput
+          name={treeAlgorithm === "KNN" ? "K" : "R"}
+          onChange={(e) => setParam(e.target.value)}
+          defaultValue={param}
+        />
+        <CustomSelect
+          name={"Distance"}
+          onChange={(e) => setDistanceMetric(e.target.value)}
+          defaultValue={distanceMetric}
+          options={[
+            { value: "shortest", label: "Shortest" },
+            { value: "longest", label: "Longest" },
+            { value: "haustoff", label: "Haustoff" },
+          ]}
+        />
+        <CustomSelect
+          name={"Sort Type"}
+          onChange={(e) => setSortType(e.target.value)}
+          defaultValue={sortType}
+          options={[
+            { value: 1, label: "Row Sum" },
+            { value: 2, label: "Average Distance" },
+          ]}
+        />
+        <CustomCheckBox
+          name={"Manual Start"}
+          onChange={(e) => setManualStart(e.target.checked)}
+          defaultValue={manualStart}
+        />
+        <CustomCheckBox
+          name={"Exclude"}
+          onChange={(e) => setExclude(e.target.checked)}
+          defaultValue={exclude}
+        />
+        <CustomCheckBox
+          name={"Do Sort"}
+          onChange={(e) => setDoSort(e.target.checked)}
+          defaultValue={doSort}
+        />
+        <Button
+          component="label"
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<PlayArrowIcon />}
+          fullWidth
+          sx={{ flexGrow: 1 }}
+          onClick={handleStart}
+        >
+          Start
+        </Button>
+        {progress != 0 && progress != 100 && (
+          <CircularProgress variant="determinate" value={progress} size={20} />
+        )}
       </Grid2>
     </Box>
   );

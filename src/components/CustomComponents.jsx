@@ -7,7 +7,6 @@ const useStyles = makeStyles({
     "& .MuiInputBase-root": {
       height: "30px",
       padding: "1px 1px",
-      fontSize: "14px",
     },
     "& input": {
       height: "22px",
@@ -17,7 +16,6 @@ const useStyles = makeStyles({
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    fontSize: "0.75rem !important",
   },
   labelContainer: {
     flex: "1 1 0",
@@ -33,7 +31,12 @@ export const CustomNumberInput = ({
 }) => {
   const classes = useStyles();
   return (
-    <Box display="flex" alignItems="center" gap={2} sx={{ height: "30px" }}>
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={2}
+      sx={{ height: "30px", width: "100%" }}
+    >
       <Box className={classes.labelContainer}>
         <Typography className={classes.label}>{name}</Typography>
       </Box>
@@ -59,7 +62,12 @@ export const CustomCheckBox = ({
 }) => {
   const classes = useStyles();
   return (
-    <Box display="flex" alignItems="center" gap={2} sx={{ height: "30px" }}>
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={2}
+      sx={{ height: "30px", width: "100%" }}
+    >
       <Box className={classes.labelContainer}>
         <Typography className={classes.label}>{name}</Typography>
       </Box>
@@ -80,7 +88,12 @@ export const CustomCheckBox = ({
 export const CustomSelect = ({ name, onChange, defaultValue, options }) => {
   const classes = useStyles();
   return (
-    <Box display="flex" alignItems="center" gap={2} sx={{ height: "30px" }}>
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={2}
+      sx={{ height: "30px", width: "100%" }}
+    >
       <Box className={classes.labelContainer}>
         <Typography className={classes.label}>{name}</Typography>
       </Box>
