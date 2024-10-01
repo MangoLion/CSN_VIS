@@ -66,7 +66,7 @@ const renderingTabTheme = createTheme({
 
 const App = () => {
   const { segments } = useContext(UniversalDataContext);
-  const { dGraphData } = useContext(GraphCommunitiesDataContext);
+  const { dGraphData, graphData } = useContext(GraphCommunitiesDataContext);
 
   const [selectedSettingsWindow, setSelectedSettingsWindow] = useState("0");
   const [selectedRenderingWindow, setSelectedRenderingWindow] = useState("0");
@@ -139,9 +139,21 @@ const App = () => {
             value={selectedRenderingWindow}
             onChange={(e, newValue) => setSelectedRenderingWindow(newValue)}
           >
-            <Tab label="Line Segments" value="0" />
-            <Tab label="Graph Communities" value="1" />
-            <Tab label="Side by Side" value="2" />
+            <Tab
+              label="Line Segments"
+              value="0"
+              disabled={segments.length === 0}
+            />
+            <Tab
+              label="Graph Communities"
+              value="1"
+              disabled={graphData.nodes && graphData.nodes.length === 0}
+            />
+            <Tab
+              label="Side by Side"
+              value="2"
+              disabled={graphData.nodes && graphData.nodes.length === 0}
+            />
           </Tabs>
         </ThemeProvider>
       </AppBar>
@@ -154,27 +166,27 @@ const App = () => {
           paddingTop: "75px",
         }}
       >
-        {selectedRenderingWindow === "0" && (
-          <Box sx={{ width: "100%", height: "100%" }}>
-            <LineSegmentsRenderer />
-          </Box>
-        )}
-        {selectedRenderingWindow === "1" && (
-          <Box sx={{ width: "100%", height: "100%" }}>
-            <GraphCommunitiesRenderer />
-          </Box>
-        )}
-        {selectedRenderingWindow === "2" && (
-          <>
-            <Box sx={{ width: "50%", height: "100%" }}>
-              <LineSegmentsRenderer />
-            </Box>
-            <Divider orientation="vertical" />
-            <Box sx={{ width: "50%", height: "100%" }}>
-              <GraphCommunitiesRenderer />
-            </Box>
-          </>
-        )}
+        <Box
+          sx={{
+            ...(selectedRenderingWindow === "0" && { width: "100%" }),
+            ...(selectedRenderingWindow === "1" && { width: "0%" }),
+            ...(selectedRenderingWindow === "2" && { width: "50%" }),
+            height: "100%",
+          }}
+        >
+          <LineSegmentsRenderer />
+        </Box>
+        <Divider orientation="vertical" />
+        <Box
+          sx={{
+            ...(selectedRenderingWindow === "0" && { width: "0%" }),
+            ...(selectedRenderingWindow === "1" && { width: "100%" }),
+            ...(selectedRenderingWindow === "2" && { width: "50%" }),
+            height: "100%",
+          }}
+        >
+          <GraphCommunitiesRenderer />
+        </Box>
       </Box>
     </div>
   );

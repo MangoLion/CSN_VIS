@@ -72,28 +72,6 @@ const GraphCommunitiesSettings = () => {
     });
   }, [dGraphData]);
 
-  useEffect(() => {
-    setDGraphData([]);
-    setSelectedSegments([]);
-    setIsEmpty(true);
-    setSelectedNodes([]);
-    setGraphData({ nodes: [], links: [] });
-    setColoredSegments([]);
-  }, [segments]);
-
-  useEffect(() => {
-    setSelectedSegments([]);
-    setSelectedNodes([]);
-    setGraphData({ nodes: [], links: [] });
-    setColoredSegments([]);
-  }, [dGraphData]);
-
-  useEffect(() => {
-    setSelectedSegments([]);
-    setSelectedNodes([]);
-    console.log(graphData);
-  }, [graphData, allGroups]);
-
   const handleStart = async () => {
     if (isEmpty) return; // Do not attempt to plot if the graph is empty
 

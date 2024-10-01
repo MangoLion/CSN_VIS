@@ -27,6 +27,28 @@ const GraphCommunitiesRenderer = () => {
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
+  useEffect(() => {
+    setDGraphData([]);
+    setSelectedSegments([]);
+    setIsEmpty(true);
+    setSelectedNodes([]);
+    setGraphData({ nodes: [], links: [] });
+    setColoredSegments([]);
+  }, [segments]);
+
+  useEffect(() => {
+    setSelectedSegments([]);
+    setSelectedNodes([]);
+    setGraphData({ nodes: [], links: [] });
+    setColoredSegments([]);
+  }, [dGraphData]);
+
+  useEffect(() => {
+    setSelectedSegments([]);
+    setSelectedNodes([]);
+    console.log(graphData);
+  }, [graphData, allGroups]);
+
   const fgRef = useRef();
 
   useEffect(() => {
