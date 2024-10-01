@@ -29,13 +29,35 @@ import GraphCommunitiesRenderer from "./Graph Community/GraphCommunitiesRenderer
 import { UniversalDataContext } from "./context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "./context/GraphCommunitiesDataContext";
 
-const tabTheme = createTheme({
+const drawerTabTheme = createTheme({
   components: {
     MuiTab: {
       styleOverrides: {
         root: {
-          fontSize: "14px",
+          fontSize: "12px",
           width: "20%",
+        },
+      },
+    },
+  },
+});
+
+const renderingTabTheme = createTheme({
+  components: {
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          color: "lightGray",
+          "&.Mui-selected": {
+            color: "black",
+          },
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        indicator: {
+          backgroundColor: "black",
         },
       },
     },
@@ -47,20 +69,19 @@ const App = () => {
   const { dGraphData } = useContext(GraphCommunitiesDataContext);
 
   const [selectedSettingsWindow, setSelectedSettingsWindow] = useState("0");
+  const [selectedRenderingWindow, setSelectedRenderingWindow] = useState("0");
   const [open, setOpen] = useState(true);
-
-  useEffect(() => {
-    console.log("dGraphData, " + dGraphData);
-  }, [dGraphData]);
 
   return (
     <div className="App" style={{ display: "flex", height: "100vh" }}>
       <Drawer open={open} onClose={() => setOpen(false)}>
-        <ThemeProvider theme={tabTheme}>
+        <ThemeProvider theme={drawerTabTheme}>
           <Box sx={{ width: "550px" }}>
             <Tabs
               value={selectedSettingsWindow}
               onChange={(e, newValue) => setSelectedSettingsWindow(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
               sx={{ zIndex: -1 }}
             >
               <Tab label="Uploader" value="0" />
@@ -80,10 +101,18 @@ const App = () => {
                 disabled={dGraphData.length === 0}
               />
             </Tabs>
-            {selectedSettingsWindow === "0" && <Uploader />}
-            {selectedSettingsWindow === "1" && <LineSegmentSettings />}
-            {selectedSettingsWindow === "2" && <NearestNeighborSettings />}
-            {selectedSettingsWindow === "3" && <GraphCommunitiesSettings />}
+            <Box hidden={selectedSettingsWindow !== "0"}>
+              <Uploader />
+            </Box>
+            <Box hidden={selectedSettingsWindow !== "1"}>
+              <LineSegmentSettings />
+            </Box>
+            <Box hidden={selectedSettingsWindow !== "2"}>
+              <NearestNeighborSettings />
+            </Box>
+            <Box hidden={selectedSettingsWindow !== "3"}>
+              <GraphCommunitiesSettings />
+            </Box>
           </Box>
         </ThemeProvider>
       </Drawer>
@@ -102,9 +131,19 @@ const App = () => {
         <IconButton onClick={() => setOpen(true)}>
           <SettingsIcon sx={{ color: "white" }} />
         </IconButton>
-        <Typography variant="h6" noWrap component="div">
+        <Typography variant="h6" noWrap>
           Curve Segment Neighborhood-Based Vector Field Exploration
         </Typography>
+        <ThemeProvider theme={renderingTabTheme}>
+          <Tabs
+            value={selectedRenderingWindow}
+            onChange={(e, newValue) => setSelectedRenderingWindow(newValue)}
+          >
+            <Tab label="Line Segments" value="0" />
+            <Tab label="Graph Communities" value="1" />
+            <Tab label="Side by Side" value="2" />
+          </Tabs>
+        </ThemeProvider>
       </AppBar>
 
       <Box
@@ -115,13 +154,27 @@ const App = () => {
           paddingTop: "75px",
         }}
       >
-        <Box sx={{ width: "50%", height: "100%" }}>
-          <LineSegmentsRenderer />
-        </Box>
-        <Divider orientation="vertical" />
-        <Box sx={{ width: "50%", height: "100%" }}>
-          <GraphCommunitiesRenderer />
-        </Box>
+        {selectedRenderingWindow === "0" && (
+          <Box sx={{ width: "100%", height: "100%" }}>
+            <LineSegmentsRenderer />
+          </Box>
+        )}
+        {selectedRenderingWindow === "1" && (
+          <Box sx={{ width: "100%", height: "100%" }}>
+            <GraphCommunitiesRenderer />
+          </Box>
+        )}
+        {selectedRenderingWindow === "2" && (
+          <>
+            <Box sx={{ width: "50%", height: "100%" }}>
+              <LineSegmentsRenderer />
+            </Box>
+            <Divider orientation="vertical" />
+            <Box sx={{ width: "50%", height: "100%" }}>
+              <GraphCommunitiesRenderer />
+            </Box>
+          </>
+        )}
       </Box>
     </div>
   );

@@ -14,6 +14,7 @@ import {
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
+import { NearestNeighborDataContext } from "../context/NearestNeighborDataContext";
 
 const NearestNeighborWorker = new Worker(
   new URL("./NearestNeighborWorker.jsx", import.meta.url),
@@ -23,15 +24,24 @@ const NearestNeighborWorker = new Worker(
 const NearestNeighborSettings = () => {
   const { segments, streamLines } = useContext(UniversalDataContext);
   const { setDGraphData } = useContext(GraphCommunitiesDataContext);
-
-  const [treeAlgorithm, setTreeAlgorithm] = useState("KNN");
-  const [param, setParam] = useState("1");
-  const [distanceMetric, setDistanceMetric] = useState("shortest");
-  const [manualStart, setManualStart] = useState(false);
-  const [exclude, setExclude] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [doSort, setDoSort] = useState(false);
-  const [sortType, setSortType] = useState(1);
+  const {
+    treeAlgorithm,
+    setTreeAlgorithm,
+    param,
+    setParam,
+    distanceMetric,
+    setDistanceMetric,
+    manualStart,
+    setManualStart,
+    exclude,
+    setExclude,
+    progress,
+    setProgress,
+    doSort,
+    setDoSort,
+    sortType,
+    setSortType,
+  } = useContext(NearestNeighborDataContext);
 
   useEffect(() => {
     if (segments && segments.length > 0) {

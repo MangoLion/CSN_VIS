@@ -74,28 +74,6 @@ const GraphCommunitiesRenderer = () => {
     setColoredSegments(newColoredSegments);
   }, [graphData]);
 
-  useEffect(() => {
-    setDGraphData([]);
-    setSelectedSegments([]);
-    setIsEmpty(true);
-    setSelectedNodes([]);
-    setGraphData({ nodes: [], links: [] });
-    setColoredSegments([]);
-  }, [segments]);
-
-  useEffect(() => {
-    setSelectedSegments([]);
-    setSelectedNodes([]);
-    setGraphData({ nodes: [], links: [] });
-    setColoredSegments([]);
-  }, [dGraphData]);
-
-  useEffect(() => {
-    setSelectedSegments([]);
-    setSelectedNodes([]);
-    console.log(graphData);
-  }, [graphData, allGroups]);
-
   const handleNodeClick = (node, event) => {
     if (event.button === 2) {
       // Right click

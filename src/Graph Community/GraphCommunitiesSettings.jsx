@@ -34,6 +34,7 @@ const GraphCommunitiesSettings = () => {
     isEmpty,
     setIsEmpty,
     selectedNodes,
+    setSelectedNodes,
     communityAlgorithm,
     setCommunityAlgorithm,
     graphData,
@@ -41,7 +42,12 @@ const GraphCommunitiesSettings = () => {
     allGroups,
     setAllGroups,
   } = useContext(GraphCommunitiesDataContext);
-  const { segments, selectedSegments } = useContext(UniversalDataContext);
+  const {
+    segments,
+    selectedSegments,
+    setSelectedSegments,
+    setColoredSegments,
+  } = useContext(UniversalDataContext);
   const [seed, setSeed] = useState(1);
   const [inputs, setInputs] = useState({
     resolution: 1,
@@ -65,6 +71,28 @@ const GraphCommunitiesSettings = () => {
       dGraphData: dGraphData,
     });
   }, [dGraphData]);
+
+  useEffect(() => {
+    setDGraphData([]);
+    setSelectedSegments([]);
+    setIsEmpty(true);
+    setSelectedNodes([]);
+    setGraphData({ nodes: [], links: [] });
+    setColoredSegments([]);
+  }, [segments]);
+
+  useEffect(() => {
+    setSelectedSegments([]);
+    setSelectedNodes([]);
+    setGraphData({ nodes: [], links: [] });
+    setColoredSegments([]);
+  }, [dGraphData]);
+
+  useEffect(() => {
+    setSelectedSegments([]);
+    setSelectedNodes([]);
+    console.log(graphData);
+  }, [graphData, allGroups]);
 
   const handleStart = async () => {
     if (isEmpty) return; // Do not attempt to plot if the graph is empty
