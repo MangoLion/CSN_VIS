@@ -11,6 +11,21 @@ export const GraphCommunitiesDataProvider = ({ children }) => {
   const [communityAlgorithm, setCommunityAlgorithm] = useState("Louvain");
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [allGroups, setAllGroups] = useState([]);
+  const [undoState, setUndoState] = useState(false);
+  const [orgCommunities, setOrgCommunities] = useState({
+    nodes: [],
+    links: [],
+  });
+  const [seed, setSeed] = useState(1);
+  const [inputs, setInputs] = useState({
+    resolution: 1,
+    randomWalk: false,
+    min: 0.01,
+    gamma: 0.1,
+    max: 10,
+    dims: 5,
+    kmean: 8,
+  });
 
   return (
     <GraphCommunitiesDataContext.Provider
@@ -33,6 +48,14 @@ export const GraphCommunitiesDataProvider = ({ children }) => {
         setGraphData,
         allGroups,
         setAllGroups,
+        undoState,
+        setUndoState,
+        orgCommunities,
+        setOrgCommunities,
+        seed,
+        setSeed,
+        inputs,
+        setInputs,
       }}
     >
       {children}

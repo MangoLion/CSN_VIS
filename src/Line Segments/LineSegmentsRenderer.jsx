@@ -16,6 +16,8 @@ extend({ TrackballControls });
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { LineSegmentsDataContext } from "../context/LineSegmentsDataContext";
 
+import { Typography } from "@mui/material";
+
 const DirectionalLightWithCamera = ({ intensity }) => {
   const directionalLightRef = useRef();
   const { camera } = useThree();
@@ -33,9 +35,11 @@ const DirectionalLightWithCamera = ({ intensity }) => {
 
 const LineSegmentsRenderer = () => {
   return (
-    <Canvas style={{ width: "100%", height: "100%" }}>
-      <LineSegmentsCanvas />
-    </Canvas>
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <Canvas style={{ position: "relative", width: "100%", height: "100%" }}>
+        <LineSegmentsCanvas />
+      </Canvas>
+    </div>
   );
 };
 

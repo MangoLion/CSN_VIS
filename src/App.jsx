@@ -72,8 +72,24 @@ const App = () => {
   const [selectedRenderingWindow, setSelectedRenderingWindow] = useState("0");
   const [open, setOpen] = useState(true);
 
+  useEffect(() => {
+    if (segments.length > 0) setSelectedRenderingWindow("0");
+  }, [segments]);
+
+  useEffect(() => {
+    if (
+      graphData.nodes &&
+      graphData.nodes.length > 0 &&
+      selectedRenderingWindow === "0"
+    )
+      setSelectedRenderingWindow("2");
+  }, [graphData]);
+
   return (
-    <div className="App" style={{ display: "flex", height: "100vh" }}>
+    <div
+      className="App"
+      style={{ display: "flex", height: "100vh", flexDirection: "column" }}
+    >
       <Drawer open={open} onClose={() => setOpen(false)}>
         <ThemeProvider theme={drawerTabTheme}>
           <Box sx={{ width: "550px" }}>
@@ -118,8 +134,8 @@ const App = () => {
       </Drawer>
 
       <AppBar
-        position="fixed"
         sx={{
+          position: "static",
           height: "75px",
           display: "flex",
           flexDirection: "row",
@@ -163,15 +179,14 @@ const App = () => {
           width: "100%",
           height: "100%",
           display: "flex",
-          paddingTop: "75px",
         }}
       >
         <Box
           sx={{
             ...(selectedRenderingWindow === "0" && { width: "100%" }),
-            ...(selectedRenderingWindow === "1" && { width: "0%" }),
+            ...(selectedRenderingWindow === "1" && { display: "none" }),
             ...(selectedRenderingWindow === "2" && { width: "50%" }),
-            height: "100%",
+            height: "95%",
           }}
         >
           <LineSegmentsRenderer />
@@ -179,10 +194,10 @@ const App = () => {
         <Divider orientation="vertical" />
         <Box
           sx={{
-            ...(selectedRenderingWindow === "0" && { width: "0%" }),
+            ...(selectedRenderingWindow === "0" && { display: "none" }),
             ...(selectedRenderingWindow === "1" && { width: "100%" }),
             ...(selectedRenderingWindow === "2" && { width: "50%" }),
-            height: "100%",
+            height: "95%",
           }}
         >
           <GraphCommunitiesRenderer />

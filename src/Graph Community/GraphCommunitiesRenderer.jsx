@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import { ForceGraph2D } from "react-force-graph";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
-import { Grid2, Box, Button, Typography } from "@mui/material";
 import convexHull from "convex-hull";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
+import GraphCommunitiesButtons from "./GraphCommunitiesButtons";
+import { Box } from "@mui/material";
 const GraphCommunitiesRenderer = () => {
   const {
     dGraphData,
@@ -46,7 +47,6 @@ const GraphCommunitiesRenderer = () => {
   useEffect(() => {
     setSelectedSegments([]);
     setSelectedNodes([]);
-    console.log(graphData);
   }, [graphData, allGroups]);
 
   const fgRef = useRef();
@@ -395,32 +395,20 @@ const GraphCommunitiesRenderer = () => {
   };
 
   return (
-    <div style={{ width: "100%", height: "100%" }} ref={windowRef}>
-      <Typography
+    <div
+      style={{ position: "relative", width: "100%", height: "100%" }}
+      ref={windowRef}
+    >
+      <Box
         sx={{
           position: "absolute",
-          fontWeight: "bold",
-          zIndex: 10,
+          left: 10,
           top: 10,
-          left: 10,
+          zIndex: 1000,
         }}
       >
-        Graph Communities
-      </Typography>
-      <Typography
-        sx={{
-          position: "absolute",
-          zIndex: 10,
-          top: 40,
-          left: 10,
-          fontWeight: "bold",
-          fontSize: 12,
-        }}
-      >
-        {graphData &&
-          graphData.nodes.length === 0 &&
-          "Run a Community Algorithm to Render Communities"}
-      </Typography>
+        <GraphCommunitiesButtons />
+      </Box>
       {!use3D && !isEmpty && (
         <ForceGraph2D
           width={dimensions.width}
