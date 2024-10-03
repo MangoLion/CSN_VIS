@@ -8,12 +8,6 @@ import louvain from "graphology-communities-louvain";
 import { scaleOrdinal } from "d3-scale";
 import { schemeCategory10 } from "d3-scale-chromatic"; // Or any other D3 color scheme
 
-import {
-  pcaKmeansStreamlineClustering,
-  drawHullOnCanvas,
-  getRandomColor,
-} from "./GraphCommunitiesHelper";
-
 //import * as d3 from 'd3';
 import chroma from "chroma-js";
 import seedrandom from "seedrandom";
@@ -80,6 +74,75 @@ const GraphCommunitiesUnused = ({
       ...inputs,
       [name]: type === "checkbox" ? checked : parseFloat(value),
     });
+  };
+
+  const pcaKmeansStreamlineClustering = (segments, pcaDims, k) => {
+    const streamlineIndices = {};
+    segments.forEach((segment, idx) => {
+      if (!streamlineIndices[segment.lineIDx]) {
+        streamlineIndices[segment.lineIDx] = [idx, idx];
+      } else {
+        streamlineIndices[segment.lineIDx][1] = idx;
+      }
+    });
+
+    const streamlines = Object.values(streamlineIndices);
+
+    const avgLength = Math.round(
+      streamlines.reduce((sum, s) => sum + (s[1] - s[0] + 1), 0) /
+        streamlines.length
+    );
+
+    const paddedStreamlines = streamlines.map(([startIdx, endIdx]) => {
+      let streamline = segments.slice(startIdx, endIdx + 1);
+      let streamlineLength = streamline.length;
+
+      let flattenedStreamline = streamline.flatMap((segment) => [
+        ...segment.startPoint,
+        ...segment.endPoint,
+        ...segment.midPoint,
+      ]);
+
+      if (streamlineLength < avgLength) {
+        const paddingSize = (avgLength - streamlineLength) * 9;
+        flattenedStreamline = [
+          ...flattenedStreamline,
+          ...Array(paddingSize).fill(0),
+        ];
+      } else if (streamlineLength > avgLength) {
+        flattenedStreamline = flattenedStreamline.slice(0, avgLength * 9);
+      }
+
+      return flattenedStreamline;
+    });
+
+    const pca = new PCA(paddedStreamlines);
+    const reducedData = pca.predict(paddedStreamlines, {
+      nComponents: pcaDims,
+    });
+    const reducedDataArray = Array.from(reducedData.data).map((row) =>
+      Array.from(row)
+    );
+
+    let ans = kmeans.kmeans(reducedDataArray, k, { seed: seed });
+    const communities = {};
+    ans.clusters.forEach((cluster, streamlineIndex) => {
+      const [startIdx, endIdx] = streamlines[streamlineIndex];
+      for (let i = startIdx; i <= endIdx; i++) {
+        communities[i] = cluster;
+      }
+    });
+
+    return fillHolesInCommunities(communities);
+  };
+
+  const getRandomColor = () => {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
   };
 
   useEffect(() => {
