@@ -106,6 +106,8 @@ const rearrangeStreamlinesKNN = (
 self.addEventListener("message", (e) => {
   const { file, skipLines, skipSegments } = e.data;
 
+  let start;
+
   const reader = new FileReader();
   let segments = [];
   reader.readAsText(file);
@@ -116,77 +118,88 @@ self.addEventListener("message", (e) => {
     const streamlines = [];
     let endIDx = 0;
     let lineSkipCount = 0;
-    let linesArray = text
-      .trim()
-      .split("\n")
-      .map((line) => {
-        lineSkipCount++;
-        if (lineSkipCount > 1 && lineSkipCount % skipLines === 0) {
-          return [];
-        }
-        const coords = line.trim().split(" ").map(parseFloat);
-        const streamline = [endIDx];
-        const points = [];
-        let ss = 1;
-        if (skipSegments > 1) ss = skipSegments;
-        for (let i = 0; i < coords.length; i += 4 * ss) {
-          let start = [coords[i], coords[i + 1], coords[i + 2]];
-          let end = [
-            coords[i + 4 * ss],
-            coords[i + 4 * ss + 1],
-            coords[i + 4 * ss + 2],
-          ];
-          let midpoint = [
-            (start[0] + end[0]) / 2,
-            (start[1] + end[1]) / 2,
-            (start[2] + end[2]) / 2,
-          ];
-          if (
-            !(
-              start.every((num) => !isNaN(num)) &&
-              end.every((num) => !isNaN(num))
-            )
+    let lastProgress = 0;
+
+    let linesArray = text.trim().split("\n");
+
+    let totalLines = linesArray.length;
+    linesArray = linesArray.map((line, i) => {
+      lineSkipCount++;
+      if (lineSkipCount > 1 && lineSkipCount % skipLines === 0) {
+        return [];
+      }
+      const coords = line.trim().split(" ").map(parseFloat);
+      const streamline = [endIDx];
+      const points = [];
+      let ss = 1;
+      if (skipSegments > 1) ss = skipSegments;
+      for (let i = 0; i < coords.length; i += 4 * ss) {
+        let start = [coords[i], coords[i + 1], coords[i + 2]];
+        let end = [
+          coords[i + 4 * ss],
+          coords[i + 4 * ss + 1],
+          coords[i + 4 * ss + 2],
+        ];
+        let midpoint = [
+          (start[0] + end[0]) / 2,
+          (start[1] + end[1]) / 2,
+          (start[2] + end[2]) / 2,
+        ];
+        if (
+          !(
+            start.every((num) => !isNaN(num)) && end.every((num) => !isNaN(num))
           )
-            continue;
+        )
+          continue;
 
-          segments.push({
-            startPoint: start,
-            endPoint: end,
-            midPoint: midpoint,
-            color: "yellow",
-            lineIDx: lineIDx,
-            globalIdx: globalIdx,
-            neighbors: [],
-          });
-          points.push(start);
-          points.push(end);
+        segments.push({
+          startPoint: start,
+          endPoint: end,
+          midPoint: midpoint,
+          color: "yellow",
+          lineIDx: lineIDx,
+          globalIdx: globalIdx,
+          neighbors: [],
+        });
+        points.push(start);
+        points.push(end);
 
-          globalIdx++;
-          endIDx = globalIdx;
-        }
-        streamline.push(endIDx);
-        streamlines.push(streamline);
-        endIDx++;
-        lineIDx++;
-        return [points];
-      });
+        globalIdx++;
+        endIDx = globalIdx;
+      }
+      streamline.push(endIDx);
+      streamlines.push(streamline);
+      endIDx++;
+      lineIDx++;
 
-    const pairwiseDistances = computePairwiseDistances(segments, streamlines);
+      const progress = Math.floor((i / totalLines) * 100);
+      if (progress % 10 === 0 && progress !== lastProgress) {
+        lastProgress = progress;
+        self.postMessage({
+          type: "progress",
+          progress: progress,
+        });
+      }
 
-    let flag = false;
-    const rearrangedStreamlines = rearrangeStreamlinesKNN(
-      streamlines,
-      pairwiseDistances,
-      flag,
-      5
-    );
+      return [points];
+    });
+
+    // const pairwiseDistances = computePairwiseDistances(segments, streamlines);
+    // let flag = false;
+    // const rearrangedStreamlines = rearrangeStreamlinesKNN(
+    //   streamlines,
+    //   pairwiseDistances,
+    //   flag,
+    //   5
+    // );
 
     linesArray = linesArray.filter((l) => l.length > 0);
 
     self.postMessage({
-      segments,
-      streamlines,
-      linesArray,
+      type: "finished",
+      segments: segments,
+      streamlines: streamlines,
+      linesArray: linesArray,
     });
   };
 });

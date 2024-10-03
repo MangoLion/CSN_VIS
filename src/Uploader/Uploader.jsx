@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Grid2, Box, Button, Typography } from "@mui/material";
+import {
+  Grid2,
+  Box,
+  Button,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import MemoryIcon from "@mui/icons-material/Memory";
+import { LoadingButton } from "@mui/lab";
 import { CustomNumberInput } from "../components/CustomComponents";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 const UploaderWorker = new Worker(
@@ -30,6 +37,7 @@ const Uploader = ({}) => {
   const [skipSegments, setSkipSegments] = useState(0);
   const [numSegments, setNumSegments] = useState(0);
   const [numLines, setNumLines] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   const handleFileUpload = (event) => {
     setFile(event.target.files[0]);
@@ -37,11 +45,16 @@ const Uploader = ({}) => {
 
   useEffect(() => {
     UploaderWorker.addEventListener("message", (event) => {
-      const { segments, streamlines, linesArray } = event.data;
-      setSegments(segments);
-      setStreamLines(streamlines);
-      setNumSegments(segments.length);
-      setNumLines(linesArray.length);
+      if (event.data.type === "progress") {
+        setProgress(event.data.progress);
+      } else {
+        const { segments, streamlines, linesArray } = event.data;
+        setProgress(0);
+        setSegments(segments);
+        setStreamLines(streamlines);
+        setNumSegments(segments.length);
+        setNumLines(linesArray.length);
+      }
     });
   });
 
@@ -71,7 +84,7 @@ const Uploader = ({}) => {
             onChange={handleFileUpload}
           />
         </Button>
-        <Button
+        <LoadingButton
           component="label"
           onClick={handleUpload}
           variant="contained"
@@ -79,9 +92,17 @@ const Uploader = ({}) => {
           startIcon={<MemoryIcon />}
           sx={{ flexGrow: 1 }}
           disabled={!file}
+          loading={progress !== 0 && progress !== 100}
+          loadingIndicator={
+            <CircularProgress
+              variant="determinate"
+              value={progress}
+              size={20}
+            />
+          }
         >
           Process
-        </Button>
+        </LoadingButton>
         <Typography noWrap textAlign="center" sx={{ width: "100%" }}>
           {file ? file.name : "No file chosen"}
         </Typography>

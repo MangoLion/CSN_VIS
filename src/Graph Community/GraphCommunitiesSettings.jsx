@@ -14,6 +14,7 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
@@ -203,7 +204,7 @@ const GraphCommunitiesSettings = () => {
           defaultValue={seed}
         />
         {renderInputs()}
-        <Button
+        <LoadingButton
           component="label"
           variant="contained"
           tabIndex={-1}
@@ -212,10 +213,10 @@ const GraphCommunitiesSettings = () => {
           disabled={isEmpty}
           sx={{ flexGrow: 1 }}
           onClick={handleStart}
+          loading={running}
         >
           Start
-        </Button>
-        {running && <CircularProgress size={20} />}
+        </LoadingButton>
       </Grid2>
     </Box>
   );

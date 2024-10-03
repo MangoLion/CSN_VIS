@@ -11,6 +11,7 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
@@ -135,7 +136,7 @@ const NearestNeighborSettings = () => {
           onChange={(e) => setDoSort(e.target.checked)}
           defaultValue={doSort}
         />
-        <Button
+        <LoadingButton
           component="label"
           variant="contained"
           tabIndex={-1}
@@ -143,12 +144,17 @@ const NearestNeighborSettings = () => {
           fullWidth
           sx={{ flexGrow: 1 }}
           onClick={handleStart}
+          loading={progress != 0 && progress != 100}
+          loadingIndicator={
+            <CircularProgress
+              variant="determinate"
+              value={progress}
+              size={20}
+            />
+          }
         >
           Start
-        </Button>
-        {progress != 0 && progress != 100 && (
-          <CircularProgress variant="determinate" value={progress} size={20} />
-        )}
+        </LoadingButton>
       </Grid2>
     </Box>
   );
