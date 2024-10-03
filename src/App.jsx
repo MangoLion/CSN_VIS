@@ -49,7 +49,7 @@ const renderingTabTheme = createTheme({
         root: {
           color: "lightGray",
           "&.Mui-selected": {
-            color: "black",
+            color: "white",
           },
         },
       },
@@ -57,7 +57,7 @@ const renderingTabTheme = createTheme({
     MuiTabs: {
       styleOverrides: {
         indicator: {
-          backgroundColor: "black",
+          backgroundColor: "white",
         },
       },
     },
@@ -90,7 +90,7 @@ const App = () => {
       className="App"
       style={{ display: "flex", height: "100vh", flexDirection: "column" }}
     >
-      <Drawer open={open} onClose={() => setOpen(false)}>
+      <Drawer open={open} onClose={() => setOpen(false)} keepMounted>
         <ThemeProvider theme={drawerTabTheme}>
           <Box sx={{ width: "550px" }}>
             <Tabs

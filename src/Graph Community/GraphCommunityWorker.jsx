@@ -292,8 +292,6 @@ const createGraph = (event) => {
 
   // Detected communities: communities (a mapping of node -> community)
 
-  console.log("CHECKPOINT1");
-
   // Use a set to store unique inter-community links in the format "smaller_larger" to ensure uniqueness
   const interCommunityLinksSet = new Set();
 
@@ -316,7 +314,6 @@ const createGraph = (event) => {
     const [source, target] = pair.split("_");
     return { source, target };
   });
-  console.log("CHECKPOINT2");
   // Deduplicate the links
   const linkPairs = new Set();
   interCommunityLinks = interCommunityLinks.filter((link) => {
@@ -328,7 +325,6 @@ const createGraph = (event) => {
       return true;
     }
   });
-  console.log("CHECKPOINT3");
   const communityMembers = {};
   Object.entries(communities).forEach(([originalNode, communityId]) => {
     if (!segments[parseInt(originalNode)]) return;
@@ -365,6 +361,7 @@ const handleSplitCommunity = (event) => {
     orgCommunities,
     selectedNodes,
     inputs,
+    segments,
   } = event.data;
   const communityIndex = selectedNodes[0].id;
   const X = 3;
@@ -476,6 +473,62 @@ const handleSplitCommunity = (event) => {
           randomWalk: inputs.randomWalk,
         });
         break;
+      case "Louvain-SL":
+        // Step 1: Build streamline graph
+        const streamlineGraph = new Graph();
+        const streamlineMap = new Map(); // Map streamline index to array of segment indices
+
+        // First, map segments to streamlines
+        segments.forEach((segment, segmentIndex) => {
+          const streamlineIndex = segment.lineIDx;
+          if (!streamlineMap.has(streamlineIndex)) {
+            streamlineMap.set(streamlineIndex, []);
+          }
+          streamlineMap.get(streamlineIndex).push(segmentIndex);
+        });
+
+        // Add all nodes to streamlineGraph first
+        streamlineMap.forEach((_, streamlineIndex) => {
+          streamlineGraph.addNode(streamlineIndex);
+        });
+
+        // Now add edges to streamlineGraph
+        streamlineMap.forEach((segmentIndices, streamlineIndex) => {
+          segmentIndices.forEach((segmentIndex) => {
+            dGraphData[segmentIndex].forEach((neighborIndex) => {
+              const neighborStreamlineIndex = segments[neighborIndex].lineIDx;
+              if (streamlineIndex !== neighborStreamlineIndex) {
+                if (
+                  !streamlineGraph.hasEdge(
+                    streamlineIndex,
+                    neighborStreamlineIndex
+                  )
+                ) {
+                  streamlineGraph.addEdge(
+                    streamlineIndex,
+                    neighborStreamlineIndex
+                  );
+                }
+              }
+            });
+          });
+        });
+
+        // Step 2: Perform Louvain community detection on streamlineGraph
+        const streamlineCommunities = louvain(streamlineGraph, {
+          resolution: inputs.resolution,
+          randomWalk: inputs.randomWalk,
+        });
+
+        // Step 3: Map communities back to individual segments
+        communities = {};
+        streamlineMap.forEach((segmentIndices, streamlineIndex) => {
+          const communityId = streamlineCommunities[streamlineIndex];
+          segmentIndices.forEach((segmentIndex) => {
+            communities[segmentIndex] = communityId;
+          });
+        });
+        break;
       case "Infomap":
         communities = jInfomap(imapNodes, imapEdges, inputs.min);
         break;
@@ -504,7 +557,6 @@ const handleSplitCommunity = (event) => {
         });
         break;
     }
-
     // Process communities, creating nodes for each community and counting sizes
     Object.entries(communities).forEach(([node, community]) => {
       if (!communityGraph.hasNode(community)) {
@@ -657,14 +709,107 @@ const handleSplitCommunity = (event) => {
   };
 };
 
+const handleMergeCommunity = (event) => {
+  const { graphData, orgCommunities, selectedNodes } = event.data;
+  const toMerge = selectedNodes.map((node) => node.id);
+  let { nodes, links } = graphData;
+
+  const mergedGroupID = [].concat(...selectedNodes.map((obj) => obj.groupID));
+
+  //convert the links back
+  links = links.map((obj) => ({
+    source: obj.source.id,
+    target: obj.target.id,
+  }));
+
+  // Find an unused community index (node ID)
+  const allCommunityIndexes = nodes.map((node) => node.id);
+  const maxCommunityIndex =
+    allCommunityIndexes.length > 0 ? Math.max(...allCommunityIndexes) : 0;
+  const newCommunityIndex = maxCommunityIndex + 1;
+
+  const mergeIds = selectedNodes.map((object) => object.id);
+  const newOrgCommunities = orgCommunities;
+  // Iterate over the mergeArray
+  for (let key in newOrgCommunities) {
+    if (mergeIds.includes(newOrgCommunities[key].toString())) {
+      newOrgCommunities[key] = newCommunityIndex;
+      //console.log(key)
+    }
+  }
+
+  // Merge member lists of communities specified in 'toMerge'
+  const mergedMembers = toMerge.flatMap((communityIndex) => {
+    // Find the node that corresponds to the current community index and get its members
+    const node = nodes.find((n) => n.id === communityIndex);
+    return node ? node.members : [];
+  });
+
+  const removed_nodes = nodes.filter((node) => toMerge.includes(node.id));
+
+  // Remove the nodes that are merged
+  nodes = nodes.filter((node) => !toMerge.includes(node.id));
+
+  const newsize = removed_nodes.reduce(
+    (totalSize, obj) => totalSize + obj.size,
+    0
+  );
+
+  // Create a new node for the merged community
+  const newCommunityNode = {
+    // Copy other properties
+    ...removed_nodes[0],
+    id: newCommunityIndex,
+    members: mergedMembers,
+    size: newsize,
+    groupID: [...mergedGroupID],
+  };
+  nodes.push(newCommunityNode);
+
+  // Update the links to reflect the merge
+  links = links
+    .map((link) => {
+      // Update the source and target of the link if they refer to a community that was merged
+      return {
+        source: toMerge.includes(link.source) ? newCommunityIndex : link.source,
+        target: toMerge.includes(link.target) ? newCommunityIndex : link.target,
+      };
+    })
+    .filter((link) => link.source !== link.target); // Remove self-links
+
+  // Deduplicate the links
+  const linkPairs = new Set();
+  links = links.filter((link) => {
+    const sortedPair = [link.source, link.target].sort().join("_");
+    if (linkPairs.has(sortedPair)) {
+      return false;
+    } else {
+      linkPairs.add(sortedPair);
+      return true;
+    }
+  });
+
+  return {
+    newOrgCommunities: newOrgCommunities,
+    newGraphData: {
+      nodes: nodes,
+      links: links,
+    },
+    newNodes: nodes,
+  };
+};
+
 self.addEventListener("message", (event) => {
   if (event.data.functionType === "preCompute")
     computeGraph(event.data.dGraphData);
   else if (event.data.functionType === "createGraph") {
     const res = createGraph(event);
     self.postMessage(res);
-  } else if (event.data.functionType == "splitCommunity") {
+  } else if (event.data.functionType === "splitCommunity") {
     const res = handleSplitCommunity(event);
+    self.postMessage(res);
+  } else if (event.data.functionType === "mergeCommunity") {
+    const res = handleMergeCommunity(event);
     self.postMessage(res);
   }
 });

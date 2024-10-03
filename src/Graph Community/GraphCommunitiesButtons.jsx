@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useContext } from "react";
 import { GraphCommunityWorkerInstance } from "./GraphCommunityWorkerInstance";
-import { Button, Box } from "@mui/material";
+import { Button, Box, ToggleButton } from "@mui/material";
 import UndoIcon from "@mui/icons-material/Undo";
 import CallSplitIcon from "@mui/icons-material/CallSplit";
+import CallMergeIcon from "@mui/icons-material/CallMerge";
 
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 
 const GraphCommunitiesButtons = () => {
-  const { selectedSegments } = useContext(UniversalDataContext);
+  const { segments, selectedSegments } = useContext(UniversalDataContext);
   const {
     setGraphData,
     setOrgCommunities,
@@ -55,6 +56,7 @@ const GraphCommunitiesButtons = () => {
       orgCommunities: orgCommunities,
       selectedNodes: selectedNodes,
       inputs: inputs,
+      segments: segments,
     });
   };
 
@@ -68,6 +70,32 @@ const GraphCommunitiesButtons = () => {
     updateGroups(newGroups);
     setOrgCommunities(newOrgCommunities);
     setGraphData(newGraphData);
+  };
+
+  const handleMergeCommunity = () => {
+    GraphCommunityWorkerInstance.addEventListener(
+      "message",
+      mergeCommunityCallback,
+      false
+    );
+    GraphCommunityWorkerInstance.postMessage({
+      functionType: "mergeCommunity",
+      graphData: graphData,
+      selectedNodes: selectedNodes,
+      orgCommunities: orgCommunities,
+    });
+  };
+
+  const mergeCommunityCallback = (event) => {
+    GraphCommunityWorkerInstance.removeEventListener(
+      "message",
+      mergeCommunityCallback
+    );
+    const { newGraphData, newOrgCommunities, newNodes } = event.data;
+    saveUndo();
+    setOrgCommunities(newOrgCommunities);
+    setGraphData(newGraphData);
+    updateGroups(newNodes);
   };
 
   const saveUndo = () => {
@@ -111,7 +139,6 @@ const GraphCommunitiesButtons = () => {
     });
 
     computeSizes(nodes);
-    console.log("GROUPS: ", groups);
     setAllGroups(groups);
     return groups;
   };
@@ -150,6 +177,14 @@ const GraphCommunitiesButtons = () => {
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+      <ToggleButton
+        value="check"
+        selected={multiSelect}
+        onChange={() => setMultiSelect(!multiSelect)}
+        color="primary"
+      >
+        Multi Select
+      </ToggleButton>
       <Button
         component="label"
         variant="contained"
@@ -169,6 +204,16 @@ const GraphCommunitiesButtons = () => {
         disabled={selectedNodes.length !== 1}
       >
         Split
+      </Button>
+      <Button
+        component="label"
+        variant="contained"
+        tabIndex={-1}
+        startIcon={<CallMergeIcon />}
+        onClick={() => handleMergeCommunity()}
+        disabled={selectedNodes.length < 2}
+      >
+        Merge
       </Button>
     </Box>
   );

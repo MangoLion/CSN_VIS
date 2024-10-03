@@ -122,18 +122,22 @@ const GraphCommunitiesRenderer = () => {
           const isNodeAlreadySelected = prevSelectedNodes.find(
             (selectedNode) => selectedNode.id === node.id
           );
+          let newState = [];
           if (!isNodeAlreadySelected) {
-            const newState = [...prevSelectedNodes, node];
-            let selected = [];
-            newState.forEach((node) => {
-              node.members.forEach((idx) => {
-                selected.push(coloredSegments[parseInt(idx)]);
-              });
-            });
-            setSelectedSegments(selected);
-            return newState;
+            newState = [...prevSelectedNodes, node];
+          } else {
+            newState = prevSelectedNodes.filter(
+              (selectedNode) => selectedNode.id !== node.id
+            );
           }
-          return prevSelectedNodes;
+          let selected = [];
+          newState.forEach((node) => {
+            node.members.forEach((idx) => {
+              selected.push(coloredSegments[parseInt(idx)]);
+            });
+          });
+          setSelectedSegments(selected);
+          return newState;
         });
       } else {
         if (selectedNodes[0] == node) {

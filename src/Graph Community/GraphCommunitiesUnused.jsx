@@ -740,19 +740,10 @@ const GraphCommunitiesUnused = ({
   };
 
   const handleMergeCommunities = () => {
-    console.log(selectedNodes);
-    console.log(selectedNodes);
-
     const toMerge = selectedNodes.map((node) => node.id);
     let { nodes, links } = graphData;
 
-    if (selectedNodes[0].groupID.length > 0) {
-      //already in group
-      const mGroupID = selectedNodes[0].groupID;
-    }
     const mergedGroupID = [].concat(...selectedNodes.map((obj) => obj.groupID));
-
-    //console.log(orgCommunities)
 
     //convert the links back
     links = links.map((obj) => ({
