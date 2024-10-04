@@ -35,12 +35,14 @@ const DirectionalLightWithCamera = ({ intensity }) => {
 };
 
 const LineSegmentsRenderer = () => {
+  const { segments } = useContext(UniversalDataContext);
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <Button
         variant="contained"
         style={{ position: "absolute", zIndex: 1, top: 10, left: 10 }}
         onClick={() => window.dispatchEvent(new Event("fitModel"))}
+        disabled={segments.length === 0}
       >
         Fit Model
       </Button>
