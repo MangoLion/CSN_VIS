@@ -16,7 +16,7 @@ extend({ TrackballControls });
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { LineSegmentsDataContext } from "../context/LineSegmentsDataContext";
 
-import { Typography } from "@mui/material";
+import { Button } from "@mui/material";
 
 const DirectionalLightWithCamera = ({ intensity }) => {
   const directionalLightRef = useRef();
@@ -36,6 +36,13 @@ const DirectionalLightWithCamera = ({ intensity }) => {
 const LineSegmentsRenderer = () => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <Button
+        variant="contained"
+        style={{ position: "absolute", zIndex: 1, top: 10, left: 10 }}
+        onClick={() => window.dispatchEvent(new Event("fitModel"))}
+      >
+        Fit Model
+      </Button>
       <Canvas style={{ position: "relative", width: "100%", height: "100%" }}>
         <LineSegmentsCanvas />
       </Canvas>
@@ -55,8 +62,8 @@ const LineSegmentsCanvas = () => {
     showCaps,
     cylinderHeight,
   } = useContext(LineSegmentsDataContext);
-  const { scene } = useThree();
-  const { camera, raycaster, gl } = useThree();
+  const { camera, gl, raycaster, scene } = useThree();
+  const controls = useThree((state) => state.controls);
   const meshesRef = useRef([]);
   const [prevMousePos, setPrevMousePos] = useState(new THREE.Vector2(0, 0));
 
@@ -154,6 +161,50 @@ const LineSegmentsCanvas = () => {
       coloredSegments,
     ]
   );
+
+  const fitModelToView = useCallback(() => {
+    if (!segments || segments.length === 0) return;
+
+    const box = new THREE.Box3();
+    segments.forEach((segment) => {
+      const startPoint = new THREE.Vector3(...segment.startPoint);
+      const endPoint = new THREE.Vector3(...segment.endPoint);
+      box.expandByPoint(startPoint);
+      box.expandByPoint(endPoint);
+    });
+
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fitHeightDistance =
+      maxDim / (2 * Math.atan((Math.PI * camera.fov) / 360));
+    const fitWidthDistance = fitHeightDistance / camera.aspect;
+    const distance = Math.max(fitHeightDistance, fitWidthDistance);
+
+    const direction = new THREE.Vector3()
+      .subVectors(camera.position, center)
+      .normalize();
+
+    camera.position.copy(direction.multiplyScalar(distance).add(center));
+    camera.lookAt(center);
+
+    // Optionally, adjust controls to ensure they fit too
+    if (controls) {
+      controls.target.copy(center);
+      controls.update();
+    }
+  }, [camera, controls, segments]);
+
+  // Listen for the 'fitModel' event to trigger fitModelToView
+  useEffect(() => {
+    const handleFitModel = () => fitModelToView();
+
+    window.addEventListener("fitModel", handleFitModel);
+    return () => window.removeEventListener("fitModel", handleFitModel);
+  }, [fitModelToView]);
 
   useEffect(() => {
     gl.domElement.addEventListener("mousedown", handleMouseDown);
