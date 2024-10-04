@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { TrackballControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 extend({ TrackballControls });
+import gsap from "gsap";
 
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { LineSegmentsDataContext } from "../context/LineSegmentsDataContext";
@@ -188,13 +189,33 @@ const LineSegmentsCanvas = () => {
       .subVectors(camera.position, center)
       .normalize();
 
-    camera.position.copy(direction.multiplyScalar(distance).add(center));
-    camera.lookAt(center);
+    const newPosition = direction.multiplyScalar(distance).add(center);
+
+    // Use GSAP to animate the camera position
+    gsap.to(camera.position, {
+      x: newPosition.x,
+      y: newPosition.y,
+      z: newPosition.z,
+      duration: 0.75,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        camera.lookAt(center);
+        camera.updateProjectionMatrix();
+      },
+    });
 
     // Optionally, adjust controls to ensure they fit too
     if (controls) {
-      controls.target.copy(center);
-      controls.update();
+      gsap.to(controls.target, {
+        x: center.x,
+        y: center.y,
+        z: center.z,
+        duration: 1.5,
+        ease: "power2.inOut",
+        onUpdate: () => {
+          controls.update();
+        },
+      });
     }
   }, [camera, controls, segments]);
 
@@ -205,6 +226,10 @@ const LineSegmentsCanvas = () => {
     window.addEventListener("fitModel", handleFitModel);
     return () => window.removeEventListener("fitModel", handleFitModel);
   }, [fitModelToView]);
+
+  useEffect(() => {
+    fitModelToView();
+  }, [segments]);
 
   useEffect(() => {
     gl.domElement.addEventListener("mousedown", handleMouseDown);
@@ -227,7 +252,6 @@ const LineSegmentsCanvas = () => {
       render(segments);
     }
 
-    // Cleanup function to remove the previous instanced mesh
     return () => {
       if (meshesRef.current) {
         meshesRef.current.forEach((mesh) => {

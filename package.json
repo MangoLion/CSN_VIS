@@ -53,6 +53,7 @@
     "graphology": "^0.25.4",
     "graphology-communities-louvain": "^2.0.1",
     "graphology-layout-forceatlas2": "^0.10.1",
+    "gsap": "^3.12.5",
     "infomap": "^1.0.5",
     "kd-tree-javascript": "^1.0.3",
     "kdbush": "^4.0.1",
