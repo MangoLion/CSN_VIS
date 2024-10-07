@@ -7,6 +7,10 @@ export const UniversalDataProvider = ({ children }) => {
   const [coloredSegments, setColoredSegments] = useState([]);
   const [selectedSegments, setSelectedSegments] = useState([]);
 
+  const [selectedSettingsWindow, setSelectedSettingsWindow] = useState("0");
+  const [selectedRenderingWindow, setSelectedRenderingWindow] = useState("0");
+  const [drawerOpen, setDrawerOpen] = useState(true);
+
   return (
     <UniversalDataContext.Provider
       value={{
@@ -18,6 +22,12 @@ export const UniversalDataProvider = ({ children }) => {
         setColoredSegments,
         selectedSegments,
         setSelectedSegments,
+        selectedSettingsWindow,
+        setSelectedSettingsWindow,
+        selectedRenderingWindow,
+        setSelectedRenderingWindow,
+        drawerOpen,
+        setDrawerOpen,
       }}
     >
       {children}

@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, Checkbox, Typography, MenuItem } from "@mui/material";
+import {
+  Box,
+  TextField,
+  Checkbox,
+  Typography,
+  MenuItem,
+  Tooltip,
+  Button,
+} from "@mui/material";
 import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles({
@@ -28,6 +36,7 @@ export const CustomNumberInput = ({
   onChange,
   defaultValue,
   stepValue = 1,
+  tooltip = "",
 }) => {
   const classes = useStyles();
   return (
@@ -38,7 +47,9 @@ export const CustomNumberInput = ({
       sx={{ height: "30px", width: "100%" }}
     >
       <Box className={classes.labelContainer}>
-        <Typography className={classes.label}>{name}</Typography>
+        <Tooltip title={tooltip} followCursor>
+          <Typography className={classes.label}>{name}</Typography>
+        </Tooltip>
       </Box>
       <Box className={classes.labelContainer}>
         <TextField
@@ -59,6 +70,7 @@ export const CustomCheckBox = ({
   onChange,
   defaultValue,
   isDynamic = true,
+  tooltip = "",
 }) => {
   const classes = useStyles();
   return (
@@ -69,7 +81,9 @@ export const CustomCheckBox = ({
       sx={{ height: "30px", width: "100%" }}
     >
       <Box className={classes.labelContainer}>
-        <Typography className={classes.label}>{name}</Typography>
+        <Tooltip title={tooltip} followCursor>
+          <Typography className={classes.label}>{name}</Typography>
+        </Tooltip>
       </Box>
       <Box
         className={classes.labelContainer}
@@ -85,7 +99,13 @@ export const CustomCheckBox = ({
   );
 };
 
-export const CustomSelect = ({ name, onChange, defaultValue, options }) => {
+export const CustomSelect = ({
+  name,
+  onChange,
+  defaultValue,
+  options,
+  tooltip = "",
+}) => {
   const classes = useStyles();
   return (
     <Box
@@ -95,7 +115,9 @@ export const CustomSelect = ({ name, onChange, defaultValue, options }) => {
       sx={{ height: "30px", width: "100%" }}
     >
       <Box className={classes.labelContainer}>
-        <Typography className={classes.label}>{name}</Typography>
+        <Tooltip title={tooltip} followCursor>
+          <Typography className={classes.label}>{name}</Typography>
+        </Tooltip>
       </Box>
       <Box
         className={classes.labelContainer}

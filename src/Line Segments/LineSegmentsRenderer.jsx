@@ -35,16 +35,28 @@ const DirectionalLightWithCamera = ({ intensity }) => {
 };
 
 const LineSegmentsRenderer = () => {
-  const { segments } = useContext(UniversalDataContext);
+  const { segments, setSelectedSettingsWindow, setDrawerOpen } =
+    useContext(UniversalDataContext);
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <Button
         variant="contained"
-        style={{ position: "absolute", zIndex: 1, top: 10, left: 10 }}
+        style={{ position: "absolute", zIndex: 1, bottom: 20, right: 20 }}
         onClick={() => window.dispatchEvent(new Event("fitModel"))}
         disabled={segments.length === 0}
       >
         Fit Model
+      </Button>
+      <Button
+        variant="contained"
+        style={{ position: "absolute", zIndex: 1, bottom: 20, right: 140 }}
+        onClick={() => {
+          setSelectedSettingsWindow("1");
+          setDrawerOpen(true);
+        }}
+        disabled={segments.length === 0}
+      >
+        Rendering Settings
       </Button>
       <Canvas style={{ position: "relative", width: "100%", height: "100%" }}>
         <LineSegmentsCanvas />

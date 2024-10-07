@@ -15,6 +15,7 @@ import {
   Tabs,
   AppBar,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -64,13 +65,22 @@ const renderingTabTheme = createTheme({
   },
 });
 
-const App = () => {
-  const { segments } = useContext(UniversalDataContext);
-  const { dGraphData, graphData } = useContext(GraphCommunitiesDataContext);
+const CloneProps = (props) => {
+  const { children, ...other } = props;
+  return children(other);
+};
 
-  const [selectedSettingsWindow, setSelectedSettingsWindow] = useState("0");
-  const [selectedRenderingWindow, setSelectedRenderingWindow] = useState("0");
-  const [open, setOpen] = useState(true);
+const App = () => {
+  const {
+    segments,
+    drawerOpen,
+    setDrawerOpen,
+    selectedRenderingWindow,
+    setSelectedRenderingWindow,
+    selectedSettingsWindow,
+    setSelectedSettingsWindow,
+  } = useContext(UniversalDataContext);
+  const { dGraphData, graphData } = useContext(GraphCommunitiesDataContext);
 
   useEffect(() => {
     if (segments.length > 0) setSelectedRenderingWindow("0");
@@ -90,7 +100,11 @@ const App = () => {
       className="App"
       style={{ display: "flex", height: "100vh", flexDirection: "column" }}
     >
-      <Drawer open={open} onClose={() => setOpen(false)} keepMounted>
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        keepMounted
+      >
         <ThemeProvider theme={drawerTabTheme}>
           <Box sx={{ width: "550px" }}>
             <Tabs
@@ -144,7 +158,7 @@ const App = () => {
           gap: "20px",
         }}
       >
-        <IconButton onClick={() => setOpen(true)}>
+        <IconButton onClick={() => setDrawerOpen(true)}>
           <SettingsIcon sx={{ color: "white" }} />
         </IconButton>
         <Typography variant="h6" noWrap>
@@ -160,16 +174,50 @@ const App = () => {
               value="0"
               disabled={segments.length === 0}
             />
-            <Tab
-              label="Graph Communities"
-              value="1"
-              disabled={graphData.nodes && graphData.nodes.length === 0}
-            />
-            <Tab
-              label="Side by Side"
-              value="2"
-              disabled={graphData.nodes && graphData.nodes.length === 0}
-            />
+
+            <CloneProps>
+              {(tabProps) => (
+                <Tooltip
+                  title={
+                    graphData.nodes && graphData.nodes.length === 0
+                      ? "Please run a Graph Community Algorithm"
+                      : ""
+                  }
+                  followCursor
+                >
+                  <div>
+                    <Tab
+                      {...tabProps}
+                      label="Graph Community"
+                      value="1"
+                      disabled={graphData.nodes && graphData.nodes.length === 0}
+                    />
+                  </div>
+                </Tooltip>
+              )}
+            </CloneProps>
+
+            <CloneProps>
+              {(tabProps) => (
+                <Tooltip
+                  title={
+                    graphData.nodes && graphData.nodes.length === 0
+                      ? "Please run a Graph Community Algorithm"
+                      : ""
+                  }
+                  followCursor
+                >
+                  <div>
+                    <Tab
+                      {...tabProps}
+                      label="Side by Side"
+                      value="2"
+                      disabled={graphData.nodes && graphData.nodes.length === 0}
+                    />
+                  </div>
+                </Tooltip>
+              )}
+            </CloneProps>
           </Tabs>
         </ThemeProvider>
       </AppBar>
@@ -186,7 +234,7 @@ const App = () => {
             ...(selectedRenderingWindow === "0" && { width: "100%" }),
             ...(selectedRenderingWindow === "1" && { display: "none" }),
             ...(selectedRenderingWindow === "2" && { width: "50%" }),
-            height: "95%",
+            height: "100%",
           }}
         >
           <LineSegmentsRenderer />
@@ -197,7 +245,7 @@ const App = () => {
             ...(selectedRenderingWindow === "0" && { display: "none" }),
             ...(selectedRenderingWindow === "1" && { width: "100%" }),
             ...(selectedRenderingWindow === "2" && { width: "50%" }),
-            height: "95%",
+            height: "99.5%",
           }}
         >
           <GraphCommunitiesRenderer />
