@@ -17,7 +17,7 @@ import gsap from "gsap";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { LineSegmentsDataContext } from "../context/LineSegmentsDataContext";
 
-import { Button } from "@mui/material";
+import { Button, Tooltip } from "@mui/material";
 
 const DirectionalLightWithCamera = ({ intensity }) => {
   const directionalLightRef = useRef();
@@ -39,25 +39,60 @@ const LineSegmentsRenderer = () => {
     useContext(UniversalDataContext);
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <Button
-        variant="contained"
-        style={{ position: "absolute", zIndex: 1, bottom: 20, right: 20 }}
-        onClick={() => window.dispatchEvent(new Event("fitModel"))}
-        disabled={segments.length === 0}
-      >
-        Fit Model
-      </Button>
-      <Button
-        variant="contained"
-        style={{ position: "absolute", zIndex: 1, bottom: 20, right: 140 }}
-        onClick={() => {
-          setSelectedSettingsWindow("1");
-          setDrawerOpen(true);
-        }}
-        disabled={segments.length === 0}
-      >
-        Rendering Settings
-      </Button>
+      {segments.length === 0 ? (
+        <>
+          <Button
+            variant="contained"
+            style={{ position: "absolute", zIndex: 1, bottom: 20, right: 20 }}
+            disabled
+          >
+            Fit Model
+          </Button>
+          <Button
+            variant="contained"
+            style={{
+              position: "absolute",
+              zIndex: 1,
+              bottom: 20,
+              right: 140,
+            }}
+            disabled
+          >
+            Rendering Settings
+          </Button>
+        </>
+      ) : (
+        <>
+          <Tooltip title="Zoom in or out to see the Entire Model">
+            <Button
+              variant="contained"
+              style={{ position: "absolute", zIndex: 1, bottom: 20, right: 20 }}
+              onClick={() => window.dispatchEvent(new Event("fitModel"))}
+            >
+              Fit Model
+            </Button>
+          </Tooltip>{" "}
+          <Tooltip title="Open Rendering Settings">
+            <Button
+              variant="contained"
+              style={{
+                position: "absolute",
+                zIndex: 1,
+                bottom: 20,
+                right: 140,
+              }}
+              onClick={() => {
+                setSelectedSettingsWindow("1");
+                setDrawerOpen(true);
+              }}
+              disabled={segments.length === 0}
+            >
+              Rendering Settings
+            </Button>
+          </Tooltip>
+        </>
+      )}
+
       <Canvas style={{ position: "relative", width: "100%", height: "100%" }}>
         <LineSegmentsCanvas />
       </Canvas>

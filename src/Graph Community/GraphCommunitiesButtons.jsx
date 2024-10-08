@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import { GraphCommunityWorkerInstance } from "./GraphCommunityWorkerInstance";
-import { Button, Box, ToggleButton } from "@mui/material";
+import { Button, Box, ToggleButton, Tooltip } from "@mui/material";
 import UndoIcon from "@mui/icons-material/Undo";
 import CallSplitIcon from "@mui/icons-material/CallSplit";
 import CallMergeIcon from "@mui/icons-material/CallMerge";
@@ -177,44 +177,61 @@ const GraphCommunitiesButtons = () => {
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
-      <ToggleButton
-        value="check"
-        selected={multiSelect}
-        onChange={() => setMultiSelect(!multiSelect)}
-        color="primary"
-      >
-        Multi Select
-      </ToggleButton>
-      <Button
-        component="label"
-        variant="contained"
-        tabIndex={-1}
-        startIcon={<UndoIcon />}
-        onClick={() => handleUndo()}
-        disabled={!undoState}
-      >
-        Undo
-      </Button>
-      <Button
-        component="label"
-        variant="contained"
-        tabIndex={-1}
-        startIcon={<CallSplitIcon />}
-        onClick={() => handleSplitCommunity()}
-        disabled={selectedNodes.length !== 1}
-      >
-        Split
-      </Button>
-      <Button
-        component="label"
-        variant="contained"
-        tabIndex={-1}
-        startIcon={<CallMergeIcon />}
-        onClick={() => handleMergeCommunity()}
-        disabled={selectedNodes.length < 2}
-      >
-        Merge
-      </Button>
+      <Tooltip title="Toggle Selecting Multiple Nodes">
+        <span>
+          <ToggleButton
+            value="check"
+            selected={multiSelect}
+            onChange={() => setMultiSelect(!multiSelect)}
+            color="primary"
+            disabled={!graphData.nodes || graphData.nodes.length === 0}
+          >
+            Multi Select
+          </ToggleButton>
+        </span>
+      </Tooltip>
+      <Tooltip title="Undo to Previous State">
+        <span>
+          <Button
+            component="label"
+            variant="contained"
+            tabIndex={-1}
+            startIcon={<UndoIcon />}
+            onClick={() => handleUndo()}
+            disabled={!undoState}
+          >
+            Undo
+          </Button>
+        </span>
+      </Tooltip>
+      <Tooltip title="Split the Selected Node (Must only have One Node Selected)">
+        <span>
+          <Button
+            component="label"
+            variant="contained"
+            tabIndex={-1}
+            startIcon={<CallSplitIcon />}
+            onClick={() => handleSplitCommunity()}
+            disabled={selectedNodes.length !== 1}
+          >
+            Split
+          </Button>
+        </span>
+      </Tooltip>
+      <Tooltip title="Merge the Selected Nodes (Must only have More than One Node Selected)">
+        <span>
+          <Button
+            component="label"
+            variant="contained"
+            tabIndex={-1}
+            startIcon={<CallMergeIcon />}
+            onClick={() => handleMergeCommunity()}
+            disabled={selectedNodes.length < 2}
+          >
+            Merge
+          </Button>
+        </span>
+      </Tooltip>
     </Box>
   );
 };
