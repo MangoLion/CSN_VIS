@@ -10,6 +10,7 @@ export const LineSegmentsDataProvider = ({ children }) => {
   const [cylinderHeight, setCylinderHeight] = useState(1.0);
   const [drawAll, setDrawAll] = useState(true);
   const [intensity, setIntensity] = useState(2);
+  const [color, setColor] = useState("#ffff00");
 
   return (
     <LineSegmentsDataContext.Provider
@@ -30,6 +31,8 @@ export const LineSegmentsDataProvider = ({ children }) => {
         setDrawAll,
         intensity,
         setIntensity,
+        color,
+        setColor,
       }}
     >
       {children}

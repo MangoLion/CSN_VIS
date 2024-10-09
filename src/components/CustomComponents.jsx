@@ -9,6 +9,7 @@ import {
   Button,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
+import { MuiColorInput } from "mui-color-input";
 
 const useStyles = makeStyles({
   smallInput: {
@@ -140,6 +141,33 @@ export const CustomSelect = ({
             </MenuItem>
           ))}
         </TextField>
+      </Box>
+    </Box>
+  );
+};
+
+export const CustomColorInput = ({ name, onChange, value, tooltip = "" }) => {
+  const classes = useStyles();
+  return (
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={2}
+      sx={{ height: "30px", width: "100%" }}
+    >
+      <Box className={classes.labelContainer}>
+        <Tooltip title={tooltip} followCursor>
+          <Typography className={classes.label}>{name}</Typography>
+        </Tooltip>
+      </Box>
+      <Box className={classes.labelContainer}>
+        <MuiColorInput
+          value={value}
+          onChange={onChange}
+          isAlphaHidden
+          format="hex"
+          className={classes.smallInput}
+        />
       </Box>
     </Box>
   );

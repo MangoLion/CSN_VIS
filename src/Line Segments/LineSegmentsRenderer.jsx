@@ -16,8 +16,10 @@ import gsap from "gsap";
 
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { LineSegmentsDataContext } from "../context/LineSegmentsDataContext";
+import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
 
 import { Button, Tooltip } from "@mui/material";
+import { matchIsValidColor } from "mui-color-input";
 
 const DirectionalLightWithCamera = ({ intensity }) => {
   const directionalLightRef = useRef();
@@ -112,7 +114,9 @@ const LineSegmentsCanvas = () => {
     opacity,
     showCaps,
     cylinderHeight,
+    color,
   } = useContext(LineSegmentsDataContext);
+  const { graphData } = useContext(GraphCommunitiesDataContext);
   const { camera, gl, raycaster, scene } = useThree();
   const controls = useThree((state) => state.controls);
   const meshesRef = useRef([]);
@@ -289,26 +293,26 @@ const LineSegmentsCanvas = () => {
   }, [gl.domElement, handleMouseUp]);
 
   useEffect(() => {
-    if (!drawAll) return;
+    if (!drawAll || !matchIsValidColor(color)) return;
 
     if (renderingMethod === "Tube") {
-      if (selectedSegments.length > 0) {
+      if (graphData.nodes.length > 0 && selectedSegments.length > 0) {
         renderTubes(selectedSegments);
-        renderTubes(segments, opacity / 10);
-      } else if (coloredSegments.length > 0) {
+        renderTubes(segments, opacity / 10, color);
+      } else if (graphData.nodes.length > 0) {
         renderTubes(coloredSegments);
       } else if (segments.length > 0) {
-        renderTubes(segments);
+        renderTubes(segments, -1, color);
       }
     }
     if (renderingMethod === "Cylinder") {
-      if (selectedSegments.length > 0) {
+      if (graphData.nodes.length > 0 && selectedSegments.length > 0) {
         renderCylinders(selectedSegments);
-        renderCylinders(segments, opacity / 10);
-      } else if (coloredSegments.length > 0) {
+        renderCylinders(segments, opacity / 10, color);
+      } else if (graphData.nodes.length > 0) {
         renderCylinders(coloredSegments);
       } else if (segments.length > 0) {
-        renderCylinders(segments);
+        renderCylinders(segments, -1, color);
       }
     }
 
@@ -335,20 +339,35 @@ const LineSegmentsCanvas = () => {
     coloredSegments,
     scene,
     renderingMethod,
+    color,
+    graphData,
   ]);
 
-  const renderTubes = (data, o = -1) => {
-    const groupedSegments = data.reduce((acc, segment) => {
-      const { lineIDx } = segment;
-      if (!acc[lineIDx]) acc[lineIDx] = [];
-      acc[lineIDx].push(segment);
-      return acc;
-    }, {});
+  const renderTubes = (data, o = -1, tubeColor = null) => {
+    const groupedSegments = [];
 
-    Object.keys(groupedSegments).forEach((lineIDx) => {
+    let currGroup = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const segment = data[i];
+      if (
+        i > 0 &&
+        (segment.lineIDx !== data[i - 1].lineIDx ||
+          (segment.color && segment.color !== data[i - 1].color))
+      ) {
+        groupedSegments.push(currGroup);
+        currGroup = [segment];
+      } else {
+        currGroup.push(segment);
+      }
+    }
+
+    groupedSegments.push(currGroup);
+
+    groupedSegments.forEach((group) => {
       const points = [];
 
-      groupedSegments[lineIDx].forEach((segment, index) => {
+      group.forEach((segment, index) => {
         if (index === 0) points.push(new THREE.Vector3(...segment.startPoint));
         points.push(new THREE.Vector3(...segment.endPoint));
       });
@@ -364,7 +383,7 @@ const LineSegmentsCanvas = () => {
       const material = new THREE.MeshPhongMaterial({
         transparent: true,
         opacity: o === -1 ? opacity : o,
-        color: groupedSegments[lineIDx][0].color,
+        color: tubeColor ? tubeColor : group[0].color,
       });
       const tubeMesh = new THREE.Mesh(tubeGeometry, material);
 
@@ -388,11 +407,15 @@ const LineSegmentsCanvas = () => {
         // Set cylinder mesh position and orientation
         const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
 
-        if (i === 0 || segment.lineIDx !== data[i - 1].lineIDx) {
+        if (
+          i === 0 ||
+          segment.lineIDx !== data[i - 1].lineIDx ||
+          segment.color !== data[i - 1].color
+        ) {
           const startCap = new THREE.Mesh(
             new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
             new THREE.MeshStandardMaterial({
-              color: segment.color,
+              color: tubeColor ? tubeColor : segment.color,
               opacity: o === -1 ? opacity : o,
               transparent: true,
             }) // Adjust material properties
@@ -404,11 +427,15 @@ const LineSegmentsCanvas = () => {
           meshesRef.current.push(startCap); // Add to scene or group
         }
 
-        if (i === data.length - 1 || segment.lineIDx !== data[i + 1].lineIDx) {
+        if (
+          i === data.length - 1 ||
+          segment.lineIDx !== data[i + 1].lineIDx ||
+          segment.color !== data[i + 1].color
+        ) {
           const endCap = new THREE.Mesh(
             new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
             new THREE.MeshStandardMaterial({
-              color: segment.color,
+              color: tubeColor ? tubeColor : segment.color,
               opacity: o === -1 ? opacity : o,
               transparent: true,
             }) // Adjust material properties
@@ -421,10 +448,9 @@ const LineSegmentsCanvas = () => {
         }
       });
     }
-    // Render Caps
   };
 
-  const renderCylinders = (data, o = -1) => {
+  const renderCylinders = (data, o = -1, tubeColor = null) => {
     const material = new THREE.MeshPhongMaterial({
       transparent: true,
       opacity: o === -1 ? opacity : o,
@@ -472,7 +498,10 @@ const LineSegmentsCanvas = () => {
       tubeMesh.setMatrixAt(i, dummy.matrix);
 
       // Update the color of the cylinder
-      tubeMesh.setColorAt(i, new THREE.Color(segment.color));
+      tubeMesh.setColorAt(
+        i,
+        new THREE.Color(tubeColor ? tubeColor : segment.color)
+      );
     });
 
     tubeMesh.instanceMatrix.needsUpdate = true;
@@ -500,7 +529,7 @@ const LineSegmentsCanvas = () => {
           const startCap = new THREE.Mesh(
             new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
             new THREE.MeshStandardMaterial({
-              color: segment.color,
+              color: tubeColor ? tubeColor : segment.color,
               opacity: o === -1 ? opacity : o,
               transparent: true,
             }) // Adjust material properties
@@ -516,7 +545,7 @@ const LineSegmentsCanvas = () => {
           const endCap = new THREE.Mesh(
             new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
             new THREE.MeshStandardMaterial({
-              color: segment.color,
+              color: tubeColor ? tubeColor : segment.color,
               opacity: o === -1 ? opacity : o,
               transparent: true,
             }) // Adjust material properties

@@ -1,11 +1,14 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Grid2, Box } from "@mui/material";
 import {
   CustomNumberInput,
   CustomCheckBox,
   CustomSelect,
+  CustomColorInput,
 } from "../components/CustomComponents";
 import { LineSegmentsDataContext } from "../context/LineSegmentsDataContext";
+import { MuiColorInput } from "mui-color-input";
+import { UniversalDataContext } from "../context/UniversalDataContext";
 
 const LineSegmentSettings = React.memo(() => {
   const {
@@ -25,6 +28,8 @@ const LineSegmentSettings = React.memo(() => {
     setShowCaps,
     cylinderHeight,
     setCylinderHeight,
+    color,
+    setColor,
   } = useContext(LineSegmentsDataContext);
 
   return (
@@ -65,6 +70,12 @@ const LineSegmentSettings = React.memo(() => {
           defaultValue={opacity}
           stepValue={0.05}
           tooltip="Controls the opacity of the segments"
+        />
+        <CustomColorInput
+          name="Color"
+          onChange={(value) => setColor(value)}
+          value={color}
+          tooltip="Controls the color of the segments"
         />
         {renderingMethod === "Cylinder" && (
           <CustomNumberInput

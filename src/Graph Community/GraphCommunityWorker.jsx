@@ -252,7 +252,6 @@ const createGraph = (event) => {
       segments[parseInt(nodeId)].communityIndex = communityIndex;
     }
   });
-  //CHECKKKKK!!!
 
   const communityGraph = new Graph(); // This will store the community graph
   // Process communities, creating nodes for each community and counting sizes
@@ -589,8 +588,6 @@ const handleSplitCommunity = (event) => {
       groupColor: groupColorWithOpacity, //colorScale(maxCommunityIndex.toString()),
       groupSize: communityGraph.nodes().length,
     }));
-    console.log(fnodes[0]);
-    console.log(selectedSegments[0]);
 
     interCommunityLinks = [];
 

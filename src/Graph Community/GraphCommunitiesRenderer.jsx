@@ -101,7 +101,7 @@ const GraphCommunitiesRenderer = () => {
   }, [isEmpty, use3D, graphData]);
 
   useEffect(() => {
-    const newColoredSegments = structuredClone(segments);
+    const newColoredSegments = [...segments];
     graphData.nodes.forEach((node) => {
       node.members.forEach((idx) => {
         newColoredSegments[idx].color = node.color;

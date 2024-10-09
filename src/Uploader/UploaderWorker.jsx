@@ -156,7 +156,6 @@ self.addEventListener("message", (e) => {
           startPoint: start,
           endPoint: end,
           midPoint: midpoint,
-          color: "yellow",
           lineIDx: lineIDx,
           globalIdx: globalIdx,
           neighbors: [],

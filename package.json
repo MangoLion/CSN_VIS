@@ -62,6 +62,7 @@
     "layered-label-propagation": "^1.0.4",
     "ml-kmeans": "^6.0.0",
     "ml-pca": "^4.1.1",
+    "mui-color-input": "^4.0.1",
     "rbush": "^3.0.1",
     "rbush-knn": "github:mourner/rbush-knn",
     "rc-dock": "^3.2.17",
