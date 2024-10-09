@@ -16,9 +16,13 @@ const useStyles = makeStyles({
     "& .MuiInputBase-root": {
       height: "30px",
       padding: "1px 1px",
+      width: "243px",
     },
     "& input": {
       height: "22px",
+    },
+    "& .MuiInputAdornment-root": {
+      marginLeft: "10px",
     },
   },
   label: {
