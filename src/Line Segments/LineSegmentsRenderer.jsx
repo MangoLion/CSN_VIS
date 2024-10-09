@@ -104,6 +104,7 @@ const LineSegmentsCanvas = () => {
   const { segments, selectedSegments, setSelectedSegments, coloredSegments } =
     useContext(UniversalDataContext);
   const {
+    renderingMethod,
     radius,
     tubeRes,
     drawAll,
@@ -240,7 +241,6 @@ const LineSegmentsCanvas = () => {
 
     const newPosition = direction.multiplyScalar(distance).add(center);
 
-    // Use GSAP to animate the camera position
     gsap.to(camera.position, {
       x: newPosition.x,
       y: newPosition.y,
@@ -253,7 +253,6 @@ const LineSegmentsCanvas = () => {
       },
     });
 
-    // Optionally, adjust controls to ensure they fit too
     if (controls) {
       gsap.to(controls.target, {
         x: center.x,
@@ -292,13 +291,25 @@ const LineSegmentsCanvas = () => {
   useEffect(() => {
     if (!drawAll) return;
 
-    if (selectedSegments.length > 0) {
-      render(selectedSegments);
-      render(segments, opacity / 10);
-    } else if (coloredSegments.length > 0) {
-      render(coloredSegments);
-    } else if (segments.length > 0) {
-      render(segments);
+    if (renderingMethod === "Tube") {
+      if (selectedSegments.length > 0) {
+        renderTubes(selectedSegments);
+        renderTubes(segments, opacity / 10);
+      } else if (coloredSegments.length > 0) {
+        renderTubes(coloredSegments);
+      } else if (segments.length > 0) {
+        renderTubes(segments);
+      }
+    }
+    if (renderingMethod === "Cylinder") {
+      if (selectedSegments.length > 0) {
+        renderCylinders(selectedSegments);
+        renderCylinders(segments, opacity / 10);
+      } else if (coloredSegments.length > 0) {
+        renderCylinders(coloredSegments);
+      } else if (segments.length > 0) {
+        renderCylinders(segments);
+      }
     }
 
     return () => {
@@ -323,9 +334,97 @@ const LineSegmentsCanvas = () => {
     cylinderHeight,
     coloredSegments,
     scene,
+    renderingMethod,
   ]);
 
-  const render = (data, o = -1) => {
+  const renderTubes = (data, o = -1) => {
+    const groupedSegments = data.reduce((acc, segment) => {
+      const { lineIDx } = segment;
+      if (!acc[lineIDx]) acc[lineIDx] = [];
+      acc[lineIDx].push(segment);
+      return acc;
+    }, {});
+
+    Object.keys(groupedSegments).forEach((lineIDx) => {
+      const points = [];
+
+      groupedSegments[lineIDx].forEach((segment, index) => {
+        if (index === 0) points.push(new THREE.Vector3(...segment.startPoint));
+        points.push(new THREE.Vector3(...segment.endPoint));
+      });
+
+      const curve = new THREE.CatmullRomCurve3(points);
+      const tubeGeometry = new THREE.TubeGeometry(
+        curve,
+        100,
+        radius,
+        tubeRes,
+        false
+      );
+      const material = new THREE.MeshPhongMaterial({
+        transparent: true,
+        opacity: o === -1 ? opacity : o,
+        color: groupedSegments[lineIDx][0].color,
+      });
+      const tubeMesh = new THREE.Mesh(tubeGeometry, material);
+
+      scene.add(tubeMesh);
+      meshesRef.current.push(tubeMesh);
+    });
+
+    if (showCaps) {
+      data.forEach((segment, i) => {
+        const startPoint = new THREE.Vector3(...segment.startPoint);
+        const endPoint = new THREE.Vector3(...segment.endPoint);
+
+        const direction = new THREE.Vector3().subVectors(endPoint, startPoint);
+
+        // Axis and angle for the cylinder orientation
+        const axis = new THREE.Vector3(0, 1, 0).cross(direction).normalize();
+        const angle = Math.acos(
+          new THREE.Vector3(0, 1, 0).dot(direction.normalize())
+        );
+
+        // Set cylinder mesh position and orientation
+        const quaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+
+        if (i === 0 || segment.lineIDx !== data[i - 1].lineIDx) {
+          const startCap = new THREE.Mesh(
+            new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
+            new THREE.MeshStandardMaterial({
+              color: segment.color,
+              opacity: o === -1 ? opacity : o,
+              transparent: true,
+            }) // Adjust material properties
+          );
+          startCap.position.copy(startPoint);
+          startCap.rotation.setFromQuaternion(quaternion);
+          startCap.rotateX(Math.PI / 2); // Rotate to face the cylinder direction
+          scene.add(startCap);
+          meshesRef.current.push(startCap); // Add to scene or group
+        }
+
+        if (i === data.length - 1 || segment.lineIDx !== data[i + 1].lineIDx) {
+          const endCap = new THREE.Mesh(
+            new THREE.CircleGeometry(radius, tubeRes), // Adjust radius and segments as needed
+            new THREE.MeshStandardMaterial({
+              color: segment.color,
+              opacity: o === -1 ? opacity : o,
+              transparent: true,
+            }) // Adjust material properties
+          );
+          endCap.position.copy(endPoint);
+          endCap.rotation.setFromQuaternion(quaternion);
+          endCap.rotateX(-Math.PI / 2); // Rotate to face the cylinder direction
+          scene.add(endCap);
+          meshesRef.current.push(endCap); // Add to scene or group
+        }
+      });
+    }
+    // Render Caps
+  };
+
+  const renderCylinders = (data, o = -1) => {
     const material = new THREE.MeshPhongMaterial({
       transparent: true,
       opacity: o === -1 ? opacity : o,

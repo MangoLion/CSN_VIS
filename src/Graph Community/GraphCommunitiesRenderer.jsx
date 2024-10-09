@@ -5,7 +5,15 @@ import convexHull from "convex-hull";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
 import GraphCommunitiesButtons from "./GraphCommunitiesButtons";
-import { Box } from "@mui/material";
+import {
+  Box,
+  Button,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  Typography,
+} from "@mui/material";
+import HelpIcon from "@mui/icons-material/Help";
 const GraphCommunitiesRenderer = () => {
   const {
     dGraphData,
@@ -23,10 +31,18 @@ const GraphCommunitiesRenderer = () => {
     setSelectedNodes,
   } = useContext(GraphCommunitiesDataContext);
 
-  const { segments, setColoredSegments, coloredSegments, setSelectedSegments } =
-    useContext(UniversalDataContext);
+  const {
+    segments,
+    setColoredSegments,
+    coloredSegments,
+    setSelectedSegments,
+    setSelectedSettingsWindow,
+    setDrawerOpen,
+  } = useContext(UniversalDataContext);
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [helpOpen, setHelpOpen] = useState(false);
+  const fgRef = useRef();
 
   useEffect(() => {
     setDGraphData([]);
@@ -48,8 +64,6 @@ const GraphCommunitiesRenderer = () => {
     setSelectedSegments([]);
     setSelectedNodes([]);
   }, [graphData, allGroups]);
-
-  const fgRef = useRef();
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -412,6 +426,67 @@ const GraphCommunitiesRenderer = () => {
         }}
       >
         <GraphCommunitiesButtons />
+      </Box>
+      <Box sx={{ position: "absolute", right: 10, top: 10, zIndex: 1000 }}>
+        <IconButton
+          onClick={() => setHelpOpen(true)}
+          size="small"
+          color="primary"
+        >
+          <HelpIcon />
+        </IconButton>
+      </Box>
+      <Dialog open={helpOpen} onClose={() => setHelpOpen(false)}>
+        <DialogTitle>Graph Communities</DialogTitle>
+        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+          <Typography>
+            Left Click: Select a Node or Select An Additional Node with
+            Multi-Select Enabled
+          </Typography>
+          <Typography>Right Click: Change Node Color</Typography>
+          <Typography>
+            Multi Select: Toggle the Selection of Multiple Nodes to Allow for
+            Merging
+          </Typography>
+          <Typography>
+            Undo: Undo to the Previous State of the Graph Communities
+          </Typography>
+          <Typography>
+            Split: Split the Selected Node (Must only have One Node Selected)
+          </Typography>
+          <Typography>
+            Merge: Merge the Selected Nodes (Must only have More than One Node
+            Selected)
+          </Typography>
+        </Box>
+      </Dialog>
+      <Box
+        sx={{
+          position: "absolute",
+          right: 20,
+          bottom: 20,
+          zIndex: 1000,
+          display: "flex",
+          gap: 2,
+        }}
+      >
+        <Button
+          variant="contained"
+          onClick={() => {
+            setSelectedSettingsWindow("3");
+            setDrawerOpen(true);
+          }}
+        >
+          Graph Community Settings
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => {
+            if (fgRef.current) fgRef.current.zoomToFit(400, 100);
+          }}
+        >
+          Fit Model
+        </Button>
       </Box>
       {!use3D && !isEmpty && (
         <ForceGraph2D

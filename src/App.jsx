@@ -34,7 +34,7 @@ import { GraphCommunitiesDataContext } from "./context/GraphCommunitiesDataConte
 
 const SmallTab = styled(Tab)({
   fontSize: "12px",
-  width: "100px",
+  width: "135px",
 });
 const BigTab = styled(Tab)({
   fontSize: "16px",
@@ -85,16 +85,17 @@ const App = () => {
   const { dGraphData, graphData } = useContext(GraphCommunitiesDataContext);
 
   useEffect(() => {
-    if (segments.length > 0) setSelectedRenderingWindow("0");
+    setSelectedRenderingWindow("0");
+    if (segments.length === 0) setSelectedSettingsWindow("0");
   }, [segments]);
 
   useEffect(() => {
-    if (
-      graphData.nodes &&
-      graphData.nodes.length > 0 &&
-      selectedRenderingWindow === "0"
-    )
-      setSelectedRenderingWindow("2");
+    if (graphData.nodes && graphData.nodes.length > 0) {
+      if (selectedRenderingWindow === "0") setSelectedRenderingWindow("2");
+    } else {
+      setSelectedRenderingWindow("0");
+      if (selectedSettingsWindow === "3") setSelectedSettingsWindow("0");
+    }
   }, [graphData]);
 
   return (
