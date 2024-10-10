@@ -8,7 +8,7 @@ export const LineSegmentsDataProvider = ({ children }) => {
   const [showCaps, setShowCaps] = useState(true);
   const [opacity, setOpacity] = useState(1);
   const [cylinderHeight, setCylinderHeight] = useState(1.0);
-  const [drawAll, setDrawAll] = useState(true);
+  const [autoUpdate, setAutoUpdate] = useState(false);
   const [intensity, setIntensity] = useState(2);
   const [color, setColor] = useState("#ffff00");
 
@@ -27,8 +27,8 @@ export const LineSegmentsDataProvider = ({ children }) => {
         setOpacity,
         cylinderHeight,
         setCylinderHeight,
-        drawAll,
-        setDrawAll,
+        autoUpdate,
+        setAutoUpdate,
         intensity,
         setIntensity,
         color,

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { Grid2, Box } from "@mui/material";
+import { Grid2, Box, Button } from "@mui/material";
 import {
   CustomNumberInput,
   CustomCheckBox,
@@ -7,8 +7,7 @@ import {
   CustomColorInput,
 } from "../components/CustomComponents";
 import { LineSegmentsDataContext } from "../context/LineSegmentsDataContext";
-import { MuiColorInput } from "mui-color-input";
-import { UniversalDataContext } from "../context/UniversalDataContext";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 const LineSegmentSettings = React.memo(() => {
   const {
@@ -18,8 +17,8 @@ const LineSegmentSettings = React.memo(() => {
     setRadius,
     tubeRes,
     setTubeRes,
-    drawAll,
-    setDrawAll,
+    autoUpdate,
+    setAutoUpdate,
     intensity,
     setIntensity,
     opacity,
@@ -93,11 +92,22 @@ const LineSegmentSettings = React.memo(() => {
           tooltip="Hide or show the caps of each segment"
         />
         <CustomCheckBox
-          name="Draw All Segments"
-          onChange={() => setDrawAll(!drawAll)}
-          defaultValue={drawAll}
-          tooltip="Draw all segments in the scene"
+          name="Auto Update"
+          onChange={() => setAutoUpdate(!autoUpdate)}
+          defaultValue={autoUpdate}
+          tooltip="If on, the segments automatically render when the settings change"
         />
+        <Button
+          component="label"
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<PlayArrowIcon />}
+          fullWidth
+          sx={{ flexGrow: 1 }}
+          onClick={() => window.dispatchEvent(new Event("render"))}
+        >
+          Render
+        </Button>
       </Grid2>
     </Box>
   );

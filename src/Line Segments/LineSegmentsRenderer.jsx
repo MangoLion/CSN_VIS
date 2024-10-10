@@ -109,7 +109,7 @@ const LineSegmentsCanvas = () => {
     renderingMethod,
     radius,
     tubeRes,
-    drawAll,
+    autoUpdate,
     intensity,
     opacity,
     showCaps,
@@ -271,29 +271,17 @@ const LineSegmentsCanvas = () => {
     }
   }, [camera, controls, segments]);
 
-  // Listen for the 'fitModel' event to trigger fitModelToView
-  useEffect(() => {
-    const handleFitModel = () => fitModelToView();
+  const render = () => {
+    if (!matchIsValidColor(color)) return;
 
-    window.addEventListener("fitModel", handleFitModel);
-    return () => window.removeEventListener("fitModel", handleFitModel);
-  }, [fitModelToView]);
-
-  useEffect(() => {
-    fitModelToView();
-  }, [segments]);
-
-  useEffect(() => {
-    gl.domElement.addEventListener("mousedown", handleMouseDown);
-    gl.domElement.addEventListener("contextmenu", handleMouseUp);
-    return () => {
-      gl.domElement.removeEventListener("mousedown", handleMouseDown);
-      gl.domElement.removeEventListener("contextmenu", handleMouseUp);
-    };
-  }, [gl.domElement, handleMouseUp]);
-
-  useEffect(() => {
-    if (!drawAll || !matchIsValidColor(color)) return;
+    if (meshesRef.current) {
+      meshesRef.current.forEach((mesh) => {
+        scene.remove(mesh);
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+      });
+    }
+    meshesRef.current = [];
 
     if (renderingMethod === "Tube") {
       if (graphData.nodes.length > 0 && selectedSegments.length > 0) {
@@ -315,33 +303,54 @@ const LineSegmentsCanvas = () => {
         renderCylinders(segments, -1, color);
       }
     }
+  };
 
+  // Listen for the 'fitModel' event to trigger fitModelToView
+  useEffect(() => {
+    const handleFitModel = () => fitModelToView();
+
+    window.addEventListener("fitModel", handleFitModel);
+    return () => window.removeEventListener("fitModel", handleFitModel);
+  }, [fitModelToView]);
+
+  useEffect(() => {
+    const handleRender = () => render();
+
+    window.addEventListener("render", handleRender);
+    return () => window.removeEventListener("render", handleRender);
+  }, [render]);
+
+  useEffect(() => {
+    fitModelToView();
+  }, [segments]);
+
+  useEffect(() => {
+    gl.domElement.addEventListener("mousedown", handleMouseDown);
+    gl.domElement.addEventListener("contextmenu", handleMouseUp);
     return () => {
-      if (meshesRef.current) {
-        meshesRef.current.forEach((mesh) => {
-          scene.remove(mesh);
-          mesh.geometry.dispose();
-          mesh.material.dispose();
-        });
-      }
-      meshesRef.current = [];
+      gl.domElement.removeEventListener("mousedown", handleMouseDown);
+      gl.domElement.removeEventListener("contextmenu", handleMouseUp);
     };
+  }, [gl.domElement, handleMouseUp]);
+
+  useEffect(() => {
+    if (autoUpdate) render();
   }, [
     radius,
     tubeRes,
-    drawAll,
-    segments,
-    selectedSegments,
+    autoUpdate,
     intensity,
     opacity,
     showCaps,
     cylinderHeight,
-    coloredSegments,
     scene,
     renderingMethod,
     color,
-    graphData,
   ]);
+
+  useEffect(() => {
+    render();
+  }, [segments, selectedSegments, coloredSegments, graphData]);
 
   const renderTubes = (data, o = -1, tubeColor = null) => {
     const groupedSegments = [];

@@ -69,6 +69,11 @@ const universalTheme = createTheme({
         enterDelay: 500,
       },
     },
+    MuiIconButton: {
+      defaultProps: {
+        color: "primary",
+      },
+    },
   },
 });
 
