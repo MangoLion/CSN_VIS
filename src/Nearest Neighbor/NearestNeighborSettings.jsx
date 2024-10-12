@@ -22,6 +22,7 @@ const NearestNeighborWorker = new Worker(
   new URL("./NearestNeighborWorker.jsx", import.meta.url),
   { type: "module" }
 );
+import NearestNeighborRuntime from "./NearestNeighborRuntime.jsx";
 
 const NearestNeighborSettings = () => {
   const { segments, streamLines } = useContext(UniversalDataContext);
@@ -169,6 +170,19 @@ const NearestNeighborSettings = () => {
         >
           Delete Tree
         </Button>
+        {treeAlgorithm === "KNN" && (
+          <Typography
+            variant="h5"
+            textAlign="center"
+            fontWeight="bold"
+            sx={{ width: "100%" }}
+          >
+            Predicted Runtime:{" "}
+            {Math.ceil(NearestNeighborRuntime(segments.length, param) / 100) *
+              100}
+            ms
+          </Typography>
+        )}
       </Grid2>
     </Box>
   );
