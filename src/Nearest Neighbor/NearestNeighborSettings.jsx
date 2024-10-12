@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
 import { NearestNeighborDataContext } from "../context/NearestNeighborDataContext";
@@ -24,7 +25,7 @@ const NearestNeighborWorker = new Worker(
 
 const NearestNeighborSettings = () => {
   const { segments, streamLines } = useContext(UniversalDataContext);
-  const { setDGraphData } = useContext(GraphCommunitiesDataContext);
+  const { dGraphData, setDGraphData } = useContext(GraphCommunitiesDataContext);
   const {
     treeAlgorithm,
     setTreeAlgorithm,
@@ -60,8 +61,8 @@ const NearestNeighborSettings = () => {
     }
   }, [segments]);
 
-  const handleStart = async () => {
-    NearestNeighborWorker.addEventListener("message", knnCallback, false);
+  const handleSearch = async () => {
+    NearestNeighborWorker.addEventListener("message", searchCallback, false);
     NearestNeighborWorker.postMessage({
       constructTree: false,
       doSort: doSort,
@@ -75,10 +76,10 @@ const NearestNeighborSettings = () => {
     });
   };
 
-  const knnCallback = (event) => {
+  const searchCallback = (event) => {
     if (event.data.type == "final") {
       setProgress(100);
-      NearestNeighborWorker.removeEventListener("message", knnCallback);
+      NearestNeighborWorker.removeEventListener("message", searchCallback);
       setDGraphData(event.data.tgraph);
     } else if (event.data.type == "progress") {
       setProgress(event.data.progress);
@@ -143,8 +144,9 @@ const NearestNeighborSettings = () => {
           startIcon={<PlayArrowIcon />}
           fullWidth
           sx={{ flexGrow: 1 }}
-          onClick={handleStart}
+          onClick={handleSearch}
           loading={progress != 0 && progress != 100}
+          disabled={dGraphData.length > 0}
           loadingIndicator={
             <CircularProgress
               variant="determinate"
@@ -155,6 +157,18 @@ const NearestNeighborSettings = () => {
         >
           Start
         </LoadingButton>
+        <Button
+          component="label"
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<DeleteIcon />}
+          fullWidth
+          sx={{ flexGrow: 1 }}
+          onClick={() => setDGraphData([])}
+          disabled={dGraphData.length === 0}
+        >
+          Delete Tree
+        </Button>
       </Grid2>
     </Box>
   );

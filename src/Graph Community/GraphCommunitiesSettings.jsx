@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
 import { GraphCommunityWorkerInstance } from "./GraphCommunityWorkerInstance";
@@ -36,6 +37,7 @@ const GraphCommunitiesSettings = () => {
     setSeed,
     inputs,
     setInputs,
+    graphData,
   } = useContext(GraphCommunitiesDataContext);
   const { segments } = useContext(UniversalDataContext);
   const [running, setRunning] = useState(false);
@@ -80,7 +82,6 @@ const GraphCommunitiesSettings = () => {
       nodes: event.data.nodesWithCommunityMembers,
       links: event.data.interCommunityLinks, //[], // No inter-community links for this simplified visualization
     });
-
     setUndoState(null);
   };
 
@@ -210,13 +211,28 @@ const GraphCommunitiesSettings = () => {
           tabIndex={-1}
           startIcon={<PlayArrowIcon />}
           fullWidth
-          disabled={isEmpty}
+          disabled={graphData.nodes.length > 0}
           sx={{ flexGrow: 1 }}
           onClick={handleStart}
           loading={running}
         >
           Start
         </LoadingButton>
+        <Button
+          component="label"
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<DeleteIcon />}
+          fullWidth
+          disabled={graphData.nodes.length === 0}
+          sx={{ flexGrow: 1 }}
+          onClick={() => {
+            setOrgCommunities([]);
+            setGraphData({ nodes: [], links: [] });
+          }}
+        >
+          Delete Graph
+        </Button>
       </Grid2>
     </Box>
   );

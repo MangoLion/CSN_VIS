@@ -51,8 +51,6 @@ self.addEventListener("message", (event) => {
     sortType,
   } = event.data;
 
-  const startTime = performance.now();
-
   // Precompute the tree once the segments are uploaded
   if (constructTree) {
     console.log("constructing tree");
@@ -65,6 +63,8 @@ self.addEventListener("message", (event) => {
   // In theory these lines should never run since there would be preprocessing on the same cpu thread
   if (!lineSegments) lineSegments = processSegments(unmodifiedSegments);
   if (!tree) createLineSegmentKDTree(lineSegments);
+
+  const startTime = performance.now();
 
   let streamlines = unmodifiedStreamLines;
   let segments = unmodifiedSegments;
@@ -88,7 +88,6 @@ self.addEventListener("message", (event) => {
   let lastProgress = 0;
   let pixels = [];
 
-  let sum, sumSquared;
   const matrix = Array(streamlines.length)
     .fill()
     .map(() => Array(streamlines.length).fill(0));
@@ -241,9 +240,9 @@ self.addEventListener("message", (event) => {
   });
 
   const endTime = performance.now();
-  console.log(`Neighbor search took ${endTime - startTime} ms.`);
+  // console.log(`Neighbor search took ${endTime - startTime} ms.`);
+  console.log(Math.round(endTime - startTime));
 
-  console.log("GRAPH SIZE: ", graphSize);
   const msg = {
     type: "final",
     tgraph: tgraph,

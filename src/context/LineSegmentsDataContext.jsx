@@ -8,7 +8,7 @@ export const LineSegmentsDataProvider = ({ children }) => {
   const [showCaps, setShowCaps] = useState(true);
   const [opacity, setOpacity] = useState(1);
   const [cylinderHeight, setCylinderHeight] = useState(1.0);
-  const [autoUpdate, setAutoUpdate] = useState(false);
+  const [autoUpdate, setAutoUpdate] = useState(true);
   const [intensity, setIntensity] = useState(2);
   const [color, setColor] = useState("#ffff00");
 
