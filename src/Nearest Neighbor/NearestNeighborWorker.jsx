@@ -52,10 +52,15 @@ self.addEventListener("message", (event) => {
   } = event.data;
 
   // Precompute the tree once the segments are uploaded
+  let startTime, endTime;
   if (constructTree) {
-    console.log("constructing tree");
+    startTime = performance.now();
     lineSegments = processSegments(unmodifiedSegments);
     tree = createLineSegmentKDTree(lineSegments);
+    endTime = performance.now();
+    console.log(
+      `Tree Construction Time: ${(endTime - startTime).toFixed(2)} ms.`
+    );
     return;
   }
 
@@ -64,7 +69,7 @@ self.addEventListener("message", (event) => {
   if (!lineSegments) lineSegments = processSegments(unmodifiedSegments);
   if (!tree) createLineSegmentKDTree(lineSegments);
 
-  const startTime = performance.now();
+  startTime = performance.now();
 
   let streamlines = unmodifiedStreamLines;
   let segments = unmodifiedSegments;
@@ -239,9 +244,8 @@ self.addEventListener("message", (event) => {
     graphSize += edges.length;
   });
 
-  const endTime = performance.now();
-  // console.log(`Neighbor search took ${endTime - startTime} ms.`);
-  console.log(Math.round(endTime - startTime));
+  endTime = performance.now();
+  console.log(`Neighbor Search Time: ${(endTime - startTime).toFixed(2)} ms.`);
 
   const msg = {
     type: "final",

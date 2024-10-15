@@ -49,7 +49,9 @@ const computeGraph = (dGraphData) => {
   });
   let endTime = performance.now();
 
-  console.log(`Precompute Time: ${endTime - startTime}ms`);
+  console.log(
+    `Graph Communities Precompute Time: ${(endTime - startTime).toFixed(2)}ms`
+  );
 };
 
 const pcaKmeansStreamlineClustering = (segments, pcaDims, k, seed) => {
@@ -241,7 +243,7 @@ const createGraph = (event) => {
 
   endTime = performance.now();
 
-  console.log(`Comm detect time:${endTime - startTime}ms`);
+  console.log(`Community Detect Time: ${(endTime - startTime).toFixed(2)}ms`);
 
   startTime = performance.now();
 
