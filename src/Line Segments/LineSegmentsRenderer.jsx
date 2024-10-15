@@ -447,6 +447,7 @@ const LineSegmentsCanvas = () => {
               color: tubeColor ? tubeColor : segment.color,
               opacity: o === -1 ? opacity : o,
               transparent: true,
+              side: THREE.DoubleSide,
             }) // Adjust material properties
           );
           endCap.position.copy(endPoint);
@@ -541,6 +542,7 @@ const LineSegmentsCanvas = () => {
               color: tubeColor ? tubeColor : segment.color,
               opacity: o === -1 ? opacity : o,
               transparent: true,
+              side: THREE.DoubleSide,
             }) // Adjust material properties
           );
           startCap.position.copy(startPoint);
@@ -557,6 +559,7 @@ const LineSegmentsCanvas = () => {
               color: tubeColor ? tubeColor : segment.color,
               opacity: o === -1 ? opacity : o,
               transparent: true,
+              side: THREE.DoubleSide,
             }) // Adjust material properties
           );
           endCap.position.copy(endPoint);

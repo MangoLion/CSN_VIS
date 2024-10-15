@@ -106,7 +106,9 @@ const rearrangeStreamlinesKNN = (
 self.addEventListener("message", (e) => {
   const { file, skipLines, skipSegments } = e.data;
 
-  let start;
+  let startTime, endTime;
+
+  startTime = performance.now();
 
   const reader = new FileReader();
   let segments = [];
@@ -183,16 +185,14 @@ self.addEventListener("message", (e) => {
       return [points];
     });
 
-    // const pairwiseDistances = computePairwiseDistances(segments, streamlines);
-    // let flag = false;
-    // const rearrangedStreamlines = rearrangeStreamlinesKNN(
-    //   streamlines,
-    //   pairwiseDistances,
-    //   flag,
-    //   5
-    // );
-
     linesArray = linesArray.filter((l) => l.length > 0);
+
+    endTime = performance.now();
+    console.log(
+      "Data Processing Time:",
+      (endTime - startTime).toFixed(2),
+      "ms"
+    );
 
     self.postMessage({
       type: "finished",

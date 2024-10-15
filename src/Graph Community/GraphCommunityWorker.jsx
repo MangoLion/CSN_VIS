@@ -50,7 +50,7 @@ const computeGraph = (dGraphData) => {
   let endTime = performance.now();
 
   console.log(
-    `Graph Communities Precompute Time: ${(endTime - startTime).toFixed(2)}ms`
+    `Community Precompute Time: ${(endTime - startTime).toFixed(2)} ms`
   );
 };
 
@@ -243,7 +243,7 @@ const createGraph = (event) => {
 
   endTime = performance.now();
 
-  console.log(`Community Detect Time: ${(endTime - startTime).toFixed(2)}ms`);
+  console.log(`Community Detect Time: ${(endTime - startTime).toFixed(2)} ms`);
 
   startTime = performance.now();
 
@@ -278,8 +278,6 @@ const createGraph = (event) => {
     ...node,
     size: node.size * scaleFactor,
   }));
-
-  console.log("NODE SIZE: ", nodes[0].size * scaleFactor);
 
   // Assign a color to each community node
   const nodesWithColors = scaledNodes.map((node) => ({

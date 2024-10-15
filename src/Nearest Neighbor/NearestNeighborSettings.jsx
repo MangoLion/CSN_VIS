@@ -147,7 +147,6 @@ const NearestNeighborSettings = () => {
           sx={{ flexGrow: 1 }}
           onClick={handleSearch}
           loading={progress != 0 && progress != 100}
-          disabled={dGraphData.length > 0}
           loadingIndicator={
             <CircularProgress
               variant="determinate"

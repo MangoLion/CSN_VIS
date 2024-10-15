@@ -326,12 +326,10 @@ const GraphCommunitiesRenderer = () => {
     var y = node.y; // y coordinate of the circle's center
 
     if (x === undefined || y === undefined) {
-      console.log("INVALID NODE XY: ", x, y);
       return;
     }
 
     if (!size) {
-      console.log("INVALID NODE SIZE: ", size);
       return;
     }
 

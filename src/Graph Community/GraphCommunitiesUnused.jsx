@@ -441,8 +441,6 @@ const GraphCommunitiesUnused = ({
       size: node.size * scaleFactor,
     }));
 
-    console.log("NODE SIZE: ", nodes[0].size * scaleFactor);
-
     // Assign a color to each community node
     const nodesWithColors = scaledNodes.map((node) => ({
       ...node,

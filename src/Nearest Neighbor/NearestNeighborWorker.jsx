@@ -59,7 +59,7 @@ self.addEventListener("message", (event) => {
     tree = createLineSegmentKDTree(lineSegments);
     endTime = performance.now();
     console.log(
-      `Tree Construction Time: ${(endTime - startTime).toFixed(2)} ms.`
+      `Tree Construction Time: ${(endTime - startTime).toFixed(2)} ms`
     );
     return;
   }
@@ -245,7 +245,7 @@ self.addEventListener("message", (event) => {
   });
 
   endTime = performance.now();
-  console.log(`Neighbor Search Time: ${(endTime - startTime).toFixed(2)} ms.`);
+  console.log(`Neighbor Search Time: ${(endTime - startTime).toFixed(2)} ms`);
 
   const msg = {
     type: "final",

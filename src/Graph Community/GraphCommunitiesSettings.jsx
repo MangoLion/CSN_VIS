@@ -211,7 +211,6 @@ const GraphCommunitiesSettings = () => {
           tabIndex={-1}
           startIcon={<PlayArrowIcon />}
           fullWidth
-          disabled={graphData.nodes.length > 0}
           sx={{ flexGrow: 1 }}
           onClick={handleStart}
           loading={running}
