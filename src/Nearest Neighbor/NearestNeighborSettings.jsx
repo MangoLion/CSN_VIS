@@ -17,7 +17,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { UniversalDataContext } from "../context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataContext";
 import { NearestNeighborDataContext } from "../context/NearestNeighborDataContext";
-
+import { AdjacencyMatrixDataContext } from "../context/AdjacencyMatrixDataContext.jsx";
 const NearestNeighborWorker = new Worker(
   new URL("./NearestNeighborWorker.jsx", import.meta.url),
   { type: "module" }
@@ -45,6 +45,7 @@ const NearestNeighborSettings = () => {
     sortType,
     setSortType,
   } = useContext(NearestNeighborDataContext);
+  const { setMinMax, setPixels } = useContext(AdjacencyMatrixDataContext);
 
   useEffect(() => {
     if (segments && segments.length > 0) {
@@ -82,6 +83,8 @@ const NearestNeighborSettings = () => {
       setProgress(100);
       NearestNeighborWorker.removeEventListener("message", searchCallback);
       setDGraphData(event.data.tgraph);
+      setMinMax([event.data.minDist, event.data.maxDist]);
+      setPixels(event.data.pixels);
     } else if (event.data.type == "progress") {
       setProgress(event.data.progress);
     }

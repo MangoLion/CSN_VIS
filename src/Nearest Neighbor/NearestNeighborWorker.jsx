@@ -131,9 +131,6 @@ self.addEventListener("message", (event) => {
 
     if (!doSort) {
       tgraph.push(neighbors);
-    } else {
-      sum = 0;
-      sumSquared = 0;
     }
 
     const progress = Math.floor((i / lineSegments.length) * 100);

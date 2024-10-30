@@ -4,8 +4,6 @@ import "rc-dock/dist/rc-dock.css";
 import "./styles/App.css";
 import "allotment/dist/style.css";
 
-import { Allotment } from "allotment";
-
 import {
   Box,
   Button,
@@ -22,21 +20,21 @@ import {
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import SettingsIcon from "@mui/icons-material/Settings";
 
+import PersistentDrawerLeft from "./TempPersistentDrawer";
+
 import Uploader from "./Uploader/Uploader";
 import LineSegmentSettings from "./Line Segments/LineSegmentSettings";
 import NearestNeighborSettings from "./Nearest Neighbor/NearestNeighborSettings";
-import GraphCommunitiesSettings from "./Graph Community/GraphCommunitiesSettings";
-import AdjacencyMatrixSettings from "./Adjacency Matrix/AdjacencyMatrixSettings";
 
 import LineSegmentsRenderer from "./Line Segments/LineSegmentsRenderer";
+import GraphCommunitiesSettings from "./Graph Community/GraphCommunitiesSettings";
 import GraphCommunitiesRenderer from "./Graph Community/GraphCommunitiesRenderer";
-import AdjacencyMatrixRenderer from "./Adjacency Matrix/AdjacencyMatrixRenderer";
 import { UniversalDataContext } from "./context/UniversalDataContext";
 import { GraphCommunitiesDataContext } from "./context/GraphCommunitiesDataContext";
 
 const SmallTab = styled(Tab)({
   fontSize: "12px",
-  width: "110px",
+  width: "135px",
 });
 const BigTab = styled(Tab)({
   fontSize: "16px",
@@ -111,6 +109,7 @@ const App = () => {
       style={{ display: "flex", height: "100vh", flexDirection: "column" }}
     >
       <ThemeProvider theme={universalTheme}>
+        {/*
         <Drawer
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
@@ -153,16 +152,6 @@ const App = () => {
               ) : (
                 <SmallTab label="Graph Communities" value="3" />
               )}
-
-              {dGraphData.length === 0 ? (
-                <SmallDisabledTabWithTooltip
-                  tooltip="Please run a Nearest Neighbor Algorithm"
-                  label="Adjacency Matrix"
-                  value="4"
-                />
-              ) : (
-                <SmallTab label="Adjacency Matrix" value="4" />
-              )}
             </Tabs>
             <Box hidden={selectedSettingsWindow !== "0"}>
               <Uploader />
@@ -175,9 +164,6 @@ const App = () => {
             </Box>
             <Box hidden={selectedSettingsWindow !== "3"}>
               <GraphCommunitiesSettings />
-            </Box>
-            <Box hidden={selectedSettingsWindow !== "4"}>
-              <AdjacencyMatrixSettings />
             </Box>
           </Box>
         </Drawer>
@@ -225,16 +211,6 @@ const App = () => {
             ) : (
               <BigTab label="Side by Side" value="2" />
             )}
-
-            {dGraphData.length > 0 ? (
-              <BigTab label="Adjacency Matrix" value="3" />
-            ) : (
-              <BigDisabledTabWithTooltip
-                tooltip="Please run a Nearest Neighbor Algorithm"
-                value="3"
-                label="Adjacency Matrix"
-              />
-            )}
           </Tabs>
         </AppBar>
 
@@ -248,8 +224,7 @@ const App = () => {
           <Box
             sx={{
               ...(selectedRenderingWindow === "0" && { width: "100%" }),
-              ...((selectedRenderingWindow === "1" ||
-                selectedRenderingWindow === "3") && { display: "none" }),
+              ...(selectedRenderingWindow === "1" && { display: "none" }),
               ...(selectedRenderingWindow === "2" && { width: "50%" }),
               height: "100%",
             }}
@@ -259,8 +234,7 @@ const App = () => {
           <Divider orientation="vertical" />
           <Box
             sx={{
-              ...((selectedRenderingWindow === "0" ||
-                selectedRenderingWindow === "3") && { display: "none" }),
+              ...(selectedRenderingWindow === "0" && { display: "none" }),
               ...(selectedRenderingWindow === "1" && { width: "100%" }),
               ...(selectedRenderingWindow === "2" && { width: "50%" }),
               height: "99.5%",
@@ -268,16 +242,129 @@ const App = () => {
           >
             <GraphCommunitiesRenderer />
           </Box>
-          <Box
-            sx={{
-              ...(selectedRenderingWindow !== "3" && { display: "none" }),
-              width: "100%",
-              height: "100%",
-            }}
-          >
-            <AdjacencyMatrixRenderer />
-          </Box>
         </Box>
+ */}
+
+        <PersistentDrawerLeft
+          headerContent={
+            <Box sx={{ height: "50px", display: "flex", alignItems: "center" }}>
+              <Typography variant="h6" noWrap>
+                Curve Segment Neighborhood-Based Vector Field Exploration
+              </Typography>
+              <Tabs
+                value={selectedRenderingWindow}
+                onChange={(e, newValue) => setSelectedRenderingWindow(newValue)}
+                textColor={"inherit"}
+              >
+                <BigTab label="Line Segments" value="0" />
+
+                {graphData.nodes && graphData.nodes.length === 0 ? (
+                  <BigDisabledTabWithTooltip
+                    tooltip="Please run a Graph Community Algorithm"
+                    value="1"
+                    label="Graph Community"
+                  />
+                ) : (
+                  <BigTab label="Graph Community" value="1" />
+                )}
+
+                {graphData.nodes && graphData.nodes.length === 0 ? (
+                  <BigDisabledTabWithTooltip
+                    tooltip="Please run a Graph Community Algorithm"
+                    value="2"
+                    label="Side by Side"
+                  />
+                ) : (
+                  <BigTab label="Side by Side" value="2" />
+                )}
+              </Tabs>
+            </Box>
+          }
+          drawerContent={
+            <Box sx={{ width: "550px" }}>
+              <Tabs
+                value={selectedSettingsWindow}
+                onChange={(e, newValue) => setSelectedSettingsWindow(newValue)}
+                sx={{ zIndex: -1 }}
+              >
+                <SmallTab label="Uploader" value="0" />
+
+                {segments.length === 0 ? (
+                  <SmallDisabledTabWithTooltip
+                    tooltip="Please Upload a File"
+                    label="Rendering"
+                    value="1"
+                  />
+                ) : (
+                  <SmallTab label="Rendering" value="1" />
+                )}
+
+                {segments.length === 0 ? (
+                  <SmallDisabledTabWithTooltip
+                    tooltip="Please Upload a File"
+                    label="Nearest Neighbor"
+                    value="2"
+                  />
+                ) : (
+                  <SmallTab label="Nearest Neighbor" value="2" />
+                )}
+
+                {dGraphData.length === 0 ? (
+                  <SmallDisabledTabWithTooltip
+                    tooltip="Please run a Nearest Neighbor Algorithm"
+                    label="Graph Communities"
+                    value="3"
+                  />
+                ) : (
+                  <SmallTab label="Graph Communities" value="3" />
+                )}
+              </Tabs>
+              <Box hidden={selectedSettingsWindow !== "0"}>
+                <Uploader />
+              </Box>
+              <Box hidden={selectedSettingsWindow !== "1"}>
+                <LineSegmentSettings />
+              </Box>
+              <Box hidden={selectedSettingsWindow !== "2"}>
+                <NearestNeighborSettings />
+              </Box>
+              <Box hidden={selectedSettingsWindow !== "3"}>
+                <GraphCommunitiesSettings />
+              </Box>
+            </Box>
+          }
+          mainContent={
+            <Box
+              sx={{
+                height: "100%",
+                width: "100%",
+                display: "flex",
+              }}
+            >
+              <Box
+                sx={{
+                  ...(selectedRenderingWindow === "0" && { width: "100%" }),
+                  ...(selectedRenderingWindow === "1" && { display: "none" }),
+                  ...(selectedRenderingWindow === "2" && { flexGrow: 1 }),
+                  height: "100%",
+                }}
+              >
+                <LineSegmentsRenderer />
+              </Box>
+              <Divider orientation="vertical" />
+              <Box
+                sx={{
+                  ...(selectedRenderingWindow === "0" && { display: "none" }),
+                  ...(selectedRenderingWindow === "1" && { width: "100%" }),
+                  ...(selectedRenderingWindow === "2" && { flexGrow: 1 }),
+                  height: "99.5%",
+                }}
+              >
+                <GraphCommunitiesRenderer />
+              </Box>
+            </Box>
+          }
+        />
       </ThemeProvider>
     </div>
   );

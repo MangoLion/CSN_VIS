@@ -127,7 +127,7 @@ const GraphCommunitiesSettings = () => {
             />
 
             <CustomNumberInput
-              name={"K Means"}
+              name={"KMeans"}
               onChange={handleInputChange}
               defaultValue={inputs.kmean}
             />
