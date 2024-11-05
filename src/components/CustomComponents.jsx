@@ -16,7 +16,7 @@ const useStyles = makeStyles({
     "& .MuiInputBase-root": {
       height: "30px",
       padding: "1px 1px",
-      width: "243px",
+      width: "200px",
     },
     "& input": {
       height: "22px",

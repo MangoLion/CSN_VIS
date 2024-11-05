@@ -37,7 +37,8 @@ const GraphCommunitiesRenderer = () => {
     coloredSegments,
     setSelectedSegments,
     setSelectedSettingsWindow,
-    setDrawerOpen,
+    selectedRenderingWindows,
+    setSelectedRenderingWindows,
   } = useContext(UniversalDataContext);
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -471,17 +472,9 @@ const GraphCommunitiesRenderer = () => {
         <Button
           variant="contained"
           onClick={() => {
-            setSelectedSettingsWindow("3");
-            setDrawerOpen(true);
-          }}
-        >
-          Graph Community Settings
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => {
             if (fgRef.current) fgRef.current.zoomToFit(400, 100);
           }}
+          disabled={isEmpty}
         >
           Fit Model
         </Button>

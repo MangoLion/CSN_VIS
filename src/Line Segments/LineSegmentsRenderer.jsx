@@ -52,18 +52,6 @@ const LineSegmentsRenderer = () => {
           >
             Fit Model
           </Button>
-          <Button
-            variant="contained"
-            style={{
-              position: "absolute",
-              zIndex: 1,
-              bottom: 20,
-              right: 140,
-            }}
-            disabled
-          >
-            Rendering Settings
-          </Button>
         </>
       ) : (
         <>
