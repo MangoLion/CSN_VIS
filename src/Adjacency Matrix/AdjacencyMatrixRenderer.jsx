@@ -21,8 +21,9 @@ const AdjacencyMatrixRenderer = () => {
   const divRef = useRef();
   const { segments, streamLines } = useContext(UniversalDataContext);
   const { dGraphData } = useContext(GraphCommunitiesDataContext);
-  const { grid, setGrid, selectMode, image, setImage, createWhiteImage } =
-    useContext(AdjacencyMatrixDataContext);
+  const { grid, setGrid, image, setImage, createWhiteImage } = useContext(
+    AdjacencyMatrixDataContext
+  );
 
   const Base64Image = ({ base64URL, ...props }) => {
     const [image, setImage] = useState(null);

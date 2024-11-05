@@ -4,8 +4,6 @@ import "rc-dock/dist/rc-dock.css";
 import "./styles/App.css";
 import "allotment/dist/style.css";
 
-import { Allotment } from "allotment";
-
 import {
   Box,
   Button,
@@ -18,6 +16,8 @@ import {
   IconButton,
   Tooltip,
   styled,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -53,16 +53,6 @@ const SmallDisabledTabWithTooltip = ({ tooltip, label, value }) => {
   );
 };
 
-const BigDisabledTabWithTooltip = ({ tooltip, label, value }) => {
-  return (
-    <Tooltip title={tooltip}>
-      <span>
-        <BigTab label={label} value={value} disabled />
-      </span>
-    </Tooltip>
-  );
-};
-
 const universalTheme = createTheme({
   components: {
     MuiTooltip: {
@@ -80,28 +70,22 @@ const universalTheme = createTheme({
 });
 
 const App = () => {
-  const {
-    segments,
-    drawerOpen,
-    setDrawerOpen,
-    selectedRenderingWindow,
-    setSelectedRenderingWindow,
-    selectedSettingsWindow,
-    setSelectedSettingsWindow,
-  } = useContext(UniversalDataContext);
+  const { segments } = useContext(UniversalDataContext);
   const { dGraphData, graphData } = useContext(GraphCommunitiesDataContext);
 
-  useEffect(() => {
-    setSelectedRenderingWindow("0");
-    if (segments.length === 0) setSelectedSettingsWindow("0");
-  }, [segments]);
+  const [selectedSettingsWindow, setSelectedSettingsWindow] = useState("0");
+  const [selectedRenderingWindows, setSelectedRenderingWindows] = useState(
+    () => ["0"]
+  );
+  const [drawerOpen, setDrawerOpen] = useState(true);
 
   useEffect(() => {
-    if (graphData.nodes && graphData.nodes.length > 0) {
-      if (selectedRenderingWindow === "0") setSelectedRenderingWindow("2");
-    } else {
-      setSelectedRenderingWindow("0");
-      if (selectedSettingsWindow === "3") setSelectedSettingsWindow("0");
+    if (
+      graphData.nodes &&
+      graphData.nodes.length > 0 &&
+      selectedRenderingWindows.indexOf("1") === -1
+    ) {
+      setSelectedRenderingWindows([...selectedRenderingWindows, "1"]);
     }
   }, [graphData]);
 
@@ -199,59 +183,33 @@ const App = () => {
           <Typography variant="h6" noWrap>
             Curve Segment Neighborhood-Based Vector Field Exploration
           </Typography>
-          <Tabs
-            value={selectedRenderingWindow}
-            onChange={(e, newValue) => setSelectedRenderingWindow(newValue)}
-            textColor={"inherit"}
+          <ToggleButtonGroup
+            value={selectedRenderingWindows}
+            onChange={(e, newValue) => {
+              if (newValue.length > 0) setSelectedRenderingWindows(newValue);
+            }}
           >
-            <BigTab label="Line Segments" value="0" />
-
-            {graphData.nodes && graphData.nodes.length === 0 ? (
-              <BigDisabledTabWithTooltip
-                tooltip="Please run a Graph Community Algorithm"
-                value="1"
-                label="Graph Community"
-              />
-            ) : (
-              <BigTab label="Graph Community" value="1" />
-            )}
-
-            {graphData.nodes && graphData.nodes.length === 0 ? (
-              <BigDisabledTabWithTooltip
-                tooltip="Please run a Graph Community Algorithm"
-                value="2"
-                label="Side by Side"
-              />
-            ) : (
-              <BigTab label="Side by Side" value="2" />
-            )}
-
-            {dGraphData.length > 0 ? (
-              <BigTab label="Adjacency Matrix" value="3" />
-            ) : (
-              <BigDisabledTabWithTooltip
-                tooltip="Please run a Nearest Neighbor Algorithm"
-                value="3"
-                label="Adjacency Matrix"
-              />
-            )}
-          </Tabs>
+            <ToggleButton value="0">Line Segments</ToggleButton>
+            <ToggleButton value="1">Graph Community</ToggleButton>
+            <ToggleButton value="2">Adjacency Matrix</ToggleButton>
+          </ToggleButtonGroup>
         </AppBar>
 
         <Box
           sx={{
             width: "100%",
-            height: "100%",
+            flexGrow: 1,
             display: "flex",
           }}
         >
           <Box
             sx={{
-              ...(selectedRenderingWindow === "0" && { width: "100%" }),
-              ...((selectedRenderingWindow === "1" ||
-                selectedRenderingWindow === "3") && { display: "none" }),
-              ...(selectedRenderingWindow === "2" && { width: "50%" }),
-              height: "100%",
+              width: `${100 / selectedRenderingWindows.length - 0.01}%`,
+              height: "99.9%",
+              ...(selectedRenderingWindows.indexOf("0") === -1 && {
+                display: "none",
+              }),
+              overflow: "hidden",
             }}
           >
             <LineSegmentsRenderer />
@@ -259,23 +217,26 @@ const App = () => {
           <Divider orientation="vertical" />
           <Box
             sx={{
-              ...((selectedRenderingWindow === "0" ||
-                selectedRenderingWindow === "3") && { display: "none" }),
-              ...(selectedRenderingWindow === "1" && { width: "100%" }),
-              ...(selectedRenderingWindow === "2" && { width: "50%" }),
-              height: "99.5%",
+              width: `${100 / selectedRenderingWindows.length - 0.01}%`,
+              height: "99.9%",
+              ...(selectedRenderingWindows.indexOf("1") === -1 && {
+                display: "none",
+              }),
             }}
           >
             <GraphCommunitiesRenderer />
           </Box>
+          <Divider orientation="vertical" />
           <Box
             sx={{
-              ...(selectedRenderingWindow !== "3" && { display: "none" }),
-              width: "100%",
+              width: `${100 / selectedRenderingWindows.length - 0.01}%`,
               height: "100%",
+              ...(selectedRenderingWindows.indexOf("2") === -1 && {
+                display: "none",
+              }),
             }}
           >
-            <AdjacencyMatrixRenderer />
+            {/* <AdjacencyMatrixRenderer /> */}
           </Box>
         </Box>
       </ThemeProvider>

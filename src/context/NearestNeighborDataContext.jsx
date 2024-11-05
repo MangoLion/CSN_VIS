@@ -3,9 +3,9 @@ export const NearestNeighborDataContext = createContext();
 
 export const NearestNeighborDataProvider = ({ children }) => {
   const [treeAlgorithm, setTreeAlgorithm] = useState("KNN");
-  const [param, setParam] = useState("1");
+  const [k, setK] = useState(25);
+  const [r, setR] = useState(0.5);
   const [distanceMetric, setDistanceMetric] = useState("shortest");
-  const [manualStart, setManualStart] = useState(false);
   const [exclude, setExclude] = useState(false);
   const [progress, setProgress] = useState(0);
   const [doSort, setDoSort] = useState(false);
@@ -16,12 +16,12 @@ export const NearestNeighborDataProvider = ({ children }) => {
       value={{
         treeAlgorithm,
         setTreeAlgorithm,
-        param,
-        setParam,
+        k,
+        setK,
+        r,
+        setR,
         distanceMetric,
         setDistanceMetric,
-        manualStart,
-        setManualStart,
         exclude,
         setExclude,
         progress,

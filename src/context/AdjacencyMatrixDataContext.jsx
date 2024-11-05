@@ -6,7 +6,6 @@ export const AdjacencyMatrixDataProvider = ({ children }) => {
   const [snap, setSnap] = useState(true);
   const [selectMode, setSelectMode] = useState("area");
   const [selectColor, setSelectColor] = useState("one");
-  const [minMax, setMinMax] = useState([0, 1]);
   const [image, setImage] = useState(createWhiteImage(500, 500, 1000));
 
   function createWhiteImage(width, height, tileSize) {
@@ -44,8 +43,6 @@ export const AdjacencyMatrixDataProvider = ({ children }) => {
         setSelectMode,
         selectColor,
         setSelectColor,
-        minMax,
-        setMinMax,
         image,
         setImage,
         createWhiteImage,

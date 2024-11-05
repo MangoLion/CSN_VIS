@@ -85,10 +85,6 @@ self.addEventListener("message", (event) => {
     KR = KR * computeDiagonalLength(bounds);
   }
   let tgraph = [];
-  let dgraph = [];
-
-  let minDist = 10000,
-    maxDist = 0;
 
   let lastProgress = 0;
   let pixels = [];
@@ -236,20 +232,12 @@ self.addEventListener("message", (event) => {
     }
   }
 
-  let graphSize = 0;
-  tgraph.forEach((edges) => {
-    graphSize += edges.length;
-  });
-
   endTime = performance.now();
   console.log(`Neighbor Search Time: ${(endTime - startTime).toFixed(2)} ms`);
 
   const msg = {
     type: "final",
     tgraph: tgraph,
-    minDist: minDist,
-    maxDist: maxDist,
-    dgraph: dgraph,
     pixels: pixels,
   };
   if (doSort) {

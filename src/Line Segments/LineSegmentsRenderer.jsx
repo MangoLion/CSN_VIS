@@ -20,6 +20,7 @@ import { GraphCommunitiesDataContext } from "../context/GraphCommunitiesDataCont
 
 import { Button, Tooltip } from "@mui/material";
 import { matchIsValidColor } from "mui-color-input";
+import { POSITION_SCALE_CHANNELS } from "vega-lite/build/src/channel";
 
 const DirectionalLightWithCamera = ({ intensity }) => {
   const directionalLightRef = useRef();
@@ -39,6 +40,7 @@ const DirectionalLightWithCamera = ({ intensity }) => {
 const LineSegmentsRenderer = () => {
   const { segments, setSelectedSettingsWindow, setDrawerOpen } =
     useContext(UniversalDataContext);
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       {segments.length === 0 ? (
@@ -95,7 +97,7 @@ const LineSegmentsRenderer = () => {
         </>
       )}
 
-      <Canvas style={{ position: "relative", width: "100%", height: "100%" }}>
+      <Canvas style={{ width: "100%", heigth: "100%" }}>
         <LineSegmentsCanvas />
       </Canvas>
     </div>
@@ -354,7 +356,6 @@ const LineSegmentsCanvas = () => {
 
   const renderTubes = (data, o = -1, tubeColor = null) => {
     const groupedSegments = [];
-
     let currGroup = [];
 
     for (let i = 0; i < data.length; i++) {
@@ -380,6 +381,8 @@ const LineSegmentsCanvas = () => {
         if (index === 0) points.push(new THREE.Vector3(...segment.startPoint));
         points.push(new THREE.Vector3(...segment.endPoint));
       });
+
+      if (points.length < 1) return;
 
       const curve = new THREE.CatmullRomCurve3(points);
       const tubeGeometry = new THREE.TubeGeometry(

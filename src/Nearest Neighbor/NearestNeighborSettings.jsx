@@ -30,12 +30,12 @@ const NearestNeighborSettings = () => {
   const {
     treeAlgorithm,
     setTreeAlgorithm,
-    param,
-    setParam,
+    k,
+    setK,
+    r,
+    setR,
     distanceMetric,
     setDistanceMetric,
-    manualStart,
-    setManualStart,
     exclude,
     setExclude,
     progress,
@@ -45,14 +45,43 @@ const NearestNeighborSettings = () => {
     sortType,
     setSortType,
   } = useContext(NearestNeighborDataContext);
-  const { setMinMax, setPixels } = useContext(AdjacencyMatrixDataContext);
 
   useEffect(() => {
     if (segments && segments.length > 0) {
+      if (treeAlgorithm === "KNN")
+        NearestNeighborWorker.postMessage({
+          constructTree: true,
+          doSort: doSort,
+          param: k,
+          unmodifiedSegments: segments,
+          treeAlgorithm: treeAlgorithm,
+          distanceMetric: distanceMetric,
+          unmodifiedStreamLines: streamLines,
+          exclude: exclude,
+          sortType: sortType,
+        });
+      else
+        NearestNeighborWorker.postMessage({
+          constructTree: true,
+          doSort: doSort,
+          param: r,
+          unmodifiedSegments: segments,
+          treeAlgorithm: treeAlgorithm,
+          distanceMetric: distanceMetric,
+          unmodifiedStreamLines: streamLines,
+          exclude: exclude,
+          sortType: sortType,
+        });
+    }
+  }, [segments]);
+
+  const handleSearch = async () => {
+    NearestNeighborWorker.addEventListener("message", searchCallback, false);
+    if (treeAlgorithm === "KNN")
       NearestNeighborWorker.postMessage({
-        constructTree: true,
+        constructTree: false,
         doSort: doSort,
-        param: param,
+        param: k,
         unmodifiedSegments: segments,
         treeAlgorithm: treeAlgorithm,
         distanceMetric: distanceMetric,
@@ -60,22 +89,18 @@ const NearestNeighborSettings = () => {
         exclude: exclude,
         sortType: sortType,
       });
-    }
-  }, [segments]);
-
-  const handleSearch = async () => {
-    NearestNeighborWorker.addEventListener("message", searchCallback, false);
-    NearestNeighborWorker.postMessage({
-      constructTree: false,
-      doSort: doSort,
-      param: param,
-      unmodifiedSegments: segments,
-      treeAlgorithm: treeAlgorithm,
-      distanceMetric: distanceMetric,
-      unmodifiedStreamLines: streamLines,
-      exclude: exclude,
-      sortType: sortType,
-    });
+    else
+      NearestNeighborWorker.postMessage({
+        constructTree: false,
+        doSort: doSort,
+        param: r,
+        unmodifiedSegments: segments,
+        treeAlgorithm: treeAlgorithm,
+        distanceMetric: distanceMetric,
+        unmodifiedStreamLines: streamLines,
+        exclude: exclude,
+        sortType: sortType,
+      });
   };
 
   const searchCallback = (event) => {
@@ -83,8 +108,6 @@ const NearestNeighborSettings = () => {
       setProgress(100);
       NearestNeighborWorker.removeEventListener("message", searchCallback);
       setDGraphData(event.data.tgraph);
-      setMinMax([event.data.minDist, event.data.maxDist]);
-      setPixels(event.data.pixels);
     } else if (event.data.type == "progress") {
       setProgress(event.data.progress);
     }
@@ -102,11 +125,20 @@ const NearestNeighborSettings = () => {
             { value: "RBN", label: "RBN" },
           ]}
         />
-        <CustomNumberInput
-          name={treeAlgorithm === "KNN" ? "K" : "R"}
-          onChange={(e) => setParam(e.target.value)}
-          defaultValue={param}
-        />
+        {treeAlgorithm === "RBN" && (
+          <CustomNumberInput
+            name={"Radius (Proportion)"}
+            onChange={(e) => setR(e.target.value)}
+            defaultValue={r}
+          />
+        )}
+        {treeAlgorithm === "KNN" && (
+          <CustomNumberInput
+            name={"Number of Neighbors (K)"}
+            onChange={(e) => setK(e.target.value)}
+            defaultValue={k}
+          />
+        )}
         <CustomSelect
           name={"Distance"}
           onChange={(e) => setDistanceMetric(e.target.value)}
@@ -127,20 +159,15 @@ const NearestNeighborSettings = () => {
           ]}
         />
         <CustomCheckBox
-          name={"Manual Start"}
-          onChange={(e) => setManualStart(e.target.checked)}
-          defaultValue={manualStart}
-        />
-        <CustomCheckBox
           name={"Exclude"}
           onChange={(e) => setExclude(e.target.checked)}
           defaultValue={exclude}
         />
-        <CustomCheckBox
+        {/* <CustomCheckBox
           name={"Do Sort"}
           onChange={(e) => setDoSort(e.target.checked)}
           defaultValue={doSort}
-        />
+        /> */}
         <LoadingButton
           component="label"
           variant="contained"
@@ -180,9 +207,8 @@ const NearestNeighborSettings = () => {
             sx={{ width: "100%" }}
           >
             Predicted Runtime:{" "}
-            {Math.ceil(NearestNeighborRuntime(segments.length, param) / 100) *
-              100}
-            ms
+            {Math.ceil(NearestNeighborRuntime(segments.length, k) / 100) / 10}{" "}
+            seconds
           </Typography>
         )}
       </Grid2>
