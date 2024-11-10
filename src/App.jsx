@@ -49,21 +49,42 @@ const universalTheme = createTheme({
 
 const App = () => {
   const {
+    segments,
     selectedRenderingWindows,
     setSelectedRenderingWindows,
     windowWidth,
     setWindowWidth,
   } = useContext(UniversalDataContext);
-  const { graphData } = useContext(GraphCommunitiesDataContext);
+  const { dGraphData, graphData } = useContext(GraphCommunitiesDataContext);
   const windowContainer = useRef();
+
+  useEffect(() => {
+    if (
+      segments &&
+      segments.length > 0 &&
+      selectedRenderingWindows.indexOf("1") === -1
+    ) {
+      setSelectedRenderingWindows([...selectedRenderingWindows, "1"]);
+    }
+  }, [segments]);
+
+  useEffect(() => {
+    if (
+      dGraphData &&
+      dGraphData.length > 0 &&
+      selectedRenderingWindows.indexOf("2") === -1
+    ) {
+      setSelectedRenderingWindows([...selectedRenderingWindows, "2"]);
+    }
+  }, [dGraphData]);
 
   useEffect(() => {
     if (
       graphData.nodes &&
       graphData.nodes.length > 0 &&
-      selectedRenderingWindows.indexOf("2") === -1
+      selectedRenderingWindows.indexOf("3") === -1
     ) {
-      setSelectedRenderingWindows([...selectedRenderingWindows, "2"]);
+      setSelectedRenderingWindows([...selectedRenderingWindows, "3"]);
     }
   }, [graphData]);
 
@@ -89,9 +110,6 @@ const App = () => {
 
   useEffect(() => {
     setWindowWidth(
-      windowContainer.current.clientWidth / selectedRenderingWindows.length
-    );
-    console.log(
       windowContainer.current.clientWidth / selectedRenderingWindows.length
     );
   }, [selectedRenderingWindows]);
@@ -124,13 +142,13 @@ const App = () => {
           <ToggleButtonGroup
             value={selectedRenderingWindows}
             onChange={(e, newValue) => {
-              if (newValue.length > 0) setSelectedRenderingWindows(newValue);
+              setSelectedRenderingWindows(newValue);
             }}
           >
             <ToggleButton value="0">Settings</ToggleButton>
             <ToggleButton value="1">Line Segments</ToggleButton>
-            <ToggleButton value="2">Graph Community</ToggleButton>
-            <ToggleButton value="3">Adjacency Matrix</ToggleButton>
+            <ToggleButton value="2">Adjacency Matrix</ToggleButton>
+            <ToggleButton value="3">Graph Community</ToggleButton>
           </ToggleButtonGroup>
         </AppBar>
 
@@ -180,7 +198,7 @@ const App = () => {
                 overflow: "hidden",
               }}
             >
-              <GraphCommunitiesRenderer />
+              <AdjacencyMatrixRenderer />
             </Box>
             <Divider orientation="vertical" />
             <Box
@@ -193,7 +211,7 @@ const App = () => {
                 overflow: "hidden",
               }}
             >
-              <AdjacencyMatrixRenderer />
+              <GraphCommunitiesRenderer />
             </Box>
           </Box>
         </Box>

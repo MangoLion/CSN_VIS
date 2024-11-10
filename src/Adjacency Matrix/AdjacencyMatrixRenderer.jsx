@@ -57,8 +57,14 @@ const AdjacencyMatrixRenderer = () => {
   }, []);
 
   useEffect(() => {
-    if (dGraphData.length > 0) setPixels(dGraphData);
+    if (dGraphData.length > 0) {
+      setPixels(dGraphData);
+    }
   }, [dGraphData]);
+
+  useEffect(() => {
+    updateView();
+  }, [image]);
 
   const setPixels = useCallback((dGraphData) => {
     const tileSize = 1000;
@@ -236,13 +242,6 @@ const AdjacencyMatrixRenderer = () => {
       };
     renderCanvasGrid(image, 1000, visibleArea);
   };
-
-  useEffect(() => {
-    const handleUpdateView = () => updateView();
-
-    window.addEventListener("updateView", handleUpdateView);
-    return () => window.removeEventListener("updateView", handleUpdateView);
-  }, [updateView]);
 
   const MemoizedRect = React.memo(({ selection }) => (
     <Rect

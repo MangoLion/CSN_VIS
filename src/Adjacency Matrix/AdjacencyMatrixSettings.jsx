@@ -49,9 +49,6 @@ const AdjacencyMatrixSettings = () => {
           startIcon={<PlayArrowIcon />}
           fullWidth
           sx={{ flexGrow: 1 }}
-          onClick={() => {
-            window.dispatchEvent(new Event("updateView"));
-          }}
         >
           Render
         </Button>
