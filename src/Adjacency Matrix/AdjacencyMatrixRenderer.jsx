@@ -21,7 +21,7 @@ const AdjacencyMatrixRenderer = () => {
   const divRef = useRef();
   const { segments, streamLines } = useContext(UniversalDataContext);
   const { dGraphData } = useContext(GraphCommunitiesDataContext);
-  const { grid, setGrid, image, setImage, createWhiteImage } = useContext(
+  const { grid, setGrid, image, setImage, createWhiteImage, snap } = useContext(
     AdjacencyMatrixDataContext
   );
 
@@ -243,6 +243,34 @@ const AdjacencyMatrixRenderer = () => {
     renderCanvasGrid(image, 1000, visibleArea);
   };
 
+  const handleWheel = (e) => {
+    const SCALE_BY = 1.05;
+    e.evt.preventDefault();
+
+    const layer = layerRef.current;
+    const oldScale = layer.scaleX();
+
+    const pointer = layer.getStage().getPointerPosition();
+
+    const mousePointTo = {
+      x: (pointer.x - layer.x()) / oldScale,
+      y: (pointer.y - layer.y()) / oldScale,
+    };
+
+    const newScale =
+      e.evt.deltaY > 0 ? oldScale / SCALE_BY : oldScale * SCALE_BY;
+
+    layer.scale({ x: newScale, y: newScale });
+
+    const newPosition = {
+      x: -(mousePointTo.x * newScale - pointer.x),
+      y: -(mousePointTo.y * newScale - pointer.y),
+    };
+
+    layer.position(newPosition);
+    layer.batchDraw();
+  };
+
   const MemoizedRect = React.memo(({ selection }) => (
     <Rect
       x={selection.x}
@@ -266,7 +294,7 @@ const AdjacencyMatrixRenderer = () => {
       >
         <Layer
           ref={layerRef}
-          // onWheel={handleWheel}
+          onWheel={handleWheel}
           // onMouseDown={handleMouseDown}
           // onMouseMove={handleMouseMove}
           // onMouseUp={handleMouseUp}
