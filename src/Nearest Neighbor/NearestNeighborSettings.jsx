@@ -127,7 +127,7 @@ const NearestNeighborSettings = () => {
         />
         {treeAlgorithm === "RBN" && (
           <CustomNumberInput
-            name={"Radius (Proportion)"}
+            name={"Radius (Proportion from 0 to 1)"}
             onChange={(e) => setR(e.target.value)}
             defaultValue={r}
           />

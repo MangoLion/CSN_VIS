@@ -64,24 +64,6 @@ const LineSegmentsRenderer = () => {
               Fit Model
             </Button>
           </Tooltip>{" "}
-          <Tooltip title="Open Rendering Settings">
-            <Button
-              variant="contained"
-              style={{
-                position: "absolute",
-                zIndex: 1,
-                bottom: 20,
-                right: 140,
-              }}
-              onClick={() => {
-                setSelectedSettingsWindow("1");
-                setDrawerOpen(true);
-              }}
-              disabled={segments.length === 0}
-            >
-              Rendering Settings
-            </Button>
-          </Tooltip>
         </>
       )}
 

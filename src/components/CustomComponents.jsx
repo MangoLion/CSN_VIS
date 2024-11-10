@@ -48,24 +48,19 @@ export const CustomNumberInput = ({
     <Box
       display="flex"
       alignItems="center"
-      gap={2}
       sx={{ height: "30px", width: "100%" }}
     >
-      <Box className={classes.labelContainer}>
-        <Tooltip title={tooltip} followCursor>
-          <Typography className={classes.label}>{name}</Typography>
-        </Tooltip>
-      </Box>
-      <Box className={classes.labelContainer}>
-        <TextField
-          className={classes.smallInput}
-          type="number"
-          defaultValue={structuredClone(defaultValue)}
-          onChange={onChange}
-          fullWidth
-          slotProps={{ htmlInput: { step: stepValue } }}
-        />
-      </Box>
+      <Tooltip title={tooltip} followCursor>
+        <Typography className={classes.label}>{name}</Typography>
+      </Tooltip>
+      <Box sx={{ flexGrow: 1 }}></Box>
+      <TextField
+        className={classes.smallInput}
+        type="number"
+        defaultValue={structuredClone(defaultValue)}
+        onChange={onChange}
+        slotProps={{ htmlInput: { step: stepValue } }}
+      />
     </Box>
   );
 };
@@ -82,18 +77,13 @@ export const CustomCheckBox = ({
     <Box
       display="flex"
       alignItems="center"
-      gap={2}
       sx={{ height: "30px", width: "100%" }}
     >
-      <Box className={classes.labelContainer}>
-        <Tooltip title={tooltip} followCursor>
-          <Typography className={classes.label}>{name}</Typography>
-        </Tooltip>
-      </Box>
-      <Box
-        className={classes.labelContainer}
-        sx={{ display: "flex", justifyContent: "center" }}
-      >
+      <Tooltip title={tooltip} followCursor>
+        <Typography className={classes.label}>{name}</Typography>
+      </Tooltip>
+      <Box sx={{ flexGrow: 1 }}></Box>
+      <Box sx={{ width: "200px", display: "flex", justifyContent: "center" }}>
         {isDynamic ? (
           <Checkbox onChange={onChange} checked={defaultValue} />
         ) : (
@@ -116,36 +106,28 @@ export const CustomSelect = ({
     <Box
       display="flex"
       alignItems="center"
-      gap={2}
       sx={{ height: "30px", width: "100%" }}
     >
-      <Box className={classes.labelContainer}>
-        <Tooltip title={tooltip} followCursor>
-          <Typography className={classes.label}>{name}</Typography>
-        </Tooltip>
-      </Box>
-      <Box
-        className={classes.labelContainer}
-        sx={{ display: "flex", justifyContent: "center" }}
+      <Tooltip title={tooltip} followCursor>
+        <Typography className={classes.label}>{name}</Typography>
+      </Tooltip>
+      <Box sx={{ flexGrow: 1 }}></Box>
+      <TextField
+        className={classes.smallInput}
+        select
+        value={defaultValue}
+        onChange={onChange}
       >
-        <TextField
-          className={classes.smallInput}
-          select
-          value={defaultValue}
-          onChange={onChange}
-          fullWidth
-        >
-          {options.map((option) => (
-            <MenuItem
-              key={option.value}
-              value={option.value}
-              sx={{ fontSize: "12px" }}
-            >
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Box>
+        {options.map((option) => (
+          <MenuItem
+            key={option.value}
+            value={option.value}
+            sx={{ fontSize: "12px" }}
+          >
+            {option.label}
+          </MenuItem>
+        ))}
+      </TextField>
     </Box>
   );
 };
@@ -156,23 +138,19 @@ export const CustomColorInput = ({ name, onChange, value, tooltip = "" }) => {
     <Box
       display="flex"
       alignItems="center"
-      gap={2}
       sx={{ height: "30px", width: "100%" }}
     >
-      <Box className={classes.labelContainer}>
-        <Tooltip title={tooltip} followCursor>
-          <Typography className={classes.label}>{name}</Typography>
-        </Tooltip>
-      </Box>
-      <Box className={classes.labelContainer}>
-        <MuiColorInput
-          value={value}
-          onChange={onChange}
-          isAlphaHidden
-          format="hex"
-          className={classes.smallInput}
-        />
-      </Box>
+      <Tooltip title={tooltip} followCursor>
+        <Typography className={classes.label}>{name}</Typography>
+      </Tooltip>
+      <Box sx={{ flexGrow: 1 }}></Box>
+      <MuiColorInput
+        value={value}
+        onChange={onChange}
+        isAlphaHidden
+        format="hex"
+        className={classes.smallInput}
+      />
     </Box>
   );
 };

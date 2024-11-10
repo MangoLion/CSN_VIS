@@ -38,7 +38,7 @@ const Settings = () => {
         alignItems: "center",
       }}
     >
-      <Box sx={{ width: "100%", maxWidth: "1000px" }}>
+      <Box sx={{ width: "100%", maxWidth: "750px" }}>
         <Tabs
           value={selectedSettingsWindow}
           onChange={(e, newValue) => setSelectedSettingsWindow(newValue)}

@@ -51,6 +51,7 @@ const App = () => {
   const { selectedRenderingWindows, setSelectedRenderingWindows } =
     useContext(UniversalDataContext);
   const { graphData } = useContext(GraphCommunitiesDataContext);
+
   useEffect(() => {
     if (
       graphData.nodes &&
@@ -60,6 +61,10 @@ const App = () => {
       setSelectedRenderingWindows([...selectedRenderingWindows, "2"]);
     }
   }, [graphData]);
+
+  useEffect(() => {
+    console.log(100 / selectedRenderingWindows.length - 0.01);
+  }, [selectedRenderingWindows]);
 
   return (
     <div
@@ -135,6 +140,7 @@ const App = () => {
                 ...(selectedRenderingWindows.indexOf("2") === -1 && {
                   display: "none",
                 }),
+                overflow: "hidden",
               }}
             >
               <GraphCommunitiesRenderer />
@@ -147,9 +153,10 @@ const App = () => {
                 ...(selectedRenderingWindows.indexOf("3") === -1 && {
                   display: "none",
                 }),
+                overflow: "hidden",
               }}
             >
-              {/* <AdjacencyMatrixRenderer /> */}
+              <AdjacencyMatrixRenderer />
             </Box>
           </Box>
         </Box>
