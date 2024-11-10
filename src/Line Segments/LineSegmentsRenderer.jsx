@@ -67,7 +67,7 @@ const LineSegmentsRenderer = () => {
         </>
       )}
 
-      <Canvas style={{ width: "100%", heigth: "100%" }}>
+      <Canvas style={{ width: "100%", height: "100%" }}>
         <LineSegmentsCanvas />
       </Canvas>
     </div>

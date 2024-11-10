@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import "rc-dock/dist/rc-dock.css";
 
 import "./styles/App.css";
@@ -48,9 +48,14 @@ const universalTheme = createTheme({
 });
 
 const App = () => {
-  const { selectedRenderingWindows, setSelectedRenderingWindows } =
-    useContext(UniversalDataContext);
+  const {
+    selectedRenderingWindows,
+    setSelectedRenderingWindows,
+    windowWidth,
+    setWindowWidth,
+  } = useContext(UniversalDataContext);
   const { graphData } = useContext(GraphCommunitiesDataContext);
+  const windowContainer = useRef();
 
   useEffect(() => {
     if (
@@ -63,13 +68,43 @@ const App = () => {
   }, [graphData]);
 
   useEffect(() => {
-    console.log(100 / selectedRenderingWindows.length - 0.01);
+    const handleResize = (entries) => {
+      for (let entry of entries) {
+        setWindowWidth(
+          entry.contentRect.width / selectedRenderingWindows.length
+        );
+      }
+    };
+
+    const observer = new ResizeObserver(handleResize);
+
+    if (windowContainer.current) {
+      observer.observe(windowContainer.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [selectedRenderingWindows, setWindowWidth]);
+
+  useEffect(() => {
+    setWindowWidth(
+      windowContainer.current.clientWidth / selectedRenderingWindows.length
+    );
+    console.log(
+      windowContainer.current.clientWidth / selectedRenderingWindows.length
+    );
   }, [selectedRenderingWindows]);
 
   return (
     <div
       className="App"
-      style={{ display: "flex", height: "100vh", flexDirection: "column" }}
+      style={{
+        display: "flex",
+        height: "100vh",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
     >
       <ThemeProvider theme={universalTheme}>
         <AppBar
@@ -100,17 +135,19 @@ const App = () => {
         </AppBar>
 
         <Box
+          ref={windowContainer}
           sx={{
             width: "100%",
             flexGrow: 1,
             display: "flex",
+            border: "1px solid black",
           }}
         >
-          <Box sx={{ height: "99.9%", flexGrow: 1, display: "flex" }}>
+          <Box sx={{ height: "100%", flexGrow: 1, display: "flex" }}>
             <Box
               sx={{
-                width: `${100 / selectedRenderingWindows.length - 0.01}%`,
-                height: "99.9%",
+                width: `${windowWidth}px`,
+                height: "100%",
                 ...(selectedRenderingWindows.indexOf("0") === -1 && {
                   display: "none",
                 }),
@@ -122,8 +159,8 @@ const App = () => {
             <Divider orientation="vertical" />
             <Box
               sx={{
-                width: `${100 / selectedRenderingWindows.length - 0.01}%`,
-                height: "99.9%",
+                width: `${windowWidth}px`,
+                height: "100%",
                 ...(selectedRenderingWindows.indexOf("1") === -1 && {
                   display: "none",
                 }),
@@ -135,8 +172,8 @@ const App = () => {
             <Divider orientation="vertical" />
             <Box
               sx={{
-                width: `${100 / selectedRenderingWindows.length - 0.01}%`,
-                height: "99.9%",
+                width: `${windowWidth}px`,
+                height: "100%",
                 ...(selectedRenderingWindows.indexOf("2") === -1 && {
                   display: "none",
                 }),
@@ -148,7 +185,7 @@ const App = () => {
             <Divider orientation="vertical" />
             <Box
               sx={{
-                width: `${100 / selectedRenderingWindows.length - 0.01}%`,
+                width: `${windowWidth}px`,
                 height: "100%",
                 ...(selectedRenderingWindows.indexOf("3") === -1 && {
                   display: "none",

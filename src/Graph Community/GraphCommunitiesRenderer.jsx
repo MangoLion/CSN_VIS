@@ -36,9 +36,7 @@ const GraphCommunitiesRenderer = () => {
     setColoredSegments,
     coloredSegments,
     setSelectedSegments,
-    setSelectedSettingsWindow,
-    selectedRenderingWindows,
-    setSelectedRenderingWindows,
+    windowWidth,
   } = useContext(UniversalDataContext);
   const windowRef = useRef(null); // Ref to the parent box
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -481,7 +479,7 @@ const GraphCommunitiesRenderer = () => {
       </Box>
       {!use3D && !isEmpty && (
         <ForceGraph2D
-          width={dimensions.width}
+          width={windowWidth}
           height={dimensions.height}
           linkVisibility={linkVisibility}
           graphData={graphData}

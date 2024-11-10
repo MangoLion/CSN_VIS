@@ -11,6 +11,7 @@ export const UniversalDataProvider = ({ children }) => {
   const [selectedRenderingWindows, setSelectedRenderingWindows] = useState(
     () => ["0"]
   );
+  const [windowWidth, setWindowWidth] = useState("0px");
 
   return (
     <UniversalDataContext.Provider
@@ -27,6 +28,8 @@ export const UniversalDataProvider = ({ children }) => {
         setSelectedSettingsWindow,
         selectedRenderingWindows,
         setSelectedRenderingWindows,
+        windowWidth,
+        setWindowWidth,
       }}
     >
       {children}
