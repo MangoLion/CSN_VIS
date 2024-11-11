@@ -11,6 +11,7 @@ export const LineSegmentsDataProvider = ({ children }) => {
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [intensity, setIntensity] = useState(2);
   const [color, setColor] = useState("#ffff00");
+  const [renderLinesWhenMoving, setRenderLinesWhenMoving] = useState(true);
 
   return (
     <LineSegmentsDataContext.Provider
@@ -33,6 +34,8 @@ export const LineSegmentsDataProvider = ({ children }) => {
         setIntensity,
         color,
         setColor,
+        renderLinesWhenMoving,
+        setRenderLinesWhenMoving,
       }}
     >
       {children}

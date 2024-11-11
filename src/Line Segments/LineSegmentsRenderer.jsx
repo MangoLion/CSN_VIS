@@ -28,7 +28,6 @@ const DirectionalLightWithCamera = ({ intensity }) => {
 
   useFrame(() => {
     if (directionalLightRef.current && camera) {
-      //console.log("synced")
       directionalLightRef.current.position.copy(camera.position);
       directionalLightRef.current.rotation.copy(camera.rotation);
     }
@@ -87,17 +86,26 @@ const LineSegmentsCanvas = () => {
     showCaps,
     cylinderHeight,
     color,
+    renderLinesWhenMoving,
   } = useContext(LineSegmentsDataContext);
   const { graphData } = useContext(GraphCommunitiesDataContext);
   const { camera, gl, raycaster, scene } = useThree();
   const controls = useThree((state) => state.controls);
   const meshesRef = useRef([]);
+  const backgroundLinesRef = useRef([]);
   const [prevMousePos, setPrevMousePos] = useState(new THREE.Vector2(0, 0));
+  const [leftMouseButtonDown, setLeftMouseButtonDown] = useState(false);
+  const [rightMouseButtonDown, setRightMouseButtonDown] = useState(false);
+  const [wheelMoving, setWheelMoving] = useState(false);
+  const wheelStopTime = 200;
+  const wheelTimeoutRef = useRef(null);
 
   const handleMouseUp = useCallback(
     (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (event.button === 0) setLeftMouseButtonDown(false);
+      if (event.button === 2) setRightMouseButtonDown(false);
       if (event.button !== 2) return;
       if (coloredSegments && coloredSegments.length > 0) return;
 
@@ -169,6 +177,8 @@ const LineSegmentsCanvas = () => {
     (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (event.button === 0) setLeftMouseButtonDown(true);
+      if (event.button === 2) setRightMouseButtonDown(true);
       if (event.button !== 2) return;
       const rect = gl.domElement.getBoundingClientRect();
       setPrevMousePos(
@@ -188,6 +198,64 @@ const LineSegmentsCanvas = () => {
       coloredSegments,
     ]
   );
+
+  const handleWheel = useCallback(
+    (event) => {
+      event.preventDefault();
+
+      setWheelMoving(true);
+
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+
+      wheelTimeoutRef.current = setTimeout(() => {
+        setWheelMoving(false);
+      }, wheelStopTime);
+    },
+    [camera, wheelStopTime]
+  );
+
+  useEffect(() => {
+    if (renderLinesWhenMoving) {
+      meshesRef.current.forEach((mesh) => {
+        mesh.visible = !(
+          leftMouseButtonDown ||
+          rightMouseButtonDown ||
+          wheelMoving
+        );
+      });
+      backgroundLinesRef.current.forEach((mesh) => {
+        mesh.visible =
+          leftMouseButtonDown || rightMouseButtonDown || wheelMoving;
+      });
+    } else {
+      meshesRef.current.forEach((mesh) => {
+        mesh.visible = true;
+      });
+      backgroundLinesRef.current.forEach((mesh) => {
+        scene.remove(mesh);
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+      });
+      backgroundLinesRef.current = [];
+    }
+  }, [
+    renderLinesWhenMoving,
+    leftMouseButtonDown,
+    rightMouseButtonDown,
+    wheelMoving,
+  ]);
+
+  useEffect(() => {
+    gl.domElement.addEventListener("mousedown", handleMouseDown);
+    gl.domElement.addEventListener("mouseup", handleMouseUp);
+    gl.domElement.addEventListener("wheel", handleWheel);
+    return () => {
+      gl.domElement.removeEventListener("mousedown", handleMouseDown);
+      gl.domElement.removeEventListener("mouseup", handleMouseUp);
+      gl.domElement.addEventListener("wheel", handleWheel);
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+    };
+  }, [gl.domElement, handleMouseDown, handleMouseUp, handleWheel]);
 
   const fitModelToView = useCallback(() => {
     if (!segments || segments.length === 0) return;
@@ -243,19 +311,41 @@ const LineSegmentsCanvas = () => {
     }
   }, [camera, controls, segments]);
 
-  const render = () => {
+  const render = (background = false) => {
     if (!matchIsValidColor(color)) return;
 
-    if (meshesRef.current) {
-      meshesRef.current.forEach((mesh) => {
-        scene.remove(mesh);
-        mesh.geometry.dispose();
-        mesh.material.dispose();
-      });
-    }
-    meshesRef.current = [];
+    if (background) {
+      if (backgroundLinesRef.current) {
+        backgroundLinesRef.current.forEach((mesh) => {
+          scene.remove(mesh);
+          mesh.geometry.dispose();
+          mesh.material.dispose();
+        });
+      }
 
-    if (renderingMethod === "Tube") {
+      backgroundLinesRef.current = [];
+    } else {
+      if (meshesRef.current) {
+        meshesRef.current.forEach((mesh) => {
+          scene.remove(mesh);
+          mesh.geometry.dispose();
+          mesh.material.dispose();
+        });
+      }
+
+      meshesRef.current = [];
+    }
+
+    if (background || renderingMethod === "Line") {
+      if (graphData.nodes.length > 0 && selectedSegments.length > 0) {
+        renderLines(selectedSegments, -1, null, background);
+        renderLines(segments, opacity / 10, color, background);
+      } else if (graphData.nodes.length > 0) {
+        renderLines(coloredSegments, -1, null, background);
+      } else if (segments.length > 0) {
+        renderLines(segments, -1, color, background);
+      }
+    } else if (renderingMethod === "Tube") {
       if (graphData.nodes.length > 0 && selectedSegments.length > 0) {
         renderTubes(selectedSegments);
         renderTubes(segments, opacity / 10, color);
@@ -264,8 +354,7 @@ const LineSegmentsCanvas = () => {
       } else if (segments.length > 0) {
         renderTubes(segments, -1, color);
       }
-    }
-    if (renderingMethod === "Cylinder") {
+    } else if (renderingMethod === "Cylinder") {
       if (graphData.nodes.length > 0 && selectedSegments.length > 0) {
         renderCylinders(selectedSegments);
         renderCylinders(segments, opacity / 10, color);
@@ -286,7 +375,10 @@ const LineSegmentsCanvas = () => {
   }, [fitModelToView]);
 
   useEffect(() => {
-    const handleRender = () => render();
+    const handleRender = () => {
+      render();
+      if (renderLinesWhenMoving) render(true);
+    };
 
     window.addEventListener("render", handleRender);
     return () => window.removeEventListener("render", handleRender);
@@ -297,16 +389,12 @@ const LineSegmentsCanvas = () => {
   }, [segments]);
 
   useEffect(() => {
-    gl.domElement.addEventListener("mousedown", handleMouseDown);
-    gl.domElement.addEventListener("contextmenu", handleMouseUp);
-    return () => {
-      gl.domElement.removeEventListener("mousedown", handleMouseDown);
-      gl.domElement.removeEventListener("contextmenu", handleMouseUp);
-    };
-  }, [gl.domElement, handleMouseUp]);
-
-  useEffect(() => {
-    if (autoUpdate) render();
+    if (autoUpdate) {
+      render();
+      if (renderLinesWhenMoving) {
+        render(true);
+      }
+    }
   }, [
     radius,
     tubeRes,
@@ -318,10 +406,14 @@ const LineSegmentsCanvas = () => {
     scene,
     renderingMethod,
     color,
+    renderLinesWhenMoving,
   ]);
 
   useEffect(() => {
     render();
+    if (renderLinesWhenMoving) {
+      render(true);
+    }
   }, [segments, selectedSegments, coloredSegments, graphData]);
 
   const renderTubes = (data, o = -1, tubeColor = null) => {
@@ -543,6 +635,51 @@ const LineSegmentsCanvas = () => {
         }
       });
     }
+  };
+
+  const renderLines = (data, o = -1, lineColor = null, background = false) => {
+    const groupedSegments = [];
+    let currGroup = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const segment = data[i];
+      if (
+        i > 0 &&
+        (segment.lineIDx !== data[i - 1].lineIDx ||
+          (segment.color && segment.color !== data[i - 1].color))
+      ) {
+        groupedSegments.push(currGroup);
+        currGroup = [segment];
+      } else {
+        currGroup.push(segment);
+      }
+    }
+
+    groupedSegments.push(currGroup);
+
+    groupedSegments.forEach((group) => {
+      const points = [];
+
+      group.forEach((segment, index) => {
+        if (index === 0) points.push(new THREE.Vector3(...segment.startPoint));
+        points.push(new THREE.Vector3(...segment.endPoint));
+      });
+
+      if (points.length < 2) return;
+
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+      const material = new THREE.LineBasicMaterial({
+        color: lineColor ? lineColor : group[0].color,
+        transparent: true,
+        opacity: o === -1 ? opacity : o,
+      });
+
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      if (background) backgroundLinesRef.current.push(line);
+      else meshesRef.current.push(line);
+    });
   };
 
   return (

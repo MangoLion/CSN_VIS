@@ -29,6 +29,8 @@ const LineSegmentSettings = React.memo(() => {
     setCylinderHeight,
     color,
     setColor,
+    renderLinesWhenMoving,
+    setRenderLinesWhenMoving,
   } = useContext(LineSegmentsDataContext);
 
   return (
@@ -41,6 +43,7 @@ const LineSegmentSettings = React.memo(() => {
           options={[
             { value: "Tube", label: "Tube" },
             { value: "Cylinder", label: "Cylinder" },
+            { value: "Line", label: "Line" },
           ]}
           tooltip="Controls the rendering method of the segments (Cylinder is typically faster)"
         />
@@ -50,19 +53,23 @@ const LineSegmentSettings = React.memo(() => {
           defaultValue={intensity}
           tooltip="Controls the light intensity in the scene"
         />
-        <CustomNumberInput
-          name="Tube Radius"
-          onChange={(e) => setRadius(Number(e.target.value))}
-          defaultValue={radius}
-          stepValue={0.05}
-          tooltip="Controls the radius of the segments (likely need to modify depending on your model)"
-        />
-        <CustomNumberInput
-          name="Tube Resolution"
-          onChange={(e) => setTubeRes(Number(e.target.value))}
-          defaultValue={tubeRes}
-          tooltip="Controls the resolution of the segments"
-        />
+        {renderingMethod !== "Line" && (
+          <CustomNumberInput
+            name="Tube Radius"
+            onChange={(e) => setRadius(Number(e.target.value))}
+            defaultValue={radius}
+            stepValue={0.05}
+            tooltip="Controls the radius of the segments (likely need to modify depending on your model)"
+          />
+        )}
+        {renderingMethod !== "Line" && (
+          <CustomNumberInput
+            name="Tube Resolution"
+            onChange={(e) => setTubeRes(Number(e.target.value))}
+            defaultValue={tubeRes}
+            tooltip="Controls the resolution of the segments"
+          />
+        )}
         <CustomNumberInput
           name="Opacity"
           onChange={(e) => setOpacity(Number(e.target.value))}
@@ -85,18 +92,28 @@ const LineSegmentSettings = React.memo(() => {
             tooltip="Controls the height of each cylinder (likely need to modify depending on your model)"
           />
         )}
-        <CustomCheckBox
-          name="Show Caps"
-          onChange={() => setShowCaps(!showCaps)}
-          defaultValue={showCaps}
-          tooltip="Hide or show the caps of each segment"
-        />
+        {renderingMethod !== "Line" && (
+          <CustomCheckBox
+            name="Show Caps"
+            onChange={() => setShowCaps(!showCaps)}
+            defaultValue={showCaps}
+            tooltip="Hide or show the caps of each segment"
+          />
+        )}
         <CustomCheckBox
           name="Auto Update"
           onChange={() => setAutoUpdate(!autoUpdate)}
           defaultValue={autoUpdate}
           tooltip="If on, the segments automatically render when the settings change"
         />
+        {renderingMethod !== "Line" && (
+          <CustomCheckBox
+            name="Render Lines when Moving"
+            onChange={() => setRenderLinesWhenMoving(!renderLinesWhenMoving)}
+            defaultValue={renderLinesWhenMoving}
+            tooltip="If on, lines will render when the camera is moving"
+          />
+        )}
         <Button
           component="label"
           variant="contained"

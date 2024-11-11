@@ -56,11 +56,11 @@ const AdjacencyMatrixRenderer = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (dGraphData.length > 0) {
-      setPixels(dGraphData);
-    }
-  }, [dGraphData]);
+  // useEffect(() => {
+  //   if (dGraphData.length > 0) {
+  //     setPixels(dGraphData);
+  //   }
+  // }, [dGraphData]);
 
   useEffect(() => {
     updateView();
