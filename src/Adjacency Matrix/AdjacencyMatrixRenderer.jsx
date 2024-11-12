@@ -56,17 +56,7 @@ const AdjacencyMatrixRenderer = () => {
     };
   }, []);
 
-  // useEffect(() => {
-  //   if (dGraphData.length > 0) {
-  //     setPixels(dGraphData);
-  //   }
-  // }, [dGraphData]);
-
-  useEffect(() => {
-    updateView();
-  }, [image]);
-
-  const setPixels = useCallback((dGraphData) => {
+  const setPixels = (dGraphData) => {
     const tileSize = 1000;
     const cols = Math.ceil(segments.length / tileSize);
     const newPixels = [];
@@ -129,7 +119,18 @@ const AdjacencyMatrixRenderer = () => {
     }
 
     setImage(canvas);
-  });
+  };
+
+  useEffect(() => {
+    const handleSetPixels = () => setPixels(dGraphData);
+
+    window.addEventListener("setPixels", handleSetPixels);
+    return () => window.removeEventListener("setPixels", handleSetPixels);
+  }, [setPixels, dGraphData]);
+
+  useEffect(() => {
+    updateView();
+  }, [image]);
 
   function fillBlackPixels(canvases, pixelList, tileSize) {
     const samec = "rgb(227, 227, 227)";

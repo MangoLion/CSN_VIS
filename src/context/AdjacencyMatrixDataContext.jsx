@@ -32,6 +32,11 @@ export const AdjacencyMatrixDataProvider = ({ children }) => {
     return canvases;
   }
 
+  function deleteImage() {
+    setImage(createWhiteImage(500, 500, 1000));
+    setGrid([]);
+  }
+
   return (
     <AdjacencyMatrixDataContext.Provider
       value={{
@@ -46,6 +51,7 @@ export const AdjacencyMatrixDataProvider = ({ children }) => {
         image,
         setImage,
         createWhiteImage,
+        deleteImage,
       }}
     >
       {children}

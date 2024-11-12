@@ -28,6 +28,7 @@ import LineSegmentsRenderer from "./Line Segments/LineSegmentsRenderer";
 import GraphCommunitiesRenderer from "./Graph Community/GraphCommunitiesRenderer";
 import AdjacencyMatrixRenderer from "./Adjacency Matrix/AdjacencyMatrixRenderer";
 import { UniversalDataContext } from "./context/UniversalDataContext";
+import { AdjacencyMatrixDataContext } from "./context/AdjacencyMatrixDataContext";
 import { GraphCommunitiesDataContext } from "./context/GraphCommunitiesDataContext";
 import { alignProperty } from "@mui/material/styles/cssUtils";
 
@@ -55,7 +56,8 @@ const App = () => {
     windowWidth,
     setWindowWidth,
   } = useContext(UniversalDataContext);
-  const { dGraphData, graphData } = useContext(GraphCommunitiesDataContext);
+  const { graphData } = useContext(GraphCommunitiesDataContext);
+  const { image } = useContext(AdjacencyMatrixDataContext);
   const windowContainer = useRef();
 
   useEffect(() => {
@@ -70,13 +72,13 @@ const App = () => {
 
   useEffect(() => {
     if (
-      dGraphData &&
-      dGraphData.length > 0 &&
+      image &&
+      image.length > 1 &&
       selectedRenderingWindows.indexOf("2") === -1
     ) {
       setSelectedRenderingWindows([...selectedRenderingWindows, "2"]);
     }
-  }, [dGraphData]);
+  }, [image]);
 
   useEffect(() => {
     if (

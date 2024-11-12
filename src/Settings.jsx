@@ -81,12 +81,12 @@ const Settings = () => {
           {dGraphData.length === 0 ? (
             <SmallDisabledTabWithTooltip
               tooltip="Please run a Nearest Neighbor Algorithm"
-              label="Graph Communities"
+              label="Adjacency Matrix"
               value="3"
             />
           ) : (
             <Tab
-              label="Graph Communities"
+              label="Adjacency Matrix"
               value="3"
               sx={{ fontSize: "12px", width: "20%" }}
             />
@@ -95,12 +95,12 @@ const Settings = () => {
           {dGraphData.length === 0 ? (
             <SmallDisabledTabWithTooltip
               tooltip="Please run a Nearest Neighbor Algorithm"
-              label="Adjacency Matrix"
+              label="Graph Communities"
               value="4"
             />
           ) : (
             <Tab
-              label="Adjacency Matrix"
+              label="Graph Communities"
               value="4"
               sx={{ fontSize: "12px", width: "20%" }}
             />
@@ -116,10 +116,10 @@ const Settings = () => {
           <NearestNeighborSettings />
         </Box>
         <Box hidden={selectedSettingsWindow !== "3"}>
-          <GraphCommunitiesSettings />
+          <AdjacencyMatrixSettings />
         </Box>
         <Box hidden={selectedSettingsWindow !== "4"}>
-          <AdjacencyMatrixSettings />
+          <GraphCommunitiesSettings />
         </Box>
       </Box>
     </Box>
