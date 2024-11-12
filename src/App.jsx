@@ -149,8 +149,8 @@ const App = () => {
           >
             <ToggleButton value="0">Settings</ToggleButton>
             <ToggleButton value="1">Line Segments</ToggleButton>
-            <ToggleButton value="2">Adjacency Matrix</ToggleButton>
             <ToggleButton value="3">Graph Community</ToggleButton>
+            <ToggleButton value="2">Adjacency Matrix</ToggleButton>
           </ToggleButtonGroup>
         </AppBar>
 
@@ -190,19 +190,7 @@ const App = () => {
               <LineSegmentsRenderer />
             </Box>
             <Divider orientation="vertical" />
-            <Box
-              sx={{
-                width: `${windowWidth}px`,
-                height: "100%",
-                ...(selectedRenderingWindows.indexOf("2") === -1 && {
-                  display: "none",
-                }),
-                overflow: "hidden",
-              }}
-            >
-              <AdjacencyMatrixRenderer />
-            </Box>
-            <Divider orientation="vertical" />
+
             <Box
               sx={{
                 width: `${windowWidth}px`,
@@ -214,6 +202,19 @@ const App = () => {
               }}
             >
               <GraphCommunitiesRenderer />
+            </Box>
+            <Divider orientation="vertical" />
+            <Box
+              sx={{
+                width: `${windowWidth}px`,
+                height: "100%",
+                ...(selectedRenderingWindows.indexOf("2") === -1 && {
+                  display: "none",
+                }),
+                overflow: "hidden",
+              }}
+            >
+              <AdjacencyMatrixRenderer />
             </Box>
           </Box>
         </Box>
