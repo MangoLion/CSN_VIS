@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import * as tf from '@tensorflow/tfjs';
-import { shortestDistanceBetweenSegmentsAsync, findKNearestNeighbors } from './knnHelper';
+import React, { useState, useEffect } from "react";
+import { findKNearestNeighbors } from "./Nearest Neighbor/knnHelper";
 
 const KNNComponent = ({ segments, k }) => {
   const [knnResults, setKnnResults] = useState([]);

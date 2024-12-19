@@ -1,153 +1,226 @@
-import React, { useState,useRef,useEffect } from 'react';
-import HugeCanvas from './HugeCanvas';
-import LineSegments from './LineSegments';
-import LineSegmentUploader from './LineSegmentUploader'
-
+import React, { useState, useContext, useEffect, useRef } from "react";
 import "rc-dock/dist/rc-dock.css";
-import BarChart from './PlotView';
 
-
-import "./App.css";
-import { Allotment } from "allotment";
+import "./styles/App.css";
 import "allotment/dist/style.css";
-import Vis from './components/Vis';
-import GraphCommunities from './GraphComm';
-import { Matrix3 } from 'three';
 
-/*document.addEventListener("contextmenu", function(e) {
-  //if(e.target.id === "YOUR ELEMENT ID") { // identify your element here. You can use e.target.id, or e.target.className, e.target.classList etc...
-  if (true){
-      e.preventDefault();
-      e.stopPropagation();
-      alert("ASDAS")
-  }
-}, true)*/
+import {
+  Box,
+  Button,
+  Divider,
+  Drawer,
+  Typography,
+  Tab,
+  Tabs,
+  AppBar,
+  IconButton,
+  Tooltip,
+  styled,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import SettingsIcon from "@mui/icons-material/Settings";
+
+import Settings from "./Settings";
+
+import LineSegmentsRenderer from "./Line Segments/LineSegmentsRenderer";
+import GraphCommunitiesRenderer from "./Graph Community/GraphCommunitiesRenderer";
+import AdjacencyMatrixRenderer from "./Adjacency Matrix/AdjacencyMatrixRenderer";
+import { UniversalDataContext } from "./context/UniversalDataContext";
+import { AdjacencyMatrixDataContext } from "./context/AdjacencyMatrixDataContext";
+import { GraphCommunitiesDataContext } from "./context/GraphCommunitiesDataContext";
+import { alignProperty } from "@mui/material/styles/cssUtils";
+
+const universalTheme = createTheme({
+  components: {
+    MuiTooltip: {
+      defaultProps: {
+        followCursor: true,
+        enterDelay: 500,
+      },
+    },
+    MuiIconButton: {
+      defaultProps: {
+        color: "primary",
+      },
+    },
+  },
+});
 
 const App = () => {
-  
-  const [streamLines, setStreamLines] = useState([]);
-  const [dGraphData, setDGraphData] = useState([]);
-  const [exclude, setExclude] = useState(-1);
-  const [manualUpdate, setManualUpdate] = useState(false);
-  const [drawAll, setDrawAll] = useState(true);
-  const [swapLayout, setSwapLayout] = useState(false);
-  const [selectedSegment,setSelectedSegment] = useState(-1);
-  const [radius,setRadius] = useState(0.45);
-  const [tubeRes,setTubeRes] = useState(20);
-  const [showPlotView,setShowPlotView] = useState(true);
-  const [layerProps, setLayerProps] = useState({
-    x: 0,
-    y: 0,
-    scaleX: 1,
-    scaleY: 1,
-  });
+  const {
+    segments,
+    selectedRenderingWindows,
+    setSelectedRenderingWindows,
+    windowWidth,
+    setWindowWidth,
+  } = useContext(UniversalDataContext);
+  const { graphData } = useContext(GraphCommunitiesDataContext);
+  const { image } = useContext(AdjacencyMatrixDataContext);
+  const windowContainer = useRef();
 
-  const [pixelData,setPixelData] = useState(false);
+  useEffect(() => {
+    if (
+      segments &&
+      segments.length > 0 &&
+      selectedRenderingWindows.indexOf("1") === -1
+    ) {
+      setSelectedRenderingWindows([...selectedRenderingWindows, "1"]);
+    }
+  }, [segments]);
 
-  const [segments, setSegments] = useState([]);
-  const [segmentsSelected, setSegmentsSelected] = useState([]);
+  useEffect(() => {
+    if (
+      image &&
+      image.length > 1 &&
+      selectedRenderingWindows.indexOf("2") === -1
+    ) {
+      setSelectedRenderingWindows([...selectedRenderingWindows, "2"]);
+    }
+  }, [image]);
 
-  const [canvasData, setCanvasData] = useState({});
-  const [settings, setSettings] = useState({});
+  useEffect(() => {
+    if (
+      graphData.nodes &&
+      graphData.nodes.length > 0 &&
+      selectedRenderingWindows.indexOf("3") === -1
+    ) {
+      setSelectedRenderingWindows([...selectedRenderingWindows, "3"]);
+    }
+  }, [graphData]);
 
-  const [selectRegion, setSelectRegion] = useState({
-      start: null, end: null 
-  });
+  useEffect(() => {
+    const handleResize = (entries) => {
+      for (let entry of entries) {
+        setWindowWidth(
+          entry.contentRect.width / selectedRenderingWindows.length
+        );
+      }
+    };
 
-  const [graphData,setGraphData] = useState(null);
-  const [CSNG, setCSNG] = useState(false);
-  const [dGraph, setDGraph] = useState(false);
-  const [pixelMapData,setPixelMapData] = useState(false);
+    const observer = new ResizeObserver(handleResize);
 
-  const [sphereRadius, setSphereRadius] = useState(1); // Default radius
+    if (windowContainer.current) {
+      observer.observe(windowContainer.current);
+    }
 
-  const [selectionMode, setSelectionMode] = useState("Add");
-  const [shapeMode, setShapeMode] = useState("Sphere");
-  const [transformMode, setTransformMode] = useState("translate");
+    return () => {
+      observer.disconnect();
+    };
+  }, [selectedRenderingWindows, setWindowWidth]);
 
-  const [objFile, setObjFile] = useState(false);
+  useEffect(() => {
+    setWindowWidth(
+      windowContainer.current.clientWidth / selectedRenderingWindows.length
+    );
+  }, [selectedRenderingWindows]);
 
-  const matRef = React.createRef();
+  return (
+    <div
+      className="App"
+      style={{
+        display: "flex",
+        height: "100vh",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <ThemeProvider theme={universalTheme}>
+        <AppBar
+          sx={{
+            position: "static",
+            height: "75px",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            paddingLeft: "20px",
+            gap: "20px",
+          }}
+        >
+          <Typography variant="h6" noWrap>
+            Curve Segment Neighborhood-Based Vector Field Exploration
+          </Typography>
+          <ToggleButtonGroup
+            value={selectedRenderingWindows}
+            onChange={(e, newValue) => {
+              setSelectedRenderingWindows(newValue);
+            }}
+          >
+            <ToggleButton value="0">Settings</ToggleButton>
+            <ToggleButton value="1">Line Segments</ToggleButton>
+            <ToggleButton value="3">Graph Community</ToggleButton>
+            <ToggleButton value="2">Adjacency Matrix</ToggleButton>
+          </ToggleButtonGroup>
+        </AppBar>
 
-  const [manualStart, setManualStart] = useState(false);
-  const [manualProgress, setManualProgress] = useState(0);
+        <Box
+          ref={windowContainer}
+          sx={{
+            width: "100%",
+            flexGrow: 1,
+            display: "flex",
+            border: "1px solid black",
+          }}
+        >
+          <Box sx={{ height: "100%", flexGrow: 1, display: "flex" }}>
+            <Box
+              sx={{
+                width: `${windowWidth}px`,
+                height: "100%",
+                ...(selectedRenderingWindows.indexOf("0") === -1 && {
+                  display: "none",
+                }),
+                overflow: "hidden",
+              }}
+            >
+              <Settings />
+            </Box>
+            <Divider orientation="vertical" />
+            <Box
+              sx={{
+                width: `${windowWidth}px`,
+                height: "100%",
+                ...(selectedRenderingWindows.indexOf("1") === -1 && {
+                  display: "none",
+                }),
+                overflow: "hidden",
+              }}
+            >
+              <LineSegmentsRenderer />
+            </Box>
+            <Divider orientation="vertical" />
 
-  const [intensity,setIntensity] = useState(2);
-
-  useEffect(()=>{
-    console.log(matRef.current);
-  }, [matRef.current]);
-
-  //const amcsRef = useRef();
-
-  /**
-   * description
-   * @param {*} newProps 
-   */
-  const handleLayerChange = (newProps) => {
-    setLayerProps(newProps);
-  };
-
-  
-  return <div className='App'>
-    <Allotment key="main">
-    <Allotment vertical={true}>
-          <Allotment.Pane maxSize={350}>
-            <div><LineSegmentUploader {
-              ...{setShowPlotView, showPlotView, 
-                  setRadius, 
-                  setTubeRes, 
-                  manualUpdate, setManualUpdate, 
-                  setStreamLines, 
-                  setSegments, 
-                  setExclude, 
-                  drawAll, setDrawAll, 
-                  swapLayout, setSwapLayout,
-                  settings, setSettings, setSphereRadius, sphereRadius,
-                  selectionMode,setSelectionMode,shapeMode, setShapeMode,
-                  transformMode, setTransformMode, setObjFile, setManualStart, manualProgress,
-                  intensity,setIntensity
-                }} key="uploader" /></div>
-          </Allotment.Pane>
-          <Allotment.Pane preferredSize={'40%'} >
-          <LineSegments {...{radius, tubeRes, setSelectedSegment, drawAll, segments, setSelectRegion, segmentsSelected,setSegmentsSelected, dGraphData, dGraph,
-            sphereRadius, selectionMode, shapeMode, transformMode, setTransformMode, objFile, intensity}} key="line3D" />
-
-          </Allotment.Pane>
-    </Allotment>
-    
-    <Allotment.Pane>
-    {/*(showPlotView)?<Vis graphData={graphData} setSegmentsSelected={setSegmentsSelected} segments={segments}/>:<div><HugeCanvas {...{selectedSegment, manualUpdate, exclude, layerProps, handleLayerChange, setSegmentsSelected}} streamLines2={streamLines} segments2={segments} key="canvas2" cid={2} /></div>*/}
-    {(showPlotView)?<GraphCommunities setPixelMapData={setPixelMapData} matRef={matRef} data={dGraphData} setPixelData={setPixelData}pixelData={pixelData}  segmentsSelected={segmentsSelected}
-      setSegmentsSelected={setSegmentsSelected} segments={segments} selectedSegment={selectedSegment} selectionMode={selectionMode}
-      setSelectionMode={setSelectionMode} />:<div><HugeCanvas {...{selectedSegment, manualUpdate, exclude, layerProps, handleLayerChange, setSegmentsSelected}} streamLines2={streamLines} segments2={segments} key="canvas2" cid={2} /></div>}
-    </Allotment.Pane>
-
-    <Allotment.Pane maxSize2={0}>
-    <div style2={{display:'none', maxWidth:'0px'}}><HugeCanvas {
-      ...{selectedSegment, 
-          manualUpdate, 
-          exclude, 
-          layerProps, 
-          handleLayerChange, 
-          setSegmentsSelected, 
-          setGraphData,
-          setDGraphData,
-          pixelData,
-          setPixelData,
-          pixelMapData,
-          canvasData, setCanvasData,
-          setCSNG,
-          manualStart,
-          setManualProgress,
-          setDGraph}}
-          onLayerChange={handleLayerChange}
-          ref = {matRef}
-           streamLines2={streamLines} segments2={segments} key="canvas1" cid={1} />
+            <Box
+              sx={{
+                width: `${windowWidth}px`,
+                height: "100%",
+                ...(selectedRenderingWindows.indexOf("3") === -1 && {
+                  display: "none",
+                }),
+                overflow: "hidden",
+              }}
+            >
+              <GraphCommunitiesRenderer />
+            </Box>
+            <Divider orientation="vertical" />
+            <Box
+              sx={{
+                width: `${windowWidth}px`,
+                height: "100%",
+                ...(selectedRenderingWindows.indexOf("2") === -1 && {
+                  display: "none",
+                }),
+                overflow: "hidden",
+              }}
+            >
+              <AdjacencyMatrixRenderer />
+            </Box>
+          </Box>
+        </Box>
+      </ThemeProvider>
     </div>
-    </Allotment.Pane>
-  </Allotment>
-    </div>
+  );
 };
 
 export default App;
